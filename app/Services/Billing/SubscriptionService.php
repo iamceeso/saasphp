@@ -446,13 +446,15 @@ class SubscriptionService
         }
 
         $productId = $this->getOrCreateStripeProduct($plan);
+        $unitAmount = (int) $price->amount;
 
-        $amount = (float) $price->amount;
-        $unitAmount = $amount >= 100 ? (int) round($amount) : (int) round($amount * 100);
+        if ($unitAmount < 0) {
+            throw new \InvalidArgumentException('Plan price amount must be zero or greater.');
+        }
 
         $stripePrice = $this->getStripeClient()->prices->create([
             'product' => $productId,
-            'unit_amount' => max($unitAmount, 1),
+            'unit_amount' => $unitAmount,
             'currency' => strtolower((string) config('services.stripe.currency', 'USD')),
             'recurring' => [
                 'interval' => $price->interval === 'annually' ? 'year' : 'month',
