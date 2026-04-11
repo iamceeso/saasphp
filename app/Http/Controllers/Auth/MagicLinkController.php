@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Setting;
 use App\Models\MagicLink;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -15,13 +16,35 @@ use Illuminate\Support\Facades\Hash;
 
 class MagicLinkController extends Controller
 {
+    protected function throttleKey(Request $request): string
+    {
+        return Str::lower($request->input('email', '') . '|' . $request->ip());
+    }
+
     public function send(Request $request)
     {
         $request->validate([
-            'email' => ['required', 'email', 'exists:users,email'],
+            'email' => ['required', 'email'],
         ]);
 
-        $user = User::where('email', $request->email)->firstOrFail();
+        $key = 'magic-link-send:' . $this->throttleKey($request);
+
+        if (app(RateLimiter::class)->tooManyAttempts($key, 5)) {
+            return back()->withErrors([
+                'email' => __('auth.throttle', [
+                    'seconds' => app(RateLimiter::class)->availableIn($key),
+                    'minutes' => ceil(app(RateLimiter::class)->availableIn($key) / 60),
+                ]),
+            ]);
+        }
+
+        app(RateLimiter::class)->hit($key, 300);
+
+        $user = User::where('email', $request->string('email')->lower()->value())->first();
+
+        if (! $user) {
+            return back()->with('status', 'If your email address exists in our system, a login link has been sent.');
+        }
 
         // Generate raw code and expiration
         $rawCode = Str::random(40);
@@ -44,17 +67,34 @@ class MagicLinkController extends Controller
                 ->subject(Setting::getValue('site.name') . ' Magic Login Link');
         });
 
-        return back()->with('status', 'A login link has been sent to your email address.');
+        return back()->with('status', 'If your email address exists in our system, a login link has been sent.');
     }
 
     public function login(Request $request)
     {
         $request->validate([
-            'email' => ['required', 'email', 'exists:users,email'],
+            'email' => ['required', 'email'],
             'code'  => ['required', 'string'],
         ]);
 
-        $user = User::where('email', $request->email)->firstOrFail();
+        $key = 'magic-link-login:' . $this->throttleKey($request);
+
+        if (app(RateLimiter::class)->tooManyAttempts($key, 10)) {
+            return redirect()->route('login')->withErrors([
+                'code' => __('auth.throttle', [
+                    'seconds' => app(RateLimiter::class)->availableIn($key),
+                    'minutes' => ceil(app(RateLimiter::class)->availableIn($key) / 60),
+                ]),
+            ]);
+        }
+
+        app(RateLimiter::class)->hit($key, 300);
+
+        $user = User::where('email', $request->string('email')->lower()->value())->first();
+
+        if (! $user) {
+            return redirect()->route('login')->withErrors(['code' => 'Invalid or expired magic link.']);
+        }
 
         // Find latest unused and unexpired magic link
         $magicLink = MagicLink::where('user_id', $user->id)
@@ -77,6 +117,8 @@ class MagicLinkController extends Controller
         if (!$user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
         }
+
+        app(RateLimiter::class)->clear($key);
 
         return redirect()->intended(route('dashboard'));
     }

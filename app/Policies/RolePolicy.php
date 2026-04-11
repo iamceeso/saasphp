@@ -101,6 +101,6 @@ class RolePolicy
 
     public function byPassMaintenanceRole(User $user): bool
     {
-        return $user->hasPermissionTo('by_pass_maintenance_role');
+        return $user->getAllPermissions()->contains('name', 'by_pass_maintenance_role');
     }
 }

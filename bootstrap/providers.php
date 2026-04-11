@@ -7,5 +7,4 @@ return [
     App\Providers\Filament\AdminPanelProvider::class,
     App\Providers\FortifyServiceProvider::class,
     App\Providers\SettingsServiceProvider::class,
-    App\Providers\StartupServiceProvider::class,
 ];

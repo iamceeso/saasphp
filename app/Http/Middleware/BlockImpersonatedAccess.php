@@ -20,7 +20,7 @@ class BlockImpersonatedAccess
     public function handle(Request $request, Closure $next): Response
     {
         // If the current user is impersonating someone else
-        if (auth()->check() && session()->has('impersonated_by')) {
+        if (auth()->check() && session()->has('impersonator_id')) {
             // Block access with 403 or redirect
             abort(403, 'You cannot access this section while impersonating.');
         }

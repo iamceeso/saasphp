@@ -123,25 +123,33 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
     public function sendVerificationEmailWithRateLimit(): bool
     {
         $key = 'verify-email:' . $this->id;
+        $attemptCacheKey = "{$key}:attempts";
 
-        if (RateLimiter::tooManyAttempts($key, 3)) {
+        if ((int) cache()->get($attemptCacheKey, 0) >= 3) {
             return false;
         }
 
-        if (app()->environment('local') && config('mail.default') === 'log') {
-            RateLimiter::hit($key, now()->addMinutes(15)->diffInSeconds());
+        $incrementAttempts = function () use ($attemptCacheKey): void {
+            cache()->add($attemptCacheKey, 0, now()->addMinutes(15));
+            cache()->increment($attemptCacheKey);
+        };
+
+        if (
+            app()->environment(['local', 'testing']) &&
+            in_array(config('mail.default'), ['array', 'log'], true)
+        ) {
+            $incrementAttempts();
+
             return true;
         }
 
         try {
+            $this->loadEmailConfig();
+
             // Attempt to send
             $this->sendEmailVerificationNotification();
 
-            // Only hit rate limiter on SUCCESS
-            RateLimiter::hit(
-                $key,
-                now()->addMinutes(15)->diffInSeconds()
-            );
+            $incrementAttempts();
 
             return true;
         } catch (\Throwable $e) {
@@ -159,10 +167,9 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
     {
         $key = 'verify-phone:' . $this->id;
 
-        if (RateLimiter::tooManyAttempts($key, 3)) {
+        if (RateLimiter::attempts($key) >= 3) {
             return false;
         }
-
 
         $this->loadDynamicSmsConfig();
 

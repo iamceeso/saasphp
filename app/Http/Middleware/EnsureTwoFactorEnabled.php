@@ -16,9 +16,9 @@ class EnsureTwoFactorEnabled
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $enabled = Setting::getBooleanValue('features.enable_two_factor_auth', 'false');
+        $enabled = Setting::getBooleanValue('features.enable_two_factor_auth', false);
         if (!$enabled) {
-            abort(403, 'Two-factor authentication is not enabled.');
+            abort(404);
         }
 
         return $next($request);

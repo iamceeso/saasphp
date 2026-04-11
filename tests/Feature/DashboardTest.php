@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\Setting;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -12,4 +13,17 @@ test('authenticated users can visit the dashboard', function () {
     $this->actingAs($user = User::factory()->create());
 
     $this->get('/dashboard')->assertOk();
+});
+
+test('maintenance mode blocks regular users from the dashboard', function () {
+    Setting::create([
+        'key' => 'features.maintenance_mode',
+        'value' => 'true',
+        'type' => 'boolean',
+        'group' => 'features',
+    ]);
+
+    $this->actingAs(User::factory()->create());
+
+    $this->get('/dashboard')->assertStatus(503);
 });

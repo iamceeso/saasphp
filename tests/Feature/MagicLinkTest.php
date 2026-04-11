@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 
@@ -24,28 +25,31 @@ class MagicLinkTest extends TestCase
 
     public function test_it_can_handle_magic_link_request_for_valid_user()
     {
+        Mail::fake();
+
         $user = User::factory()->create();
 
         $response = $this->post(route('magic.send'), [
-            'email' => $user->login,
+            'email' => $user->email,
         ]);
 
-        $response->assertRedirect(); // or change depending on response behavior
-
-        // Optional: Assert something was stored (DB/cache/etc.)
-        // e.g., assert session or cache key exists if your system tracks it
+        $response
+            ->assertRedirect()
+            ->assertSessionHas('status', 'If your email address exists in our system, a login link has been sent.');
     }
 
 
     public function test_it_does_not_send_magic_link_for_unknown_email()
     {
+        Mail::fake();
+
         $response = $this->post(route('magic.send'), [
             'email' => 'notfound@example.com',
         ]);
 
-        $response->assertRedirect(); // Or maybe 422, depending on validation
-
-        // Could also assert session error or old input preserved
+        $response
+            ->assertRedirect()
+            ->assertSessionHas('status', 'If your email address exists in our system, a login link has been sent.');
     }
 
 
