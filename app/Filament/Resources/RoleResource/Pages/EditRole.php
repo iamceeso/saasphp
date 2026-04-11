@@ -19,26 +19,17 @@ class EditRole extends EditRecord
     public static function canAccess(array $parameters = []): bool
     {
         $user = auth()->user();
+        $record = $parameters['record'] ?? null;
 
-        if (!$user->can('update_role')) {
+        if (! $record) {
             return false;
         }
 
-        $record = $parameters['record'] ?? null;
-
-        if ($record) {
-            $roleName = strtolower($record->name);
-
-            if ($roleName === 'admin') {
-                return $user->can('update_admin_role');
-            }
-
-            if (!in_array($roleName, ['admin', 'user'])) {
-                return $user->can('update_staff_role');
-            }
+        if (! $record instanceof \Spatie\Permission\Models\Role) {
+            $record = RoleResource::getModel()::find($record);
         }
 
-        return true;
+        return $record ? $user?->can('update', $record) : false;
     }
 
 

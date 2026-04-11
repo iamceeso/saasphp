@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\RoleResource\RelationManagers;
 
+use App\Helpers\RoleHelper;
+use App\Models\Role;
 use App\Models\User;
 
 use Filament\Forms;
@@ -40,12 +42,14 @@ class UsersRelationManager extends RelationManager
                 Tables\Actions\AttachAction::make()
                     ->recordSelectOptionsQuery(fn() => User::doesntHave('roles'))
                     ->recordSelectSearchColumns(['name', 'email', 'phone'])
+                    ->authorize(fn() => RoleHelper::canManageAssignments($this->getOwnerRecord()))
+                    ->hidden(fn() => ! RoleHelper::canManageAssignments($this->getOwnerRecord()))
                     ->label('Attach User To Role'),
             ])
             ->actions([
                 Tables\Actions\DetachAction::make()
-                    ->hidden(fn($record) => !\App\Helpers\RoleHelper::shouldHideAdminDetach($record))
-                    ->authorize(fn($record) => \App\Helpers\RoleHelper::shouldHideAdminDetach($record))
+                    ->hidden(fn(User $record) => ! RoleHelper::canDetachRoleFromUser($this->getOwnerRecord(), $record))
+                    ->authorize(fn(User $record) => RoleHelper::canDetachRoleFromUser($this->getOwnerRecord(), $record))
             ])
             ->bulkActions([
                 // Tables\Actions\DetachBulkAction::make()

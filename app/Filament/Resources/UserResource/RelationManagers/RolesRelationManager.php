@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\UserResource\RelationManagers;
 
+use App\Helpers\RoleHelper;
+use App\Models\Role;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -39,8 +41,8 @@ class RolesRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\DetachAction::make()
-                    ->hidden(fn($record) => !\App\Helpers\RoleHelper::shouldHideAdminDetach($record))
-                    ->authorize(fn($record) => \App\Helpers\RoleHelper::shouldHideAdminDetach($record))
+                    ->hidden(fn(Role $record) => ! RoleHelper::canDetachRoleFromUser($record, $this->getOwnerRecord()))
+                    ->authorize(fn(Role $record) => RoleHelper::canDetachRoleFromUser($record, $this->getOwnerRecord()))
             ])
             ->bulkActions([
                 // No bulk actions available

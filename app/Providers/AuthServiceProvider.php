@@ -20,17 +20,12 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        /**
-         * Super Admin Access Override
-         *
-         * This allows users with the "admin" role to bypass all
-         * permission and policy checks throughout the application.
-         *
-         * ⚠️ Caution: Use with care — any user with the "admin" role
-         * will have unrestricted access to all actions and resources.
-         */
-        Gate::before(function ($user, $ability) {
-            return $user->hasRole('admin') ? true : null;
+        Gate::before(function ($user) {
+            if (! config('filament-shield.super_admin.enabled')) {
+                return null;
+            }
+
+            return $user->hasRole(config('filament-shield.super_admin.name', 'admin')) ? true : null;
         });
     }
 }

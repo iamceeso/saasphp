@@ -66,7 +66,7 @@ class RolePolicy
 
     public function modifySettings(User $user): bool
     {
-        return $user->hasPermissionTo('modify_settings');
+        return $user->hasPermissionTo('modify_settings_role');
     }
 
     public function assignCore(User $user): bool
@@ -96,7 +96,7 @@ class RolePolicy
 
     public function viewNoRole(User $user): bool
     {
-        return $user->hasPermissionTo('view_no_role');
+        return $user->hasPermissionTo('view_no_role_role');
     }
 
     public function byPassMaintenanceRole(User $user): bool

@@ -15,12 +15,22 @@ class EditUser extends EditRecord
 
     public static function canAccess(array $parameters = []): bool
     {
-        return auth()->user()?->can('update', User::class);
+        $record = $parameters['record'] ?? null;
+
+        if (! $record) {
+            return false;
+        }
+
+        if (! $record instanceof User) {
+            $record = User::find($record);
+        }
+
+        return $record ? auth()->user()?->can('update', $record) : false;
     }
 
     protected function getHeaderActions(): array
     {
-        return [
+        $actions = [
             Actions\DeleteAction::make()
                 ->icon('heroicon-o-trash')
                 ->color('success')
@@ -46,12 +56,17 @@ class EditUser extends EditRecord
                         !$record->hasRole('admin')
                 ),
         ];
-    }
 
-    protected function getActions(): array
-    {
-        return auth()->user()?->can('impersonate')
-            ? [Impersonate::make()->record($record)]
-            : [];
+        $actions[] = Impersonate::make()
+            ->record($this->record)
+            ->visible(
+                fn() =>
+                auth()->user()?->can('impersonate', User::class) &&
+                    $this->record->hasRole('user') &&
+                    (!($this->record->phone && !$this->record->hasVerifiedPhone())) &&
+                    (!($this->record->email && !$this->record->hasVerifiedEmail()))
+            );
+
+        return $actions;
     }
 }
