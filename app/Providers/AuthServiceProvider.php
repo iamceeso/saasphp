@@ -4,28 +4,40 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use App\Models\CustomerSubscription;
+use App\Models\SubscriptionPlan;
+use App\Policies\SubscriptionPolicy;
+use App\Policies\PlanPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
-    /**
-     * Register services.
-     */
+    protected $policies = [
+        CustomerSubscription::class => SubscriptionPolicy::class,
+        SubscriptionPlan::class => PlanPolicy::class,
+    ];
+
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap services.
-     */
     public function boot(): void
     {
+        $this->registerPolicies();
+
         Gate::before(function ($user) {
-            if (! config('filament-shield.super_admin.enabled')) {
+            if (!config('filament-shield.super_admin.enabled')) {
                 return null;
             }
 
             return $user->hasRole(config('filament-shield.super_admin.name', 'admin')) ? true : null;
         });
+    }
+
+    private function registerPolicies(): void
+    {
+        foreach ($this->policies as $model => $policy) {
+            Gate::policy($model, $policy);
+        }
     }
 }

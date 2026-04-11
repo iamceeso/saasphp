@@ -25,6 +25,16 @@ export interface SharedData {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
+    modules: {
+        billing: {
+            enabled: boolean;
+            navigation: {
+                enabled: boolean;
+                show_pricing: boolean;
+                show_subscriptions: boolean;
+            };
+        };
+    };
     site: {
         name: string;
         url: string;

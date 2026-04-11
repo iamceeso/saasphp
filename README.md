@@ -1,207 +1,321 @@
-# SaaS PHP - Laravel React Starter Kit
+# SaaS PHP
 
-A comprehensive SaaS starter kit built with Laravel, React, and Inertia.js featuring robust authentication, user management, and modern development tooling.
+SaaS PHP is a Laravel starter kit for building subscription-based products with a modern customer app, a professional Filament admin panel, and a reusable billing foundation.
 
-## 🚀 Key Features
+It combines Laravel, React, Inertia, Filament, Tailwind, Fortify, and Stripe into a starter that is practical enough for real product work while still staying flexible for custom SaaS builds.
 
-**Authentication & Security**
-- Multi-factor authentication with email and phone verification
-- Social login (Google, Microsoft, Yahoo, GitHub, Twitter)
-- Magic link passwordless authentication
-- Two-factor authentication (2FA)
-- Role-based access control with Spatie Laravel Permission
-- User impersonation
+## Overview
 
-**User Management**
-- Filament-based admin panel with user impersonation
-- Complete user verification system
-- Profile management and settings
+This starter kit is built around two clear surfaces:
 
-**Modern Tech Stack**
-- **Backend**: Laravel with Fortify authentication
-- **Frontend**: React 19 with TypeScript
-- **Styling**: Tailwind CSS with Radix UI components
-- **Build Tools**: Vite with hot reload
-- **Testing**: Pest framework
-- **Icons**: Lucide icon library
+- The customer-facing app for onboarding, pricing, checkout, subscriptions, invoices, and account management
+- The Filament control panel for operating the business, managing plans, subscriptions, users, roles, permissions, and settings
 
-**Developer Experience**
-- TypeScript for type safety
-- ESLint & Prettier for code quality
-- Inertia.js for SPA-like experience without API complexity
-- Concurrent development processes
+The goal is to give you a strong SaaS foundation without forcing one rigid product shape.
 
-## 🔮 Future Plans
+## What You Get
 
-- **Marketplace**: Product management, shopping cart, wishlist, order tracking
-- **Payments**: Stripe, PayPal, and multi-gateway support
-- **Advanced Features**: Reviews, inventory management, shipping integration
+### Authentication and account security
 
-## 📋 Requirements
+- Email and phone-based authentication flows
+- Email verification and phone verification
+- Magic link login
+- Social login support for Google, Microsoft, Yahoo, GitHub, and Twitter
+- Two-factor authentication support
+- Profile and account settings
+
+### Authorization and user management
+
+- Role and permission system powered by Spatie Permission
+- Policy-based authorization across the app
+- User impersonation for support workflows
+- Filament admin resources for managing users and access
+
+### Billing and subscriptions
+
+- Stripe-powered subscriptions
+- Monthly and annual plan pricing
+- Trial period support
+- Plan upgrades and downgrades
+- Billing cycle changes
+- Cancel now or cancel at period end
+- Resume during grace period
+- Invoice history and PDF downloads
+- Stripe webhook handling with signature verification
+- Database-backed protection against duplicate active subscriptions
+
+### Starter-kit architecture
+
+- Reusable billing services and actions
+- Reusable billing UI module under `resources/js/modules/billing`
+- Config-based billing enable/disable support
+- Optional billing navigation registration
+- Clean route separation with `routes/billing.php`
+
+### Admin experience
+
+- Filament admin panel with custom branding and improved visual styling
+- Billing resources for plans and customer subscriptions
+- Site settings management
+- Operational access for roles, permissions, and user administration
+
+### Developer experience
+
+- Laravel 12
+- React 19 + TypeScript
+- Inertia.js
+- Tailwind CSS
+- Vite
+- Pest / PHPUnit testing
+- ESLint, Prettier, and TypeScript checks
+
+## Current Product Scope
+
+SaaS PHP is strongest today as a starter for:
+
+- Single-tenant SaaS products
+- Subscription products with Stripe billing
+- Internal admin + customer dashboard setups
+- Products that need authentication, permissions, settings, and account billing out of the box
+
+It is not yet a full multi-tenant platform with team billing, seat-based billing, or advanced revenue analytics. Those are natural next-phase extensions, but they are not the current core scope.
+
+## Tech Stack
+
+### Backend
 
 - PHP 8.2+
-- Node.js 18+
+- Laravel 12
+- Laravel Fortify
+- Filament 3
+- Spatie Permission
+- Stripe PHP SDK
+
+### Frontend
+
+- React 19
+- TypeScript
+- Inertia.js
+- Tailwind CSS
+- Radix UI primitives
+
+### Tooling
+
+- Vite
+- Pest / PHPUnit
+- ESLint
+- Prettier
+
+## Requirements
+
+- PHP 8.2 or newer
 - Composer
-- SQLite (default) or MySQL/PostgreSQL
+- Node.js 18 or newer
+- SQLite, MySQL, or PostgreSQL
 
-## 🛠️ Installation
+## Installation
 
-1. **Clone and Navigate**
 ```bash
-git clone https://github.com/chidiesobe/saasPHP saasphp
+git clone https://github.com/chidiesobe/saasPHP.git saasphp
 cd saasphp
 
-# Create SQLite database (default)
-touch database/database.sqlite
-```
-
-2. **Install Dependencies**
-```bash
 composer install
 npm install
-```
 
-3. **Environment Setup**
-```bash
 cp .env.example .env
 php artisan key:generate
-```
 
-4. **Database Setup**
-```bash
-# Run migrations and seed data
+touch database/database.sqlite
 php artisan migrate
 php artisan db:seed
-```
 
-5. **Build Assets**
-```bash
 npm run build
 ```
 
-## 🚀 Development
+## Development
 
-**Quick Start (Recommended)**
+### Recommended commands
+
 ```bash
 composer run new
 ```
-This single command handles migrations, seeding, and starts all development services.
+
+Runs migrations, seeds the database, and starts the local development services.
 
 ```bash
 composer run dev
 ```
-For everyday coding and testing (no migrations or seeding).
 
-**Individual Services**
-```bash
-php artisan serve    # Laravel server
-npm run dev         # Vite dev server
-php artisan queue:work  # Queue worker
-php artisan pail    # Log monitoring
-```
+Starts the normal local development services without reseeding.
 
-**Code Quality**
-```bash
-npm run format      # Format code
-npm run lint        # Lint code
-npm run types       # Type checking
-```
-
-## 🧪 Testing
+### Useful individual commands
 
 ```bash
-php artisan test    # Run all tests
-php artisan test --coverage  # With coverage
-php artisan test tests/Feature/Auth/AuthenticationTest.php  # Specific test
+php artisan serve
+npm run dev
+php artisan queue:listen --tries=1
+php artisan pail
 ```
 
-## 🔑 Default Users (First Install)
+## Billing Setup
 
-When you run `composer run new` for the first time, the system will automatically create the following default accounts:
+Billing is enabled through the application config and environment.
 
-| Email               | Password   | Role  |
-|---------------------|------------|-------|
+Key environment variables:
+
+```env
+BILLING_ENABLED=true
+BILLING_NAV_ENABLED=true
+BILLING_NAV_SHOW_PRICING=true
+BILLING_NAV_SHOW_SUBSCRIPTIONS=true
+
+STRIPE_PUBLIC_KEY=pk_test_xxx
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+```
+
+Seed sample billing plans:
+
+```bash
+php artisan db:seed --class=BillingSeeder
+```
+
+Customer-facing billing routes:
+
+- `/billing/pricing`
+- `/billing/checkout`
+- `/subscriptions`
+- `/subscriptions/{subscription}`
+- `/subscriptions/{subscription}/invoices`
+
+Webhook endpoint:
+
+- `POST /billing/webhooks/stripe`
+
+## Filament Admin Panel
+
+The admin panel is available at:
+
+- `/admin`
+
+Filament is intended for operating the product, not replacing the customer app. It is the right place for:
+
+- user management
+- roles and permissions
+- site settings
+- subscription plans
+- customer subscriptions
+- operational billing oversight
+
+The customer app is where pricing, checkout, subscriptions, and invoice UX live.
+
+## Default Seeded Users
+
+On a fresh seeded install, the project creates development accounts similar to:
+
+| Email | Password | Role |
+| --- | --- | --- |
 | `admin@saasphp.com` | `password` | Admin |
-| `user1@saasphp.com` | `password` | User  |
-| `user2@saasphp.com` | `password` | User  |
+| `user1@saasphp.com` | `password` | User |
+| `user2@saasphp.com` | `password` | User |
 
-> ⚠️ **Security Notice**  
-> These default accounts are for **development and testing only**.  
-> Before deploying to production, you should:
-> - Change the default passwords.  
-> - Update the admin email.  
-> - Remove or disable the sample user accounts if not needed.
+These accounts are for local development only. Change or remove them before production use.
 
+## Project Structure
 
-## 📁 Project Structure
-
-```
+```text
 app/
-├── Actions/Fortify/     # Authentication actions
-├── Filament/           # Admin panel resources
-├── Http/Controllers/   # Application controllers
-├── Models/            # Eloquent models
-└── Services/          # Business logic
+├── Actions/
+│   ├── Billing/
+│   └── Fortify/
+├── Filament/
+├── Http/
+├── Models/
+├── Policies/
+├── Providers/
+└── Services/
+    └── Billing/
 
 resources/
+├── css/
 ├── js/
-│   ├── components/    # React components
-│   ├── pages/        # Inertia.js pages
-│   └── layouts/      # Layout components
-└── views/            # Blade templates
+│   ├── components/
+│   ├── layouts/
+│   ├── modules/
+│   │   └── billing/
+│   └── pages/
+└── views/
 
 routes/
-├── web.php           # Web routes
-├── auth.php         # Authentication routes
-└── settings.php     # Settings routes
+├── auth.php
+├── billing.php
+├── settings.php
+└── web.php
 ```
 
-## ⚙️ Configuration
+## Testing
 
-**Key Environment Variables**
-```env
-APP_NAME="SaaS PHP"
-APP_URL=http://localhost
-DB_CONNECTION=sqlite
-```
-
-**Admin Panel**
-Access the Filament admin panel at `/admin` for user management, roles, permissions, and site settings.
-
-**SMS Integration**
-Configure SMS providers (Africa's Talking or Vonage) in the admin panel for phone verification.
-
-## 🚀 Production Deployment
+Run the full test suite:
 
 ```bash
-# Optimize for production
-composer install --no-dev --optimize-autoloader
-npm ci && npm run build
+php artisan test
+```
 
-# Cache configuration
+Run focused billing tests:
+
+```bash
+php artisan test tests/Feature/BillingTest.php tests/Unit/Models/CustomerSubscriptionTest.php
+```
+
+Frontend quality checks:
+
+```bash
+npm run lint
+npm run types
+npm run build
+```
+
+## Deployment Notes
+
+Before production deployment:
+
+- configure real Stripe keys and webhook secret
+- disable or replace seeded demo users
+- review role and permission assignments
+- set production mail, queue, cache, and database drivers
+- run migrations and build production assets
+
+Example production flow:
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci
+npm run build
+php artisan migrate --force
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
-
-# Run migrations
-php artisan migrate --force
 ```
 
-Ensure production environment variables are configured for database, social login providers, and SMS services.
+## Status
 
-## 🤝 Contributing
+The current starter includes a production-minded Phase 1 SaaS foundation:
+
+- hardened authorization model
+- Stripe subscription lifecycle support
+- plans and pricing data model
+- billing webhooks
+- pricing and checkout flow
+- invoice access
+- reusable billing module structure
+
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Run tests and linting
-4. Submit a pull request
+2. Create a branch
+3. Run tests and checks
+4. Open a pull request
 
+## Support
 
-## 🆘 Support
-
-- Check documentation and existing issues
-- Create new issues for bugs or feature requests
-
----
-
-Built with ❤️ using Laravel, React, and modern web technologies
+Use the repository issues for bug reports, regressions, and feature requests.

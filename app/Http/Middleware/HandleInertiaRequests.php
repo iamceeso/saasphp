@@ -46,6 +46,16 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'modules' => [
+                'billing' => [
+                    'enabled' => (bool) config('billing.enabled'),
+                    'navigation' => [
+                        'enabled' => (bool) config('billing.navigation.enabled'),
+                        'show_pricing' => (bool) config('billing.navigation.show_pricing'),
+                        'show_subscriptions' => (bool) config('billing.navigation.show_subscriptions'),
+                    ],
+                ],
+            ],
             'status' => fn() => session('status'),
         ];
     }
