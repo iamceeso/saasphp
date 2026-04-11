@@ -6,6 +6,7 @@ use App\Models\CustomerSubscription;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\Billing\SubscriptionService;
+use Illuminate\Support\Facades\DB;
 
 class SubscribeToPlan
 {
@@ -19,20 +20,27 @@ class SubscribeToPlan
         string $interval,
         ?string $paymentMethod = null
     ): CustomerSubscription {
-        $currentSubscription = $this->subscriptionService->normalizeCurrentSubscriptions($user);
+        return DB::transaction(function () use ($user, $plan, $interval, $paymentMethod) {
+            $lockedUser = User::query()
+                ->whereKey($user->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($currentSubscription instanceof CustomerSubscription) {
-            if ((int) $currentSubscription->plan_id === (int) $plan->id && $currentSubscription->interval === $interval) {
-                return $currentSubscription->refresh();
+            $currentSubscription = $this->subscriptionService->normalizeCurrentSubscriptions($lockedUser);
+
+            if ($currentSubscription instanceof CustomerSubscription) {
+                if ((int) $currentSubscription->plan_id === (int) $plan->id && $currentSubscription->interval === $interval) {
+                    return $currentSubscription->refresh();
+                }
+
+                if ((int) $currentSubscription->plan_id === (int) $plan->id) {
+                    return $this->subscriptionService->changeBillingCycle($currentSubscription, $interval);
+                }
+
+                return $this->subscriptionService->swapPlan($currentSubscription, $plan, $interval);
             }
 
-            if ((int) $currentSubscription->plan_id === (int) $plan->id) {
-                return $this->subscriptionService->changeBillingCycle($currentSubscription, $interval);
-            }
-
-            return $this->subscriptionService->swapPlan($currentSubscription, $plan, $interval);
-        }
-
-        return $this->subscriptionService->subscribe($user, $plan, $interval, $paymentMethod);
+            return $this->subscriptionService->subscribe($lockedUser, $plan, $interval, $paymentMethod);
+        }, 3);
     }
 }

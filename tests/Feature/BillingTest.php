@@ -42,6 +42,16 @@ class BillingTest extends TestCase
         $this->assertEqual(200, $response->status());
     }
 
+    public function test_stripe_webhook_route_is_exempt_from_csrf_protection()
+    {
+        config()->set('services.stripe.webhook_secret', 'whsec_test');
+
+        $response = $this->post(route('webhooks.stripe'), []);
+
+        $this->assertNotEquals(419, $response->status());
+        $this->assertEqual(400, $response->status());
+    }
+
     public function test_plan_with_prices_structure()
     {
         $plan = SubscriptionPlan::create([

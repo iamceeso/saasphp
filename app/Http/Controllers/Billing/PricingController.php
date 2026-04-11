@@ -99,6 +99,7 @@ class PricingController extends Controller
                 $subscription = CustomerSubscription::create([
                     'user_id' => $user->id,
                     'plan_id' => $plan->id,
+                    'current_subscription_key' => $this->subscriptionService->currentSubscriptionKeyFor($user->id),
                     'stripe_subscription_id' => 'sub_local_' . Str::uuid(),
                     'stripe_customer_id' => $user->stripe_id ?: 'cus_local_' . $user->id,
                     'status' => $trialEndsAt ? 'trialing' : 'active',

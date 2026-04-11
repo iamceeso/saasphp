@@ -13,6 +13,7 @@ class CustomerSubscription extends Model
     protected $fillable = [
         'user_id',
         'plan_id',
+        'current_subscription_key',
         'stripe_subscription_id',
         'stripe_customer_id',
         'status',
@@ -34,6 +35,15 @@ class CustomerSubscription extends Model
         'canceled_at' => 'datetime',
         'ended_at' => 'datetime',
         'metadata' => 'json',
+    ];
+
+    public const CURRENT_SLOT_STATUSES = [
+        'trialing',
+        'active',
+        'past_due',
+        'unpaid',
+        'incomplete',
+        'incomplete_expired',
     ];
 
     public function user(): BelongsTo
@@ -68,7 +78,7 @@ class CustomerSubscription extends Model
 
     public function isActive(): bool
     {
-        return in_array($this->status, ['trialing', 'active']);
+        return in_array($this->status, ['trialing', 'active']) || $this->onGracePeriod();
     }
 
     public function isTrialing(): bool
@@ -78,7 +88,7 @@ class CustomerSubscription extends Model
 
     public function isCanceled(): bool
     {
-        return $this->status === 'canceled';
+        return $this->status === 'canceled' || $this->ended_at !== null;
     }
 
     public function isPastDue(): bool
@@ -95,6 +105,11 @@ class CustomerSubscription extends Model
         return Carbon::now()->lt($this->current_period_end);
     }
 
+    public function shouldOccupyCurrentSlot(): bool
+    {
+        return in_array($this->status, self::CURRENT_SLOT_STATUSES, true) && $this->ended_at === null;
+    }
+
     public function getFormattedAmount(): string
     {
         $currency = $this->metadata['currency'] ?? 'USD';
@@ -103,7 +118,7 @@ class CustomerSubscription extends Model
 
     public function getNextBillingDate(): ?Carbon
     {
-        if (!$this->isActive()) {
+        if (!$this->current_period_end || $this->ended_at) {
             return null;
         }
 

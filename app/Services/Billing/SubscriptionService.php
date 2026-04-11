@@ -7,6 +7,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\CustomerSubscription;
 use App\Models\PlanPrice;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Stripe\StripeClient;
 use Stripe\Exception\ApiErrorException;
@@ -87,7 +88,26 @@ class SubscriptionService
 
         $subscription = $this->getStripeClient()->subscriptions->create($payload);
 
-        return $this->syncSubscriptionToDB($user, $plan, $subscription, $interval);
+        try {
+            return DB::transaction(
+                fn () => $this->syncSubscriptionToDB($user, $plan, $subscription, $interval)
+            );
+        } catch (\Throwable $e) {
+            try {
+                $this->getStripeClient()->subscriptions->cancel($subscription->id, [
+                    'invoice_now' => false,
+                    'prorate' => false,
+                ]);
+            } catch (\Throwable $rollbackException) {
+                Log::error('Failed to rollback Stripe subscription after local persistence error', [
+                    'user_id' => $user->id,
+                    'stripe_subscription_id' => $subscription->id,
+                    'error' => $rollbackException->getMessage(),
+                ]);
+            }
+
+            throw $e;
+        }
     }
 
     public function swapPlan(
@@ -104,13 +124,20 @@ class SubscriptionService
         $provider = data_get($subscription->metadata, 'provider');
 
         if ($provider === 'local') {
-            $subscription->update([
-                'plan_id' => $newPlan->id,
-                'interval' => $interval,
-                'amount' => $newPrice->amount,
-            ]);
+            return DB::transaction(function () use ($subscription, $newPlan, $interval, $newPrice) {
+                $subscription->update([
+                    'plan_id' => $newPlan->id,
+                    'interval' => $interval,
+                    'amount' => $newPrice->amount,
+                    'current_subscription_key' => $this->resolveCurrentSubscriptionKey(
+                        $subscription->user_id,
+                        $subscription->status,
+                        $subscription->ended_at,
+                    ),
+                ]);
 
-            return $subscription->refresh();
+                return $subscription->refresh();
+            });
         }
 
         $stripePriceId = $this->getOrCreateStripePrice($newPlan, $newPrice);
@@ -137,30 +164,50 @@ class SubscriptionService
             ]
         );
 
-        $subscription->update(array_merge(
-            ['plan_id' => $newPlan->id],
-            $this->mapStripeSubscription($updatedStripeSubscription, $newPlan, $interval)
-        ));
+        return DB::transaction(function () use ($subscription, $newPlan, $interval, $updatedStripeSubscription) {
+            $subscription->update(array_merge(
+                ['plan_id' => $newPlan->id],
+                $this->mapStripeSubscription($updatedStripeSubscription, $newPlan, $interval)
+            ));
 
-        return $subscription->refresh();
+            return $subscription->refresh();
+        });
     }
 
     public function cancel(CustomerSubscription $subscription, bool $immediately = false): void
     {
         if ($immediately) {
-            $this->getStripeClient()->subscriptions->cancel($subscription->stripe_subscription_id, [
+            $stripeSubscription = $this->getStripeClient()->subscriptions->cancel($subscription->stripe_subscription_id, [
                 'invoice_now' => false,
             ]);
-        } else {
-            $this->getStripeClient()->subscriptions->update($subscription->stripe_subscription_id, [
-                'cancel_at_period_end' => true,
-            ]);
+
+            DB::transaction(function () use ($subscription, $stripeSubscription) {
+                $subscription->update([
+                    'current_subscription_key' => null,
+                    'status' => 'canceled',
+                    'canceled_at' => now(),
+                    'ended_at' => $stripeSubscription->ended_at
+                        ? Carbon::createFromTimestamp((int) $stripeSubscription->ended_at)
+                        : now(),
+                ]);
+            });
+
+            return;
         }
 
-        $subscription->update([
-            'status' => 'canceled',
-            'canceled_at' => now(),
+        $this->getStripeClient()->subscriptions->update($subscription->stripe_subscription_id, [
+            'cancel_at_period_end' => true,
         ]);
+
+        DB::transaction(function () use ($subscription) {
+            $subscription->update([
+                'canceled_at' => now(),
+                'current_subscription_key' => $this->currentSubscriptionKeyFor($subscription->user_id),
+                'metadata' => array_merge($subscription->metadata ?? [], [
+                    'cancel_at_period_end' => true,
+                ]),
+            ]);
+        });
     }
 
     public function resume(CustomerSubscription $subscription): CustomerSubscription
@@ -169,12 +216,18 @@ class SubscriptionService
             'cancel_at_period_end' => false,
         ]);
 
-        $subscription->update([
-            'status' => 'active',
-            'canceled_at' => null,
-        ]);
+        return DB::transaction(function () use ($subscription) {
+            $subscription->update([
+                'current_subscription_key' => $this->currentSubscriptionKeyFor($subscription->user_id),
+                'status' => 'active',
+                'canceled_at' => null,
+                'metadata' => array_merge($subscription->metadata ?? [], [
+                    'cancel_at_period_end' => false,
+                ]),
+            ]);
 
-        return $subscription->refresh();
+            return $subscription->refresh();
+        });
     }
 
     public function changeBillingCycle(
@@ -244,7 +297,8 @@ class SubscriptionService
     {
         $currentSubscriptions = $user->subscriptions()
             ->whereIn('status', ['active', 'trialing'])
-            ->latest()
+            ->orderByDesc('created_at')
+            ->lockForUpdate()
             ->get();
 
         $current = $currentSubscriptions->first();
@@ -275,13 +329,22 @@ class SubscriptionService
             }
 
             $duplicate->update([
+                'current_subscription_key' => null,
                 'status' => 'canceled',
                 'canceled_at' => now(),
                 'ended_at' => now(),
+                'metadata' => array_merge($duplicate->metadata ?? [], [
+                    'normalized_duplicate' => true,
+                ]),
             ]);
         }
 
         return $current->refresh();
+    }
+
+    public function currentSubscriptionKeyFor(int $userId): string
+    {
+        return "user:{$userId}";
     }
 
     private function syncSubscriptionToDB(
@@ -296,15 +359,32 @@ class SubscriptionService
         )->first();
 
         if ($existingSubscription) {
-            $existingSubscription->update($this->mapStripeSubscription($stripeSubscription, $plan, $interval));
+            $existingSubscription->update(array_merge(
+                [
+                    'current_subscription_key' => $this->resolveCurrentSubscriptionKey(
+                        $user->id,
+                        $stripeSubscription->status,
+                        data_get($stripeSubscription, 'ended_at'),
+                    ),
+                ],
+                $this->mapStripeSubscription($stripeSubscription, $plan, $interval)
+            ));
             return $existingSubscription;
         }
 
-        return CustomerSubscription::create(
+        return CustomerSubscription::updateOrCreate(
+            [
+                'stripe_subscription_id' => $stripeSubscription->id,
+            ],
             array_merge(
                 [
                     'user_id' => $user->id,
                     'plan_id' => $plan->id,
+                    'current_subscription_key' => $this->resolveCurrentSubscriptionKey(
+                        $user->id,
+                        $stripeSubscription->status,
+                        data_get($stripeSubscription, 'ended_at'),
+                    ),
                 ],
                 $this->mapStripeSubscription($stripeSubscription, $plan, $interval)
             )
@@ -331,8 +411,18 @@ class SubscriptionService
             'metadata' => [
                 'provider' => 'stripe',
                 'currency' => config('services.stripe.currency', 'USD'),
+                'cancel_at_period_end' => (bool) ($stripeSubscription->cancel_at_period_end ?? false),
             ],
         ];
+    }
+
+    public function resolveCurrentSubscriptionKey(int $userId, string $status, mixed $endedAt = null): ?string
+    {
+        if (in_array($status, CustomerSubscription::CURRENT_SLOT_STATUSES, true) && blank($endedAt)) {
+            return $this->currentSubscriptionKeyFor($userId);
+        }
+
+        return null;
     }
 
     private function getOrCreateStripePrice(SubscriptionPlan $plan, PlanPrice $price): string

@@ -98,12 +98,12 @@ class PlanService
             'currency' => config('services.stripe.currency', 'USD'),
             'type' => 'recurring',
             'recurring' => [
-                'interval' => $data['interval'],
+                'interval' => $data['interval'] === 'annually' ? 'year' : 'month',
                 'interval_count' => 1,
-                'trial_period_days' => $data['trial_days'] ?? 0,
             ],
             'metadata' => [
                 'interval' => $data['interval'],
+                'trial_days' => (string) ($data['trial_days'] ?? 0),
             ],
         ]);
 

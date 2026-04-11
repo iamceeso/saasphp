@@ -5,7 +5,8 @@ namespace App\Services\Billing;
 use App\Models\WebhookLog;
 use App\Models\BillingEvent;
 use App\Models\CustomerSubscription;
-use App\Models\SubscriptionPlan;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Stripe\Event;
 use Stripe\Webhook;
 use Exception;
@@ -27,12 +28,18 @@ class WebhookService
             throw new Exception("Webhook signature verification failed: {$e->getMessage()}");
         }
 
-        $log = WebhookLog::create([
-            'stripe_event_id' => $event->id,
-            'event_type' => $event->type,
-            'payload' => json_encode($event->data),
-            'processed' => false,
-        ]);
+        $log = WebhookLog::firstOrCreate(
+            ['stripe_event_id' => $event->id],
+            [
+                'event_type' => $event->type,
+                'payload' => json_encode($event->data),
+                'processed' => false,
+            ]
+        );
+
+        if ($log->processed) {
+            return $log;
+        }
 
         try {
             $this->processEvent($event);
@@ -77,11 +84,19 @@ class WebhookService
             $stripeSubscription->id
         )->first();
 
-        if ($subscription) {
+        if (! $subscription) {
+            return;
+        }
+
+        DB::transaction(function () use ($subscription, $stripeSubscription) {
             $subscription->update([
+                'current_subscription_key' => null,
                 'status' => 'canceled',
-                'canceled_at' => now(),
-                'ended_at' => now(),
+                'canceled_at' => $this->timestampToCarbon($stripeSubscription->canceled_at) ?? now(),
+                'ended_at' => $this->timestampToCarbon($stripeSubscription->ended_at) ?? now(),
+                'metadata' => array_merge($subscription->metadata ?? [], [
+                    'cancel_at_period_end' => false,
+                ]),
             ]);
 
             BillingEvent::create([
@@ -91,7 +106,7 @@ class WebhookService
                 'payload' => json_encode($stripeSubscription),
                 'processed_at' => now(),
             ]);
-        }
+        });
     }
 
     private function handlePaymentSucceeded(Event $event): void
@@ -104,8 +119,17 @@ class WebhookService
                 $invoice->subscription
             )->first();
 
-            if ($subscription) {
-                $subscription->update(['status' => 'active']);
+            if (! $subscription) {
+                return;
+            }
+
+            DB::transaction(function () use ($subscription, $invoice) {
+                $subscription->update([
+                    'status' => 'active',
+                    'metadata' => array_merge($subscription->metadata ?? [], [
+                        'cancel_at_period_end' => false,
+                    ]),
+                ]);
 
                 BillingEvent::create([
                     'subscription_id' => $subscription->id,
@@ -114,7 +138,7 @@ class WebhookService
                     'payload' => json_encode($invoice),
                     'processed_at' => now(),
                 ]);
-            }
+            });
         }
     }
 
@@ -128,7 +152,11 @@ class WebhookService
                 $invoice->subscription
             )->first();
 
-            if ($subscription) {
+            if (! $subscription) {
+                return;
+            }
+
+            DB::transaction(function () use ($subscription, $invoice) {
                 $subscription->update(['status' => 'past_due']);
 
                 BillingEvent::create([
@@ -138,7 +166,7 @@ class WebhookService
                     'payload' => json_encode($invoice),
                     'processed_at' => now(),
                 ]);
-            }
+            });
         }
     }
 
@@ -150,15 +178,17 @@ class WebhookService
             $stripeSubscription->id
         )->first();
 
-        if ($subscription) {
-            BillingEvent::create([
-                'subscription_id' => $subscription->id,
-                'user_id' => $subscription->user_id,
-                'event_type' => 'trial.will_end',
-                'payload' => json_encode($stripeSubscription),
-                'processed_at' => now(),
-            ]);
+        if (! $subscription) {
+            return;
         }
+
+        BillingEvent::create([
+            'subscription_id' => $subscription->id,
+            'user_id' => $subscription->user_id,
+            'event_type' => 'trial.will_end',
+            'payload' => json_encode($stripeSubscription),
+            'processed_at' => now(),
+        ]);
     }
 
     private function syncSubscriptionState($stripeSubscription): void
@@ -178,10 +208,20 @@ class WebhookService
         }
 
         $subscription->update([
+            'current_subscription_key' => $this->resolveCurrentSubscriptionKey(
+                $subscription->user_id,
+                $stripeSubscription->status,
+                $stripeSubscription->ended_at,
+            ),
             'status' => $stripeSubscription->status,
-            'current_period_start' => now()->setTimestampMs($stripeSubscription->current_period_start * 1000),
-            'current_period_end' => now()->setTimestampMs($stripeSubscription->current_period_end * 1000),
-            'trial_ends_at' => $stripeSubscription->trial_end ? now()->setTimestampMs($stripeSubscription->trial_end * 1000) : null,
+            'current_period_start' => $this->timestampToCarbon($stripeSubscription->current_period_start),
+            'current_period_end' => $this->timestampToCarbon($stripeSubscription->current_period_end),
+            'trial_ends_at' => $this->timestampToCarbon($stripeSubscription->trial_end),
+            'canceled_at' => $this->timestampToCarbon($stripeSubscription->canceled_at),
+            'ended_at' => $this->timestampToCarbon($stripeSubscription->ended_at),
+            'metadata' => array_merge($subscription->metadata ?? [], [
+                'cancel_at_period_end' => (bool) ($stripeSubscription->cancel_at_period_end ?? false),
+            ]),
         ]);
     }
 
@@ -204,5 +244,23 @@ class WebhookService
                 $log->recordAttempt($e->getMessage());
             }
         }
+    }
+
+    private function timestampToCarbon(null|int|string $timestamp): ?Carbon
+    {
+        if (blank($timestamp)) {
+            return null;
+        }
+
+        return Carbon::createFromTimestamp((int) $timestamp);
+    }
+
+    private function resolveCurrentSubscriptionKey(int $userId, string $status, mixed $endedAt = null): ?string
+    {
+        if (in_array($status, CustomerSubscription::CURRENT_SLOT_STATUSES, true) && blank($endedAt)) {
+            return "user:{$userId}";
+        }
+
+        return null;
     }
 }
