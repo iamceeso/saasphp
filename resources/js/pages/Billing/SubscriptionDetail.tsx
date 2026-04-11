@@ -220,11 +220,11 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                 </div>
 
                                 <div className="border-t pt-4 flex gap-3">
-                                    <Link href={route('subscriptions.invoices', subscription.id)}>
-                                        <Button variant="outline">
+                                    <Button asChild variant="outline">
+                                        <Link href={route('subscriptions.invoices', subscription.id)}>
                                             View Invoices
-                                        </Button>
-                                    </Link>
+                                        </Link>
+                                    </Button>
                                     {(subscription.status === 'active' || subscription.status === 'trialing') && !subscription.canceled_at && (
                                         <Button
                                             variant="destructive"

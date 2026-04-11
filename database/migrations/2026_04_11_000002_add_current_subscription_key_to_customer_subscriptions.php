@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\CustomerSubscription;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +22,14 @@ return new class extends Migration
         $occupiedUsers = [];
 
         foreach ($rows as $row) {
-            $shouldOccupy = in_array($row->status, CustomerSubscription::CURRENT_SLOT_STATUSES, true)
+            $shouldOccupy = in_array($row->status, [
+                'trialing',
+                'active',
+                'past_due',
+                'unpaid',
+                'incomplete',
+                'incomplete_expired',
+            ], true)
                 && $row->ended_at === null
                 && ! isset($occupiedUsers[$row->user_id]);
 

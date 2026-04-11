@@ -35,7 +35,7 @@ class SubscriptionService
         SubscriptionPlan $plan,
         string $interval = 'monthly',
         ?string $paymentMethod = null
-    ): CustomerSubscription {
+    ): array {
         $price = $plan->prices()
             ->where('interval', $interval)
             ->where('is_active', true)
@@ -89,9 +89,22 @@ class SubscriptionService
         $subscription = $this->getStripeClient()->subscriptions->create($payload);
 
         try {
-            return DB::transaction(
+            $localSubscription = DB::transaction(
                 fn () => $this->syncSubscriptionToDB($user, $plan, $subscription, $interval)
             );
+
+            $paymentIntent = data_get($subscription, 'latest_invoice.payment_intent');
+
+            return [
+                'subscription' => $localSubscription,
+                'payment_intent_client_secret' => data_get($paymentIntent, 'client_secret'),
+                'payment_intent_status' => data_get($paymentIntent, 'status'),
+                'requires_action' => in_array(
+                    data_get($paymentIntent, 'status'),
+                    ['requires_action', 'requires_confirmation'],
+                    true
+                ),
+            ];
         } catch (\Throwable $e) {
             try {
                 $this->getStripeClient()->subscriptions->cancel($subscription->id, [
@@ -296,7 +309,8 @@ class SubscriptionService
     public function normalizeCurrentSubscriptions(User $user): ?CustomerSubscription
     {
         $currentSubscriptions = $user->subscriptions()
-            ->whereIn('status', ['active', 'trialing'])
+            ->whereIn('status', CustomerSubscription::CURRENT_SLOT_STATUSES)
+            ->whereNull('ended_at')
             ->orderByDesc('created_at')
             ->lockForUpdate()
             ->get();

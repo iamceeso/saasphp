@@ -23,7 +23,6 @@ interface Props {
     plan: Plan;
     price: Price;
     interval: string;
-    clientSecret: string | null;
     publishableKey: string;
 }
 
@@ -112,6 +111,25 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
             const data = await response.json();
 
             if (data.success) {
+                if (data.clientSecret) {
+                    const confirmation = await stripe.confirmCardPayment(data.clientSecret);
+
+                    if (confirmation.error) {
+                        setError(confirmation.error.message || 'Payment confirmation failed.');
+                        return;
+                    }
+
+                    const paymentIntentStatus = confirmation.paymentIntent?.status;
+
+                    if (
+                        paymentIntentStatus &&
+                        !['succeeded', 'processing', 'requires_capture'].includes(paymentIntentStatus)
+                    ) {
+                        setError(`Payment requires attention. Current status: ${paymentIntentStatus}.`);
+                        return;
+                    }
+                }
+
                 window.location.href = data.redirect;
             } else {
                 const backendError =

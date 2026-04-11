@@ -17,6 +17,7 @@ class WebhookController extends Controller
     {
         $payload = $request->getContent();
         $signature = $request->header('Stripe-Signature');
+        $event = json_decode($payload, true);
 
         if (!$signature) {
             return response()->json(['error' => 'Missing signature'], 400);
@@ -28,7 +29,8 @@ class WebhookController extends Controller
         } catch (\Exception $e) {
             Log::error('Stripe webhook error', [
                 'error' => $e->getMessage(),
-                'payload' => $payload,
+                'event_id' => data_get($event, 'id'),
+                'event_type' => data_get($event, 'type'),
             ]);
 
             return response()->json(['error' => $e->getMessage()], 422);

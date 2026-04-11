@@ -8,11 +8,15 @@ use App\Models\CustomerSubscription;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Stripe\Event;
+use Stripe\Exception\SignatureVerificationException;
+use Stripe\StripeClient;
 use Stripe\Webhook;
 use Exception;
 
 class WebhookService
 {
+    private ?StripeClient $stripe = null;
+
     public function handleWebhook(string $payload, string $signature): WebhookLog
     {
         $secret = config('services.stripe.webhook_secret');
@@ -24,15 +28,21 @@ class WebhookService
 
         try {
             $event = Webhook::constructEvent($payload, $signature, $secret);
-        } catch (Exception $e) {
+        } catch (SignatureVerificationException | Exception $e) {
             throw new Exception("Webhook signature verification failed: {$e->getMessage()}");
+        }
+
+        $decodedPayload = json_decode($payload, true);
+
+        if (! is_array($decodedPayload)) {
+            throw new Exception('Webhook payload could not be decoded.');
         }
 
         $log = WebhookLog::firstOrCreate(
             ['stripe_event_id' => $event->id],
             [
                 'event_type' => $event->type,
-                'payload' => json_encode($event->data),
+                'payload' => $decodedPayload,
                 'processed' => false,
             ]
         );
@@ -235,8 +245,13 @@ class WebhookService
 
         foreach ($failedLogs as $log) {
             try {
-                $event = (object) json_decode($log->payload, true);
-                $event->type = $log->event_type;
+                $payload = $log->payload;
+
+                if (! is_array($payload) || ! isset($payload['id'], $payload['type'], $payload['data'])) {
+                    $payload = $this->getStripeClient()->events->retrieve($log->stripe_event_id)->toArray();
+                }
+
+                $event = Event::constructFrom($payload);
 
                 $this->processEvent($event);
                 $log->markAsProcessed();
@@ -262,5 +277,20 @@ class WebhookService
         }
 
         return null;
+    }
+
+    private function getStripeClient(): StripeClient
+    {
+        if ($this->stripe === null) {
+            $secret = config('services.stripe.secret');
+
+            if (! $secret) {
+                throw new \InvalidArgumentException('Stripe secret key is not configured.');
+            }
+
+            $this->stripe = new StripeClient($secret);
+        }
+
+        return $this->stripe;
     }
 }

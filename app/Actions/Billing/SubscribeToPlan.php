@@ -19,7 +19,7 @@ class SubscribeToPlan
         SubscriptionPlan $plan,
         string $interval,
         ?string $paymentMethod = null
-    ): CustomerSubscription {
+    ): array {
         return DB::transaction(function () use ($user, $plan, $interval, $paymentMethod) {
             $lockedUser = User::query()
                 ->whereKey($user->getKey())
@@ -30,14 +30,29 @@ class SubscribeToPlan
 
             if ($currentSubscription instanceof CustomerSubscription) {
                 if ((int) $currentSubscription->plan_id === (int) $plan->id && $currentSubscription->interval === $interval) {
-                    return $currentSubscription->refresh();
+                    return [
+                        'subscription' => $currentSubscription->refresh(),
+                        'payment_intent_client_secret' => null,
+                        'payment_intent_status' => null,
+                        'requires_action' => false,
+                    ];
                 }
 
                 if ((int) $currentSubscription->plan_id === (int) $plan->id) {
-                    return $this->subscriptionService->changeBillingCycle($currentSubscription, $interval);
+                    return [
+                        'subscription' => $this->subscriptionService->changeBillingCycle($currentSubscription, $interval),
+                        'payment_intent_client_secret' => null,
+                        'payment_intent_status' => null,
+                        'requires_action' => false,
+                    ];
                 }
 
-                return $this->subscriptionService->swapPlan($currentSubscription, $plan, $interval);
+                return [
+                    'subscription' => $this->subscriptionService->swapPlan($currentSubscription, $plan, $interval),
+                    'payment_intent_client_secret' => null,
+                    'payment_intent_status' => null,
+                    'requires_action' => false,
+                ];
             }
 
             return $this->subscriptionService->subscribe($lockedUser, $plan, $interval, $paymentMethod);

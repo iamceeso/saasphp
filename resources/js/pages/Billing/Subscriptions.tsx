@@ -58,9 +58,9 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                             <p className="text-gray-600 mb-4">
                                 Get started by choosing a plan that fits your needs.
                             </p>
-                            <Link href={route('pricing.show')}>
-                                <Button>Browse Plans</Button>
-                            </Link>
+                            <Button asChild>
+                                <Link href={route('pricing.show')}>Browse Plans</Link>
+                            </Button>
                         </CardContent>
                     </Card>
                 ) : (
@@ -133,22 +133,22 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                                     </div>
 
                                     <div className="flex gap-3 pt-4 border-t">
-                                        <Link href={route('subscriptions.show', subscription.id)}>
-                                            <Button variant="outline">
+                                        <Button asChild variant="outline">
+                                            <Link href={route('subscriptions.show', subscription.id)}>
                                                 View Details
-                                            </Button>
-                                        </Link>
-                                        <Link href={route('subscriptions.invoices', subscription.id)}>
-                                            <Button variant="outline">
-                                                Invoices
-                                            </Button>
-                                        </Link>
-                                        {(subscription.status === 'active' || subscription.status === 'trialing') && !subscription.canceled_at && (
-                                            <Link href={route('subscriptions.cancel', subscription.id)} method="post">
-                                                <Button variant="destructive">
-                                                    Cancel
-                                                </Button>
                                             </Link>
+                                        </Button>
+                                        <Button asChild variant="outline">
+                                            <Link href={route('subscriptions.invoices', subscription.id)}>
+                                                Invoices
+                                            </Link>
+                                        </Button>
+                                        {(subscription.status === 'active' || subscription.status === 'trialing') && !subscription.canceled_at && (
+                                            <Button asChild variant="destructive">
+                                                <Link href={route('subscriptions.cancel', subscription.id)} method="post">
+                                                    Cancel
+                                                </Link>
+                                            </Button>
                                         )}
                                     </div>
                                 </CardContent>

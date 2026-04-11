@@ -95,8 +95,7 @@ class PlanService
         $stripePrice = $this->getStripeClient()->prices->create([
             'product' => $plan->stripe_product_id,
             'unit_amount' => $data['amount'],
-            'currency' => config('services.stripe.currency', 'USD'),
-            'type' => 'recurring',
+            'currency' => strtolower((string) config('services.stripe.currency', 'USD')),
             'recurring' => [
                 'interval' => $data['interval'] === 'annually' ? 'year' : 'month',
                 'interval_count' => 1,
