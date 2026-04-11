@@ -20,6 +20,7 @@ interface Subscription {
     current_period_end: string;
     trial_ends_at: string | null;
     canceled_at: string | null;
+    ended_at?: string | null;
     plan: {
         name: string;
         description: string;
@@ -111,6 +112,16 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                                                 </p>
                                             </div>
                                         )}
+                                        {subscription.canceled_at && (
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-600 mb-1">
+                                                    Canceled At
+                                                </p>
+                                                <p className="text-sm text-red-600 font-medium">
+                                                    {formatBillingDate(subscription.canceled_at)}
+                                                </p>
+                                            </div>
+                                        )}
                                         <div>
                                             <p className="text-sm font-medium text-gray-600 mb-1">
                                                 Subscription ID
@@ -132,7 +143,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                                                 Invoices
                                             </Button>
                                         </Link>
-                                        {subscription.status === 'active' && !subscription.canceled_at && (
+                                        {(subscription.status === 'active' || subscription.status === 'trialing') && !subscription.canceled_at && (
                                             <Link href={route('subscriptions.cancel', subscription.id)} method="post">
                                                 <Button variant="destructive">
                                                     Cancel

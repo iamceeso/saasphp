@@ -2,11 +2,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/app-layout';
-import { BillingNav } from '@/modules/billing/components/BillingNav';
 import { BillingPageHeader } from '@/modules/billing/components/BillingPageHeader';
 import { PlanFeatureList } from '@/modules/billing/components/PlanFeatureList';
 import { formatBillingPrice } from '@/modules/billing/lib/format';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import React from 'react';
 
@@ -51,19 +50,13 @@ interface Props {
     userSubscription: Subscription | null;
 }
 
-interface PricingPageProps extends Props {
-    auth?: {
-        user?: { id: number } | null;
-    };
-}
-
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
     { title: 'Pricing', href: '/billing/pricing' },
 ];
 
 export default function PricingPage({ plans, userSubscription }: Props) {
-    const { auth } = usePage<PricingPageProps>().props;
+    const { auth } = usePage<SharedData>().props;
     const isAuthenticated = Boolean(auth?.user);
     const [billingInterval, setBillingInterval] = React.useState<'monthly' | 'annually'>('monthly');
 
@@ -97,7 +90,7 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                         </>
                     )}
 
-                    {isAuthenticated && <div className="mt-4"><BillingNav /></div>}
+                    
 
                     <div className={`mt-6 inline-flex items-center rounded-xl border border-border bg-background/80 p-1 ${isAuthenticated ? '' : ''}`}>
                         <span className={`text-sm font-medium ${billingInterval === 'monthly' ? 'text-gray-900' : 'text-gray-600'}`}>

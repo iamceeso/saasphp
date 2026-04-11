@@ -27,7 +27,7 @@ class PricingController extends Controller
 
         $userSubscription = null;
         if (auth()->check()) {
-            $userSubscription = auth()->user()->getCurrentSubscription();
+            $userSubscription = $this->subscriptionService->normalizeCurrentSubscriptions(auth()->user());
         }
 
         return Inertia::render('Billing/Pricing', [

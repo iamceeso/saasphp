@@ -28,6 +28,8 @@ class SubscriptionController extends Controller
     {
         $this->authorize('viewAny', CustomerSubscription::class);
 
+        $this->subscriptionService->normalizeCurrentSubscriptions(auth()->user());
+
         $subscriptions = auth()->user()
             ->subscriptions()
             ->with('plan.prices', 'plan.features')

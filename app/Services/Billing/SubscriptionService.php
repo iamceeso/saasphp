@@ -7,6 +7,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\CustomerSubscription;
 use App\Models\PlanPrice;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Stripe\StripeClient;
 use Stripe\Exception\ApiErrorException;
 
@@ -237,6 +238,50 @@ class SubscriptionService
         $user->update(['stripe_id' => $customer->id]);
 
         return $customer->id;
+    }
+
+    public function normalizeCurrentSubscriptions(User $user): ?CustomerSubscription
+    {
+        $currentSubscriptions = $user->subscriptions()
+            ->whereIn('status', ['active', 'trialing'])
+            ->latest()
+            ->get();
+
+        $current = $currentSubscriptions->first();
+
+        if (!$current) {
+            return null;
+        }
+
+        $duplicates = $currentSubscriptions->slice(1);
+
+        foreach ($duplicates as $duplicate) {
+            $provider = data_get($duplicate->metadata, 'provider');
+
+            if ($provider === 'stripe' && !empty($duplicate->stripe_subscription_id)) {
+                try {
+                    $this->getStripeClient()->subscriptions->cancel($duplicate->stripe_subscription_id, [
+                        'invoice_now' => false,
+                        'prorate' => false,
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to cancel duplicate Stripe subscription during normalization', [
+                        'user_id' => $user->id,
+                        'subscription_id' => $duplicate->id,
+                        'stripe_subscription_id' => $duplicate->stripe_subscription_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            $duplicate->update([
+                'status' => 'canceled',
+                'canceled_at' => now(),
+                'ended_at' => now(),
+            ]);
+        }
+
+        return $current->refresh();
     }
 
     private function syncSubscriptionToDB(

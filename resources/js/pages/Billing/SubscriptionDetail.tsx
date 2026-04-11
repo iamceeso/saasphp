@@ -19,6 +19,7 @@ interface Subscription {
     current_period_start: string;
     current_period_end: string;
     canceled_at: string | null;
+    ended_at?: string | null;
     trial_ends_at: string | null;
     plan: {
         id: number;
@@ -158,6 +159,7 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                         <Card className="mb-6">
                             <CardHeader>
                                 <CardTitle>Subscription Details</CardTitle>
+                                <CardDescription>{subscription.plan.description}</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid sm:grid-cols-2 gap-4">
@@ -195,6 +197,26 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                             </p>
                                         </div>
                                     )}
+                                    {subscription.canceled_at && (
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-600 mb-1">
+                                                Canceled At
+                                            </p>
+                                            <p className="text-sm text-red-600 font-medium">
+                                                {formatBillingDate(subscription.canceled_at)}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {subscription.ended_at && (
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-600 mb-1">
+                                                Ended At
+                                            </p>
+                                            <p className="text-sm text-gray-900">
+                                                {formatBillingDate(subscription.ended_at)}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="border-t pt-4 flex gap-3">
@@ -203,7 +225,7 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                             View Invoices
                                         </Button>
                                     </Link>
-                                    {subscription.status === 'active' && !subscription.canceled_at && (
+                                    {(subscription.status === 'active' || subscription.status === 'trialing') && !subscription.canceled_at && (
                                         <Button
                                             variant="destructive"
                                             onClick={handleCancel}
@@ -226,7 +248,7 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                     </div>
 
                     <div>
-                        {availablePlans.length > 0 && (
+                        {availablePlans.length > 0 && subscription.status !== 'canceled' && (
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg">Change Plan</CardTitle>

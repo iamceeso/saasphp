@@ -19,7 +19,7 @@ class SubscribeToPlan
         string $interval,
         ?string $paymentMethod = null
     ): CustomerSubscription {
-        $currentSubscription = $user->getCurrentSubscription();
+        $currentSubscription = $this->subscriptionService->normalizeCurrentSubscriptions($user);
 
         if ($currentSubscription instanceof CustomerSubscription) {
             if ((int) $currentSubscription->plan_id === (int) $plan->id && $currentSubscription->interval === $interval) {
