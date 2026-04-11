@@ -20,9 +20,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 use Laravel\Cashier\Billable;
-
-
-
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 {
@@ -118,6 +116,32 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
         return $this->forceFill([
             'phone_verified_at' => now(),
         ])->save();
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(CustomerSubscription::class);
+    }
+
+    public function billingEvents(): HasMany
+    {
+        return $this->hasMany(BillingEvent::class);
+    }
+
+    public function getCurrentSubscription(): ?CustomerSubscription
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->orWhere('status', 'trialing')
+            ->latest()
+            ->first();
+    }
+
+    public function hasActiveSubscription(): bool
+    {
+        return $this->subscriptions()
+            ->whereIn('status', ['active', 'trialing'])
+            ->exists();
     }
 
     public function sendVerificationEmailWithRateLimit(): bool

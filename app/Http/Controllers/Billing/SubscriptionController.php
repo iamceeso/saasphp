@@ -7,6 +7,7 @@ use App\Models\CustomerSubscription;
 use App\Models\SubscriptionPlan;
 use App\Services\Billing\SubscriptionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class SubscriptionController extends Controller
@@ -156,11 +157,54 @@ class SubscriptionController extends Controller
     {
         $this->authorize('viewInvoices', $subscription);
 
-        $invoices = $subscription->user->invoices()->get();
+        $subscription->loadMissing('user', 'plan');
+        $invoices = collect();
+        $upcomingInvoice = null;
+
+        try {
+            $provider = data_get($subscription->metadata, 'provider');
+            $hasStripeCustomer = !empty($subscription->user?->stripe_id);
+            $hasStripeSubscription = !empty($subscription->stripe_subscription_id);
+
+            if ($provider !== 'local' && $hasStripeCustomer && $hasStripeSubscription) {
+                $invoices = collect($this->subscriptionService->getStripeInvoices($subscription));
+                $upcomingInvoice = $this->subscriptionService->getUpcomingStripeInvoice($subscription);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to fetch Stripe invoices', [
+                'subscription_id' => $subscription->id,
+                'user_id' => $subscription->user_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $invoicePayload = $invoices->map(function ($invoice) {
+            $stripeInvoice = method_exists($invoice, 'asStripeInvoice')
+                ? $invoice->asStripeInvoice()
+                : $invoice;
+
+            return [
+                'id' => data_get($stripeInvoice, 'id'),
+                'amount' => (int) data_get($stripeInvoice, 'amount_paid', data_get($stripeInvoice, 'total', 0)),
+                'status' => data_get($stripeInvoice, 'status', 'draft'),
+                'created' => (int) data_get($stripeInvoice, 'created', now()->timestamp),
+                'invoice_pdf' => data_get($stripeInvoice, 'invoice_pdf'),
+                'hosted_invoice_url' => data_get($stripeInvoice, 'hosted_invoice_url'),
+                'currency' => strtoupper((string) data_get($stripeInvoice, 'currency', 'usd')),
+            ];
+        })->values();
+
+        $upcomingInvoicePayload = $upcomingInvoice ? [
+            'amount' => (int) data_get($upcomingInvoice, 'amount_due', data_get($upcomingInvoice, 'total', 0)),
+            'currency' => strtoupper((string) data_get($upcomingInvoice, 'currency', 'usd')),
+            'next_payment_attempt' => data_get($upcomingInvoice, 'next_payment_attempt'),
+            'period_end' => data_get($upcomingInvoice, 'period_end'),
+        ] : null;
 
         return Inertia::render('Billing/Invoices', [
             'subscription' => $subscription,
-            'invoices' => $invoices,
+            'invoices' => $invoicePayload,
+            'upcomingInvoice' => $upcomingInvoicePayload,
         ]);
     }
 }

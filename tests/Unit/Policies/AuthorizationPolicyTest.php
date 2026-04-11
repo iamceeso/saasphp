@@ -5,6 +5,7 @@ namespace Tests\Unit\Policies;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\CustomerSubscription;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
@@ -65,5 +66,20 @@ class AuthorizationPolicyTest extends TestCase
         $user->givePermissionTo('view_no_role_role');
 
         $this->assertTrue($user->can('viewNoRole', User::class));
+    }
+
+    public function test_subscription_create_policy_uses_verification_model_not_raw_column(): void
+    {
+        Setting::updateOrCreate(
+            ['key' => 'features.enable_email_verification'],
+            ['value' => 'false', 'type' => 'boolean', 'group' => 'features']
+        );
+
+        $user = User::factory()->create([
+            'email' => 'subscriber@saasphp.com',
+            'email_verified_at' => null,
+        ]);
+
+        $this->assertTrue($user->can('create', CustomerSubscription::class));
     }
 }
