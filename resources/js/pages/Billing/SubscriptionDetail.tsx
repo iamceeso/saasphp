@@ -1,6 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import React, { useState } from 'react';
 
@@ -56,6 +58,11 @@ interface Props {
     subscription: Subscription;
     availablePlans: AvailablePlan[];
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: '/dashboard' },
+    { title: 'Subscriptions', href: '/subscriptions' },
+];
 
 const StatusBadge = ({ status }: { status: string }) => {
     const statusMap: Record<string, { bg: string; text: string }> = {
@@ -157,183 +164,181 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
     };
 
     return (
-        <>
+        <AppLayout
+            breadcrumbs={[
+                ...breadcrumbs,
+                { title: subscription.plan.name, href: route('subscriptions.show', subscription.id) },
+            ]}
+        >
             <Head title={`Subscription - ${subscription.plan.name}`} />
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-7xl mx-auto">
-                    <div className="mb-8">
-                        <Link href={route('subscriptions.index')} className="text-blue-600 hover:text-blue-800 mb-4 inline-block">
-                            ← Back to Subscriptions
-                        </Link>
-                        <div className="flex items-center justify-between">
-                            <h1 className="text-3xl font-bold text-gray-900">
-                                {subscription.plan.name}
-                            </h1>
-                            <StatusBadge status={subscription.status} />
-                        </div>
-                    </div>
+            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-semibold tracking-tight">
+                        {subscription.plan.name}
+                    </h1>
+                    <StatusBadge status={subscription.status} />
+                </div>
 
-                    <div className="grid md:grid-cols-3 gap-8 mb-8">
-                        <div className="md:col-span-2">
-                            <Card className="mb-6">
-                                <CardHeader>
-                                    <CardTitle>Subscription Details</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="grid sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 mb-1">Plan</p>
-                                            <p className="text-lg font-semibold text-gray-900">
-                                                {subscription.plan.name}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 mb-1">Price</p>
-                                            <p className="text-lg font-semibold text-gray-900">
-                                                {formatPrice(subscription.amount)}
-                                                <span className="text-sm font-normal text-gray-600">
-                                                    /{subscription.interval === 'monthly' ? 'mo' : 'yr'}
-                                                </span>
-                                            </p>
-                                        </div>
+                <div className="grid md:grid-cols-3 gap-8 mb-8">
+                    <div className="md:col-span-2">
+                        <Card className="mb-6">
+                            <CardHeader>
+                                <CardTitle>Subscription Details</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 mb-1">Plan</p>
+                                        <p className="text-lg font-semibold text-gray-900">
+                                            {subscription.plan.name}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 mb-1">Price</p>
+                                        <p className="text-lg font-semibold text-gray-900">
+                                            {formatPrice(subscription.amount)}
+                                            <span className="text-sm font-normal text-gray-600">
+                                                /{subscription.interval === 'monthly' ? 'mo' : 'yr'}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 mb-1">
+                                            Current Period
+                                        </p>
+                                        <p className="text-sm text-gray-900">
+                                            {formatDate(subscription.current_period_start)} -{' '}
+                                            {formatDate(subscription.current_period_end)}
+                                        </p>
+                                    </div>
+                                    {subscription.trial_ends_at && (
                                         <div>
                                             <p className="text-sm font-medium text-gray-600 mb-1">
-                                                Current Period
+                                                Trial Ends
                                             </p>
-                                            <p className="text-sm text-gray-900">
-                                                {formatDate(subscription.current_period_start)} -{' '}
-                                                {formatDate(subscription.current_period_end)}
+                                            <p className="text-sm text-green-600 font-medium">
+                                                {formatDate(subscription.trial_ends_at)}
                                             </p>
                                         </div>
-                                        {subscription.trial_ends_at && (
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-600 mb-1">
-                                                    Trial Ends
-                                                </p>
-                                                <p className="text-sm text-green-600 font-medium">
-                                                    {formatDate(subscription.trial_ends_at)}
-                                                </p>
-                                            </div>
-                                        )}
-                                    </div>
+                                    )}
+                                </div>
 
-                                    <div className="border-t pt-4 flex gap-3">
-                                        <Link href={route('subscriptions.invoices', subscription.id)}>
-                                            <Button variant="outline">
-                                                View Invoices
-                                            </Button>
-                                        </Link>
-                                        {subscription.status === 'active' && !subscription.canceled_at && (
-                                            <Button
-                                                variant="destructive"
-                                                onClick={handleCancel}
-                                            >
-                                                Cancel Subscription
-                                            </Button>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Plan Features</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <ul className="space-y-3">
-                                        {subscription.plan.features.map((feature) => (
-                                            <li key={feature.id} className="flex items-start gap-3">
-                                                <svg
-                                                    className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M5 13l4 4L19 7"
-                                                    />
-                                                </svg>
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-900">
-                                                        {feature.feature_name}
-                                                    </p>
-                                                    {feature.description && (
-                                                        <p className="text-xs text-gray-500">
-                                                            {feature.description}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        <div>
-                            {availablePlans.length > 0 && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">Change Plan</CardTitle>
-                                        <CardDescription>
-                                            Switch to a different plan
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <select
-                                            value={selectedPlan || ''}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                setSelectedPlan(value ? parseInt(value, 10) : null);
-                                            }}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                <div className="border-t pt-4 flex gap-3">
+                                    <Link href={route('subscriptions.invoices', subscription.id)}>
+                                        <Button variant="outline">
+                                            View Invoices
+                                        </Button>
+                                    </Link>
+                                    {subscription.status === 'active' && !subscription.canceled_at && (
+                                        <Button
+                                            variant="destructive"
+                                            onClick={handleCancel}
                                         >
-                                            <option value="">Select a plan</option>
-                                            {availablePlans.map((plan) => (
-                                                <option key={plan.id} value={plan.id}>
-                                                    {plan.name}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            Cancel Subscription
+                                        </Button>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                                        {selectedPlan && (
-                                            <>
-                                                <select
-                                                    value={selectedInterval}
-                                                    onChange={(e) =>
-                                                        setSelectedInterval(e.target.value as 'monthly' | 'annually')
-                                                    }
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                                >
-                                                    <option value="monthly">Monthly</option>
-                                                    <option value="annually">Annually</option>
-                                                </select>
-
-                                                <Button
-                                                    onClick={handleSwapPlan}
-                                                    disabled={isUpdating}
-                                                    className="w-full"
-                                                >
-                                                    {isUpdating ? 'Updating...' : 'Update Plan'}
-                                                </Button>
-
-                                                {actionError && (
-                                                    <p className="text-sm text-red-600">
-                                                        {actionError}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Plan Features</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ul className="space-y-3">
+                                    {subscription.plan.features.map((feature) => (
+                                        <li key={feature.id} className="flex items-start gap-3">
+                                            <svg
+                                                className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M5 13l4 4L19 7"
+                                                />
+                                            </svg>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {feature.feature_name}
+                                                </p>
+                                                {feature.description && (
+                                                    <p className="text-xs text-gray-500">
+                                                        {feature.description}
                                                     </p>
                                                 )}
-                                            </>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </div>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div>
+                        {availablePlans.length > 0 && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-lg">Change Plan</CardTitle>
+                                    <CardDescription>
+                                        Switch to a different plan
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <select
+                                        value={selectedPlan || ''}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setSelectedPlan(value ? parseInt(value, 10) : null);
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                    >
+                                        <option value="">Select a plan</option>
+                                        {availablePlans.map((plan) => (
+                                            <option key={plan.id} value={plan.id}>
+                                                {plan.name}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    {selectedPlan && (
+                                        <>
+                                            <select
+                                                value={selectedInterval}
+                                                onChange={(e) =>
+                                                    setSelectedInterval(e.target.value as 'monthly' | 'annually')
+                                                }
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                            >
+                                                <option value="monthly">Monthly</option>
+                                                <option value="annually">Annually</option>
+                                            </select>
+
+                                            <Button
+                                                onClick={handleSwapPlan}
+                                                disabled={isUpdating}
+                                                className="w-full"
+                                            >
+                                                {isUpdating ? 'Updating...' : 'Update Plan'}
+                                            </Button>
+
+                                            {actionError && (
+                                                <p className="text-sm text-red-600">
+                                                    {actionError}
+                                                </p>
+                                            )}
+                                        </>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
                 </div>
             </div>
-        </>
+        </AppLayout>
     );
 }
