@@ -1,7 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/app-layout';
+import { BillingNav } from '@/modules/billing/components/BillingNav';
+import { BillingPageHeader } from '@/modules/billing/components/BillingPageHeader';
+import { BillingStatusBadge } from '@/modules/billing/components/BillingStatusBadge';
+import { PlanFeatureList } from '@/modules/billing/components/PlanFeatureList';
+import { formatBillingDate, formatBillingPrice } from '@/modules/billing/lib/format';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import React, { useState } from 'react';
@@ -64,43 +68,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Subscriptions', href: '/subscriptions' },
 ];
 
-const StatusBadge = ({ status }: { status: string }) => {
-    const statusMap: Record<string, { bg: string; text: string }> = {
-        active: { bg: 'bg-green-100', text: 'text-green-800' },
-        trialing: { bg: 'bg-blue-100', text: 'text-blue-800' },
-        past_due: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-        canceled: { bg: 'bg-red-100', text: 'text-red-800' },
-    };
-
-    const config = statusMap[status] || statusMap.active;
-
-    return (
-        <Badge className={`${config.bg} ${config.text}`}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-        </Badge>
-    );
-};
-
 export default function SubscriptionDetailPage({ subscription, availablePlans }: Props) {
     const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
     const [selectedInterval, setSelectedInterval] = useState<'monthly' | 'annually'>('monthly');
     const [isUpdating, setIsUpdating] = useState(false);
     const [actionError, setActionError] = useState<string | null>(null);
-
-    const formatPrice = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(amount / 100);
-    };
-
-    const formatDate = (date: string) => {
-        return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        }).format(new Date(date));
-    };
 
     const handleSwapPlan = async () => {
         if (!selectedPlan) return;
@@ -172,12 +144,14 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
         >
             <Head title={`Subscription - ${subscription.plan.name}`} />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        {subscription.plan.name}
-                    </h1>
-                    <StatusBadge status={subscription.status} />
+                <div className="flex items-center justify-between gap-4">
+                    <BillingPageHeader
+                        title={subscription.plan.name}
+                        description="Review your plan details, billing cycle, and subscription actions."
+                    />
+                    <BillingStatusBadge status={subscription.status} />
                 </div>
+                <BillingNav />
 
                 <div className="grid md:grid-cols-3 gap-8 mb-8">
                     <div className="md:col-span-2">
@@ -196,7 +170,7 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                     <div>
                                         <p className="text-sm font-medium text-gray-600 mb-1">Price</p>
                                         <p className="text-lg font-semibold text-gray-900">
-                                            {formatPrice(subscription.amount)}
+                                            {formatBillingPrice(subscription.amount)}
                                             <span className="text-sm font-normal text-gray-600">
                                                 /{subscription.interval === 'monthly' ? 'mo' : 'yr'}
                                             </span>
@@ -207,8 +181,8 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                             Current Period
                                         </p>
                                         <p className="text-sm text-gray-900">
-                                            {formatDate(subscription.current_period_start)} -{' '}
-                                            {formatDate(subscription.current_period_end)}
+                                            {formatBillingDate(subscription.current_period_start)} -{' '}
+                                            {formatBillingDate(subscription.current_period_end)}
                                         </p>
                                     </div>
                                     {subscription.trial_ends_at && (
@@ -217,7 +191,7 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                                 Trial Ends
                                             </p>
                                             <p className="text-sm text-green-600 font-medium">
-                                                {formatDate(subscription.trial_ends_at)}
+                                                {formatBillingDate(subscription.trial_ends_at)}
                                             </p>
                                         </div>
                                     )}
@@ -246,35 +220,7 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                 <CardTitle>Plan Features</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <ul className="space-y-3">
-                                    {subscription.plan.features.map((feature) => (
-                                        <li key={feature.id} className="flex items-start gap-3">
-                                            <svg
-                                                className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M5 13l4 4L19 7"
-                                                />
-                                            </svg>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">
-                                                    {feature.feature_name}
-                                                </p>
-                                                {feature.description && (
-                                                    <p className="text-xs text-gray-500">
-                                                        {feature.description}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
+                                <PlanFeatureList features={subscription.plan.features} />
                             </CardContent>
                         </Card>
                     </div>

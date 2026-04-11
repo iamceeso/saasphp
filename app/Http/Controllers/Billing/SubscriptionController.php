@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\Billing;
 
+use App\Actions\Billing\CancelSubscription;
+use App\Actions\Billing\ChangeSubscriptionBillingCycle;
+use App\Actions\Billing\ResumeSubscription;
+use App\Actions\Billing\SwapSubscriptionPlan;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerSubscription;
 use App\Models\SubscriptionPlan;
@@ -13,7 +17,11 @@ use Inertia\Inertia;
 class SubscriptionController extends Controller
 {
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private SwapSubscriptionPlan $swapSubscriptionPlan,
+        private ChangeSubscriptionBillingCycle $changeSubscriptionBillingCycle,
+        private CancelSubscription $cancelSubscription,
+        private ResumeSubscription $resumeSubscription
     ) {}
 
     public function index()
@@ -58,7 +66,7 @@ class SubscriptionController extends Controller
 
         try {
             $newPlan = SubscriptionPlan::findOrFail($request->plan_id);
-            $updated = $this->subscriptionService->swapPlan(
+            $updated = $this->swapSubscriptionPlan->handle(
                 $subscription,
                 $newPlan,
                 $request->interval,
@@ -87,7 +95,7 @@ class SubscriptionController extends Controller
         ]);
 
         try {
-            $updated = $this->subscriptionService->changeBillingCycle(
+            $updated = $this->changeSubscriptionBillingCycle->handle(
                 $subscription,
                 $request->interval
             );
@@ -114,7 +122,7 @@ class SubscriptionController extends Controller
         ]);
 
         try {
-            $this->subscriptionService->cancel(
+            $this->cancelSubscription->handle(
                 $subscription,
                 $request->boolean('immediately', false)
             );
@@ -138,7 +146,7 @@ class SubscriptionController extends Controller
         $this->authorize('resume', $subscription);
 
         try {
-            $updated = $this->subscriptionService->resume($subscription);
+            $updated = $this->resumeSubscription->handle($subscription);
 
             return response()->json([
                 'success' => true,
@@ -185,9 +193,19 @@ class SubscriptionController extends Controller
 
             return [
                 'id' => data_get($stripeInvoice, 'id'),
+                'number' => data_get($stripeInvoice, 'number'),
                 'amount' => (int) data_get($stripeInvoice, 'amount_paid', data_get($stripeInvoice, 'total', 0)),
+                'subtotal' => (int) data_get($stripeInvoice, 'subtotal', 0),
+                'total' => (int) data_get($stripeInvoice, 'total', 0),
+                'amount_due' => (int) data_get($stripeInvoice, 'amount_due', 0),
+                'amount_paid' => (int) data_get($stripeInvoice, 'amount_paid', 0),
                 'status' => data_get($stripeInvoice, 'status', 'draft'),
                 'created' => (int) data_get($stripeInvoice, 'created', now()->timestamp),
+                'paid_at' => data_get($stripeInvoice, 'status_transitions.paid_at'),
+                'period_start' => data_get($stripeInvoice, 'period_start'),
+                'period_end' => data_get($stripeInvoice, 'period_end'),
+                'attempt_count' => (int) data_get($stripeInvoice, 'attempt_count', 0),
+                'description' => data_get($stripeInvoice, 'description'),
                 'invoice_pdf' => data_get($stripeInvoice, 'invoice_pdf'),
                 'hosted_invoice_url' => data_get($stripeInvoice, 'hosted_invoice_url'),
                 'currency' => strtoupper((string) data_get($stripeInvoice, 'currency', 'usd')),

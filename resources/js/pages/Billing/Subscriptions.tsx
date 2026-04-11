@@ -1,7 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/app-layout';
+import { BillingNav } from '@/modules/billing/components/BillingNav';
+import { BillingPageHeader } from '@/modules/billing/components/BillingPageHeader';
+import { BillingStatusBadge } from '@/modules/billing/components/BillingStatusBadge';
+import { formatBillingDate, formatBillingPrice } from '@/modules/billing/lib/format';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import React from 'react';
@@ -34,52 +37,16 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Subscriptions', href: '/subscriptions' },
 ];
 
-const StatusBadge = ({ status }: { status: string }) => {
-    const statusMap: Record<string, { bg: string; text: string }> = {
-        active: { bg: 'bg-green-100', text: 'text-green-800' },
-        trialing: { bg: 'bg-blue-100', text: 'text-blue-800' },
-        past_due: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-        canceled: { bg: 'bg-red-100', text: 'text-red-800' },
-        unpaid: { bg: 'bg-red-100', text: 'text-red-800' },
-    };
-
-    const config = statusMap[status] || statusMap.active;
-
-    return (
-        <Badge className={`${config.bg} ${config.text}`}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-        </Badge>
-    );
-};
-
 export default function SubscriptionsPage({ subscriptions }: Props) {
-    const formatPrice = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(amount / 100);
-    };
-
-    const formatDate = (date: string) => {
-        return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        }).format(new Date(date));
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Subscriptions" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
-                <div>
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        Your Subscriptions
-                    </h1>
-                    <p className="text-muted-foreground mt-1 text-sm">
-                        Manage your active subscriptions and billing information.
-                    </p>
-                </div>
+                <BillingPageHeader
+                    title="Your Subscriptions"
+                    description="Manage your active subscriptions and billing information."
+                />
+                <BillingNav />
 
                 {subscriptions.data.length === 0 ? (
                     <Card>
@@ -109,7 +76,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                                                 {subscription.plan.description}
                                             </CardDescription>
                                         </div>
-                                        <StatusBadge status={subscription.status} />
+                                        <BillingStatusBadge status={subscription.status} />
                                     </div>
                                 </CardHeader>
                                 <CardContent>
@@ -119,7 +86,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                                                 Price
                                             </p>
                                             <p className="text-lg font-semibold text-gray-900">
-                                                {formatPrice(subscription.amount)}
+                                                {formatBillingPrice(subscription.amount)}
                                                 <span className="text-sm font-normal text-gray-600">
                                                     /{subscription.interval === 'monthly' ? 'mo' : 'yr'}
                                                 </span>
@@ -130,8 +97,8 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                                                 Current Period
                                             </p>
                                             <p className="text-sm text-gray-900">
-                                                {formatDate(subscription.current_period_start)} -{' '}
-                                                {formatDate(subscription.current_period_end)}
+                                                {formatBillingDate(subscription.current_period_start)} -{' '}
+                                                {formatBillingDate(subscription.current_period_end)}
                                             </p>
                                         </div>
                                         {subscription.trial_ends_at && (
@@ -140,7 +107,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                                                     Trial Ends
                                                 </p>
                                                 <p className="text-sm text-green-600 font-medium">
-                                                    {formatDate(subscription.trial_ends_at)}
+                                                    {formatBillingDate(subscription.trial_ends_at)}
                                                 </p>
                                             </div>
                                         )}

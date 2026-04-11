@@ -2,6 +2,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/app-layout';
+import { BillingNav } from '@/modules/billing/components/BillingNav';
+import { BillingPageHeader } from '@/modules/billing/components/BillingPageHeader';
+import { PlanFeatureList } from '@/modules/billing/components/PlanFeatureList';
+import { formatBillingPrice } from '@/modules/billing/lib/format';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import React from 'react';
@@ -63,13 +67,6 @@ export default function PricingPage({ plans, userSubscription }: Props) {
     const isAuthenticated = Boolean(auth?.user);
     const [billingInterval, setBillingInterval] = React.useState<'monthly' | 'annually'>('monthly');
 
-    const formatPrice = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(amount / 100);
-    };
-
     const handleSubscribe = (planId: number) => {
         window.location.href = route('checkout.show', {
             plan_id: planId,
@@ -84,12 +81,23 @@ export default function PricingPage({ plans, userSubscription }: Props) {
         <div className={isAuthenticated ? 'flex h-full flex-1 flex-col gap-6 rounded-xl p-4' : 'min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8'}>
             <div className={isAuthenticated ? '' : 'max-w-7xl mx-auto'}>
                 <div className={isAuthenticated ? '' : 'text-center mb-12'}>
-                    <h1 className={`${isAuthenticated ? 'text-3xl font-semibold tracking-tight' : 'text-4xl font-bold text-gray-900 mb-4'}`}>
-                        Simple, Transparent Pricing
-                    </h1>
-                    <p className={`${isAuthenticated ? 'text-muted-foreground mt-2 max-w-2xl text-sm' : 'text-xl text-gray-600 mb-8'}`}>
-                        Choose the perfect plan for your needs
-                    </p>
+                    {isAuthenticated ? (
+                        <BillingPageHeader
+                            title="Simple, Transparent Pricing"
+                            description="Choose the perfect plan for your needs."
+                        />
+                    ) : (
+                        <>
+                            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                                Simple, Transparent Pricing
+                            </h1>
+                            <p className="text-xl text-gray-600 mb-8">
+                                Choose the perfect plan for your needs
+                            </p>
+                        </>
+                    )}
+
+                    {isAuthenticated && <div className="mt-4"><BillingNav /></div>}
 
                     <div className={`mt-6 inline-flex items-center rounded-xl border border-border bg-background/80 p-1 ${isAuthenticated ? '' : ''}`}>
                         <span className={`text-sm font-medium ${billingInterval === 'monthly' ? 'text-gray-900' : 'text-gray-600'}`}>
@@ -147,7 +155,7 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                                             <>
                                                 <div className="flex items-end gap-2 mb-2">
                                                     <span className="text-4xl font-bold tracking-tight">
-                                                        {formatPrice(price.amount)}
+                                                        {formatBillingPrice(price.amount)}
                                                     </span>
                                                     <span className="mb-1 text-sm text-gray-600">
                                                         /{price.interval === 'monthly' ? 'month' : 'year'}
@@ -166,40 +174,7 @@ export default function PricingPage({ plans, userSubscription }: Props) {
 
                                     <div className="mb-6">
                                         <h3 className="font-semibold text-sm mb-4">Features included:</h3>
-                                        <ul className="space-y-3">
-                                            {plan.features.map((feature) => (
-                                                <li key={feature.id} className="flex items-start gap-3">
-                                                    <svg
-                                                        className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M5 13l4 4L19 7"
-                                                        />
-                                                    </svg>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-900">
-                                                            {feature.feature_name}
-                                                            {feature.value && (
-                                                                <span className="ml-2 text-xs font-semibold text-blue-700">
-                                                                    {feature.value}
-                                                                </span>
-                                                            )}
-                                                        </p>
-                                                        {feature.description && (
-                                                            <p className="text-xs text-gray-500">
-                                                                {feature.description}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
+                                        <PlanFeatureList features={plan.features} />
                                     </div>
 
                                     <Button

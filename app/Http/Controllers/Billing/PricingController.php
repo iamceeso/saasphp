@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Billing;
 
+use App\Actions\Billing\SubscribeToPlan;
 use App\Http\Controllers\Controller;
 use App\Models\SubscriptionPlan;
 use App\Models\CustomerSubscription;
@@ -13,7 +14,8 @@ use Inertia\Inertia;
 class PricingController extends Controller
 {
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private SubscribeToPlan $subscribeToPlan
     ) {}
 
     public function show()
@@ -79,7 +81,7 @@ class PricingController extends Controller
             $user = auth()->user();
 
             if (Str::startsWith($paymentMethod, 'pm_')) {
-                $subscription = $this->subscriptionService->subscribe(
+                $subscription = $this->subscribeToPlan->handle(
                     $user,
                     $plan,
                     $request->interval,

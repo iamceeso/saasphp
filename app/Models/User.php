@@ -131,8 +131,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
     public function getCurrentSubscription(): ?CustomerSubscription
     {
         return $this->subscriptions()
-            ->where('status', 'active')
-            ->orWhere('status', 'trialing')
+            ->whereIn('status', ['active', 'trialing'])
             ->latest()
             ->first();
     }

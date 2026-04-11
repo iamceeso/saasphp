@@ -2,8 +2,9 @@ import ImpersonatorNotice from '@/components/impersonator-notice';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { BillingNav } from '@/modules/billing/components/BillingNav';
+import { SharedData, type BreadcrumbItem } from '@/types';
+import { Head, Link, usePage } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -13,6 +14,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Dashboard() {
+    const { modules } = usePage<SharedData>().props;
+    const billingEnabled = modules.billing.enabled;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <ImpersonatorNotice/>
@@ -25,43 +29,47 @@ export default function Dashboard() {
                     </p>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Plans & Pricing</CardTitle>
-                            <CardDescription>Choose or compare subscription plans.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Link href={route('pricing.show')}>
-                                <Button className="w-full">Open Pricing</Button>
-                            </Link>
-                        </CardContent>
-                    </Card>
+                {billingEnabled && <BillingNav />}
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Subscriptions</CardTitle>
-                            <CardDescription>Manage your active subscriptions and updates.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Link href={route('subscriptions.index')}>
-                                <Button className="w-full" variant="outline">Manage Subscriptions</Button>
-                            </Link>
-                        </CardContent>
-                    </Card>
+                {billingEnabled && (
+                    <div className="grid gap-4 md:grid-cols-3">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg">Plans & Pricing</CardTitle>
+                                <CardDescription>Choose or compare subscription plans.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Link href={route('pricing.show')}>
+                                    <Button className="w-full">Open Pricing</Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Billing History</CardTitle>
-                            <CardDescription>View invoices and billing events.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Link href={route('subscriptions.index')}>
-                                <Button className="w-full" variant="secondary">View Billing</Button>
-                            </Link>
-                        </CardContent>
-                    </Card>
-                </div>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg">Subscriptions</CardTitle>
+                                <CardDescription>Manage your active subscriptions and updates.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Link href={route('subscriptions.index')}>
+                                    <Button className="w-full" variant="outline">Manage Subscriptions</Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg">Billing History</CardTitle>
+                                <CardDescription>View invoices and billing events.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Link href={route('subscriptions.index')}>
+                                    <Button className="w-full" variant="secondary">View Billing</Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
             </div>
         </AppLayout>
     );

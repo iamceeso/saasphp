@@ -17,7 +17,7 @@ class BillingTest extends TestCase
     {
         $response = $this->get(route('pricing.show'));
 
-        $this->assertIn($response->status(), [200, 302]);
+        $this->assertContains($response->status(), [200, 302]);
     }
 
     public function test_subscriptions_index_requires_auth()
@@ -33,6 +33,7 @@ class BillingTest extends TestCase
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => bcrypt('password'),
+            'email_verified_at' => now(),
         ]);
 
         $this->actingAs($user);
