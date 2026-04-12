@@ -18,7 +18,7 @@ class PreventAdminAccessToUserArea
         $user = auth()->user();
 
         // Prevent admin or staff roles from accessing this route group
-        if ($user && !$user->hasAnyRole(['user'])) {
+        if ($user && ! $user->isStandardUser()) {
             abort(403, 'Admins and staff cannot access this section, using staff account');
         }
 

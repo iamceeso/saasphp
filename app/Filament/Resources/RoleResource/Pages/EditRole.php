@@ -6,6 +6,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 use Filament\Actions;
+use App\Models\User;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Resources\RoleResource;
 use BezhanSalleh\FilamentShield\Support\Utils;
@@ -35,7 +36,7 @@ class EditRole extends EditRecord
 
     protected function getActions(): array
     {
-        if (in_array($this->record->name, ['admin', 'user'])) {
+        if (in_array(strtolower($this->record->name), [strtolower(User::superAdminRoleName()), 'user'], true)) {
             // Do not allow deleting
             return [];
         }
@@ -44,7 +45,7 @@ class EditRole extends EditRecord
             Actions\DeleteAction::make()
                 ->visible(
                     fn($record) =>
-                    !in_array(strtolower($record->name), ['admin', 'user']) &&
+                    !in_array(strtolower($record->name), [strtolower(User::superAdminRoleName()), 'user'], true) &&
                         $record->users()->count() === 0
                 ),
         ];
@@ -59,7 +60,7 @@ class EditRole extends EditRecord
             ->filter(fn($name) => str($name)->endsWith('_role'));
 
         if (
-            ! auth()->user()->hasRole('admin')
+            ! auth()->user()->isSuperAdmin()
             &&
             ! auth()->user()->can('assign_core_role')
 

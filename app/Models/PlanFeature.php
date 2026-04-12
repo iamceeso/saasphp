@@ -41,6 +41,6 @@ class PlanFeature extends Model
 
     public function isUnlimited(): bool
     {
-        return strtolower($this->value) === 'unlimited';
+        return is_string($this->value) && strtolower($this->value) === 'unlimited';
     }
 }

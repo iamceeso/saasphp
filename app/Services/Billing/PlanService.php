@@ -26,19 +26,25 @@ class PlanService
 
     public function createPlan(array $data): SubscriptionPlan
     {
-        $product = $this->getStripeClient()->products->create([
-            'name' => $data['name'],
-            'description' => $data['description'] ?? null,
-            'metadata' => [
-                'slug' => $data['slug'],
-            ],
-        ]);
+        $stripeProductId = null;
+
+        if ($this->requiresStripeProduct($data['prices'] ?? [])) {
+            $product = $this->getStripeClient()->products->create([
+                'name' => $data['name'],
+                'description' => $data['description'] ?? null,
+                'metadata' => [
+                    'slug' => $data['slug'],
+                ],
+            ]);
+
+            $stripeProductId = $product->id;
+        }
 
         $plan = SubscriptionPlan::create([
             'slug' => $data['slug'],
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
-            'stripe_product_id' => $product->id,
+            'stripe_product_id' => $stripeProductId,
             'sort_order' => $data['sort_order'] ?? 0,
             'is_active' => $data['is_active'] ?? true,
         ]);
@@ -88,33 +94,72 @@ class PlanService
 
     public function createPrice(SubscriptionPlan $plan, array $data): PlanPrice
     {
-        if (!$plan->stripe_product_id) {
-            throw new \Exception('Plan must have a Stripe product ID');
+        $unitAmount = filter_var($data['amount'] ?? null, FILTER_VALIDATE_INT);
+
+        if ($unitAmount === false || $unitAmount < 0) {
+            throw new \InvalidArgumentException(
+                'Plan price amount must be an integer in minor currency units and zero or greater.'
+            );
         }
 
-        $stripePrice = $this->getStripeClient()->prices->create([
-            'product' => $plan->stripe_product_id,
-            'unit_amount' => $data['amount'],
-            'currency' => config('services.stripe.currency', 'USD'),
-            'type' => 'recurring',
-            'recurring' => [
-                'interval' => $data['interval'] === 'annually' ? 'year' : 'month',
-                'interval_count' => 1,
-            ],
-            'metadata' => [
-                'interval' => $data['interval'],
-                'trial_days' => (string) ($data['trial_days'] ?? 0),
-            ],
-        ]);
+        $stripePriceId = null;
+
+        if ($unitAmount > 0) {
+            if (!$plan->stripe_product_id) {
+                $plan->update([
+                    'stripe_product_id' => $this->createStripeProductForPlan($plan),
+                ]);
+            }
+
+            $stripePrice = $this->getStripeClient()->prices->create([
+                'product' => $plan->stripe_product_id,
+                'unit_amount' => $unitAmount,
+                'currency' => strtolower((string) config('services.stripe.currency', 'USD')),
+                'recurring' => [
+                    'interval' => $data['interval'] === 'annually' ? 'year' : 'month',
+                    'interval_count' => 1,
+                ],
+                'metadata' => [
+                    'interval' => $data['interval'],
+                    'trial_days' => (string) ($data['trial_days'] ?? 0),
+                ],
+            ]);
+
+            $stripePriceId = $stripePrice->id;
+        }
 
         return PlanPrice::create([
             'plan_id' => $plan->id,
             'interval' => $data['interval'],
-            'amount' => $data['amount'],
+            'amount' => $unitAmount,
             'trial_days' => $data['trial_days'] ?? 0,
-            'stripe_price_id' => $stripePrice->id,
+            'stripe_price_id' => $stripePriceId,
             'is_active' => true,
         ]);
+    }
+
+    private function requiresStripeProduct(array $prices): bool
+    {
+        foreach ($prices as $price) {
+            if ((int) ($price['amount'] ?? 0) > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function createStripeProductForPlan(SubscriptionPlan $plan): string
+    {
+        $product = $this->getStripeClient()->products->create([
+            'name' => $plan->name,
+            'description' => $plan->description,
+            'metadata' => [
+                'slug' => $plan->slug,
+            ],
+        ]);
+
+        return $product->id;
     }
 
     public function attachFeatures(SubscriptionPlan $plan, array $features): void

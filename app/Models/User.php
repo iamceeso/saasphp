@@ -73,7 +73,31 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
-        return Gate::allows('accessPanel', $this);
+        return Gate::allows('accessPanel', static::class);
+    }
+
+    public static function superAdminRoleName(): string
+    {
+        return (string) config('filament-shield.super_admin.name', 'admin');
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(static::superAdminRoleName());
+    }
+
+    public function hasPrivilegedRole(): bool
+    {
+        return $this->roles->contains(function ($role) {
+            $name = strtolower($role->name);
+
+            return $name !== 'user';
+        });
+    }
+
+    public function isStandardUser(): bool
+    {
+        return $this->hasRole('user') && ! $this->hasPrivilegedRole();
     }
 
     public function hasVerifiedEmail()

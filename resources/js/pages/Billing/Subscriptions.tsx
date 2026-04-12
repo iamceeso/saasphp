@@ -21,6 +21,10 @@ interface Subscription {
     trial_ends_at: string | null;
     canceled_at: string | null;
     ended_at?: string | null;
+    metadata?: {
+        provider?: string;
+        free_tier?: boolean;
+    };
     plan: {
         name: string;
         description: string;
@@ -58,9 +62,9 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                             <p className="text-gray-600 mb-4">
                                 Get started by choosing a plan that fits your needs.
                             </p>
-                            <Link href={route('pricing.show')}>
-                                <Button>Browse Plans</Button>
-                            </Link>
+                            <Button asChild>
+                                <Link href={route('pricing.show')}>Browse Plans</Link>
+                            </Button>
                         </CardContent>
                     </Card>
                 ) : (
@@ -87,21 +91,38 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                                                 Price
                                             </p>
                                             <p className="text-lg font-semibold text-gray-900">
-                                                {formatBillingPrice(subscription.amount)}
-                                                <span className="text-sm font-normal text-gray-600">
-                                                    /{subscription.interval === 'monthly' ? 'mo' : 'yr'}
-                                                </span>
+                                                {subscription.metadata?.provider === 'free' ? (
+                                                    'Free'
+                                                ) : (
+                                                    <>
+                                                        {formatBillingPrice(subscription.amount)}
+                                                        <span className="text-sm font-normal text-gray-600">
+                                                            /{subscription.interval === 'monthly' ? 'mo' : 'yr'}
+                                                        </span>
+                                                    </>
+                                                )}
                                             </p>
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 mb-1">
-                                                Current Period
-                                            </p>
-                                            <p className="text-sm text-gray-900">
-                                                {formatBillingDate(subscription.current_period_start)} -{' '}
-                                                {formatBillingDate(subscription.current_period_end)}
-                                            </p>
-                                        </div>
+                                        {subscription.metadata?.provider === 'free' ? (
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-600 mb-1">
+                                                    Access
+                                                </p>
+                                                <p className="text-sm text-gray-900">
+                                                    Active free tier
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-600 mb-1">
+                                                    Current Period
+                                                </p>
+                                                <p className="text-sm text-gray-900">
+                                                    {formatBillingDate(subscription.current_period_start)} -{' '}
+                                                    {formatBillingDate(subscription.current_period_end)}
+                                                </p>
+                                            </div>
+                                        )}
                                         {subscription.trial_ends_at && (
                                             <div>
                                                 <p className="text-sm font-medium text-gray-600 mb-1">
@@ -124,7 +145,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                                         )}
                                         <div>
                                             <p className="text-sm font-medium text-gray-600 mb-1">
-                                                Subscription ID
+                                                Subscription Reference
                                             </p>
                                             <p className="text-xs text-gray-600 font-mono">
                                                 {subscription.stripe_subscription_id.slice(-8)}...
@@ -133,22 +154,22 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                                     </div>
 
                                     <div className="flex gap-3 pt-4 border-t">
-                                        <Link href={route('subscriptions.show', subscription.id)}>
-                                            <Button variant="outline">
+                                        <Button asChild variant="outline">
+                                            <Link href={route('subscriptions.show', subscription.id)}>
                                                 View Details
-                                            </Button>
-                                        </Link>
-                                        <Link href={route('subscriptions.invoices', subscription.id)}>
-                                            <Button variant="outline">
-                                                Invoices
-                                            </Button>
-                                        </Link>
-                                        {(subscription.status === 'active' || subscription.status === 'trialing') && !subscription.canceled_at && (
-                                            <Link href={route('subscriptions.cancel', subscription.id)} method="post">
-                                                <Button variant="destructive">
-                                                    Cancel
-                                                </Button>
                                             </Link>
+                                        </Button>
+                                        <Button asChild variant="outline">
+                                            <Link href={route('subscriptions.invoices', subscription.id)}>
+                                                Invoices
+                                            </Link>
+                                        </Button>
+                                        {(subscription.status === 'active' || subscription.status === 'trialing') && !subscription.canceled_at && (
+                                            <Button asChild variant="destructive">
+                                                <Link href={route('subscriptions.cancel', subscription.id)} method="post">
+                                                    Cancel
+                                                </Link>
+                                            </Button>
                                         )}
                                     </div>
                                 </CardContent>

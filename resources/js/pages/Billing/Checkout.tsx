@@ -23,7 +23,6 @@ interface Props {
     plan: Plan;
     price: Price;
     interval: string;
-    clientSecret: string | null;
     publishableKey: string;
 }
 
@@ -40,6 +39,7 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [cardholderName, setCardholderName] = useState('');
+    const isFreePlan = price.amount === 0;
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -47,6 +47,49 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
         setError(null);
 
         try {
+            if (isFreePlan) {
+                const response = await fetch(route('subscribe'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        plan_id: plan.id,
+                        interval,
+                    }),
+                });
+
+                const contentType = response.headers.get('content-type') || '';
+
+                if (!contentType.includes('application/json')) {
+                    if (response.status === 401 || response.status === 403) {
+                        setError('Your session has expired or access is denied. Please sign in again and retry.');
+                        return;
+                    }
+
+                    if (response.status === 419) {
+                        setError('Your session token expired. Refresh the page and try again.');
+                        return;
+                    }
+
+                    setError('Unexpected server response. Please refresh the page and try again.');
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    setError(data.error || 'Unable to start the free plan.');
+                    return;
+                }
+
+                window.location.href = data.redirect;
+                return;
+            }
+
             if (!stripe || !elements) {
                 setError('Stripe has not loaded yet. Please wait a moment and try again.');
                 return;
@@ -112,6 +155,31 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
             const data = await response.json();
 
             if (data.success) {
+                const requiresConfirmation =
+                    Boolean(data.requiresAction) ||
+                    ['requires_action', 'requires_confirmation'].includes(
+                        data.paymentIntentStatus ?? ''
+                    );
+
+                if (requiresConfirmation && data.clientSecret) {
+                    const confirmation = await stripe.confirmCardPayment(data.clientSecret);
+
+                    if (confirmation.error) {
+                        setError(confirmation.error.message || 'Payment confirmation failed.');
+                        return;
+                    }
+
+                    const paymentIntentStatus = confirmation.paymentIntent?.status;
+
+                    if (
+                        paymentIntentStatus &&
+                        !['succeeded', 'processing', 'requires_capture'].includes(paymentIntentStatus)
+                    ) {
+                        setError(`Payment requires attention. Current status: ${paymentIntentStatus}.`);
+                        return;
+                    }
+                }
+
                 window.location.href = data.redirect;
             } else {
                 const backendError =
@@ -142,10 +210,10 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
             <div className="max-w-2xl mx-auto">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Complete Your Subscription
+                        {isFreePlan ? 'Start Your Free Plan' : 'Complete Your Subscription'}
                     </h1>
                     <p className="text-gray-600">
-                        Secure payment powered by Stripe
+                        {isFreePlan ? 'No card required for this plan.' : 'Secure payment powered by Stripe'}
                     </p>
                 </div>
 
@@ -153,9 +221,11 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
                     <div className="md:col-span-2">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Payment Method</CardTitle>
+                                <CardTitle>{isFreePlan ? 'Free Activation' : 'Payment Method'}</CardTitle>
                                 <CardDescription>
-                                    Enter your card details to complete the subscription
+                                    {isFreePlan
+                                        ? 'Confirm your free plan and activate it instantly.'
+                                        : 'Enter your card details to complete the subscription'}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -177,54 +247,62 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
                                         </p>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Cardholder Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={cardholderName}
-                                            onChange={(e) => setCardholderName(e.target.value)}
-                                            placeholder="John Doe"
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            required
-                                        />
-                                    </div>
+                                    {!isFreePlan && (
+                                        <>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Cardholder Name
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={cardholderName}
+                                                    onChange={(e) => setCardholderName(e.target.value)}
+                                                    placeholder="John Doe"
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    required
+                                                />
+                                            </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Card Details
-                                        </label>
-                                        <div className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
-                                            <CardElement
-                                                options={{
-                                                    hidePostalCode: true,
-                                                    style: {
-                                                        base: {
-                                                            fontSize: '16px',
-                                                            color: '#111827',
-                                                            '::placeholder': {
-                                                                color: '#6B7280',
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Card Details
+                                                </label>
+                                                <div className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+                                                    <CardElement
+                                                        options={{
+                                                            hidePostalCode: true,
+                                                            style: {
+                                                                base: {
+                                                                    fontSize: '16px',
+                                                                    color: '#111827',
+                                                                    '::placeholder': {
+                                                                        color: '#6B7280',
+                                                                    },
+                                                                },
+                                                                invalid: {
+                                                                    color: '#DC2626',
+                                                                },
                                                             },
-                                                        },
-                                                        invalid: {
-                                                            color: '#DC2626',
-                                                        },
-                                                    },
-                                                }}
-                                            />
-                                        </div>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Test: 4242 4242 4242 4242
-                                        </p>
-                                    </div>
+                                                        }}
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Test: 4242 4242 4242 4242
+                                                </p>
+                                            </div>
+                                        </>
+                                    )}
 
                                     <Button
                                         type="submit"
-                                        disabled={isLoading || !stripe || !elements}
+                                        disabled={isLoading || (!isFreePlan && (!stripe || !elements))}
                                         className="w-full"
                                     >
-                                        {isLoading ? 'Processing...' : `Subscribe - ${formatPrice(price.amount)}/${interval === 'monthly' ? 'mo' : 'yr'}`}
+                                        {isLoading
+                                            ? (isFreePlan ? 'Starting...' : 'Processing...')
+                                            : isFreePlan
+                                                ? 'Start Free Plan'
+                                                : `Subscribe - ${formatPrice(price.amount)}/${interval === 'monthly' ? 'mo' : 'yr'}`}
                                     </Button>
                                 </form>
                             </CardContent>

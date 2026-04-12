@@ -14,26 +14,26 @@ class PlanPolicy
 
     public function view(User $user, SubscriptionPlan $plan): bool
     {
-        return $plan->is_active || $user->hasRole('admin');
+        return $plan->is_active || $user->isSuperAdmin();
     }
 
     public function create(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->isSuperAdmin();
     }
 
     public function update(User $user, SubscriptionPlan $plan): bool
     {
-        return $user->hasRole('admin');
+        return $user->isSuperAdmin();
     }
 
     public function delete(User $user, SubscriptionPlan $plan): bool
     {
-        return $user->hasRole('admin');
+        return $user->isSuperAdmin();
     }
 
     public function managePlans(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->isSuperAdmin();
     }
 }

@@ -55,7 +55,6 @@ class PricingController extends Controller
             'plan' => $plan,
             'price' => $price,
             'interval' => $request->interval,
-            'clientSecret' => null,
             'publishableKey' => config('services.stripe.public'),
         ]);
     }
@@ -63,11 +62,10 @@ class PricingController extends Controller
     public function subscribe(Request $request)
     {
         $this->authorize('create', CustomerSubscription::class);
-
         $request->validate([
             'plan_id' => 'required|exists:subscription_plans,id',
             'interval' => 'required|in:monthly,annually',
-            'payment_method' => 'required|string',
+            'payment_method' => 'nullable|string',
         ]);
 
         try {
@@ -77,11 +75,20 @@ class PricingController extends Controller
                 ->where('is_active', true)
                 ->firstOrFail();
 
-            $paymentMethod = (string) $request->payment_method;
+            $paymentMethod = $request->filled('payment_method')
+                ? (string) $request->payment_method
+                : null;
             $user = auth()->user();
 
-            if (Str::startsWith($paymentMethod, 'pm_')) {
-                $subscription = $this->subscribeToPlan->handle(
+            if ((int) $price->amount === 0) {
+                $result = $this->subscribeToPlan->handle(
+                    $user,
+                    $plan,
+                    $request->interval,
+                    null
+                );
+            } elseif ($paymentMethod && Str::startsWith($paymentMethod, 'pm_')) {
+                $result = $this->subscribeToPlan->handle(
                     $user,
                     $plan,
                     $request->interval,
@@ -113,6 +120,13 @@ class PricingController extends Controller
                         'currency' => config('services.stripe.currency', 'USD'),
                     ],
                 ]);
+
+                $result = [
+                    'subscription' => $subscription,
+                    'payment_intent_client_secret' => null,
+                    'payment_intent_status' => null,
+                    'requires_action' => false,
+                ];
             } else {
                 return response()->json([
                     'success' => false,
@@ -122,8 +136,11 @@ class PricingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'subscription' => $subscription,
-                'redirect' => route('subscriptions.show', $subscription),
+                'subscription' => $result['subscription'],
+                'redirect' => route('subscriptions.show', $result['subscription']),
+                'clientSecret' => $result['payment_intent_client_secret'],
+                'paymentIntentStatus' => $result['payment_intent_status'],
+                'requiresAction' => $result['requires_action'],
             ]);
         } catch (\Exception $e) {
             return response()->json([

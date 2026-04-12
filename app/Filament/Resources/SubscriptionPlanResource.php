@@ -75,10 +75,14 @@ class SubscriptionPlanResource extends Resource
                                     ->native(false),
                                 TextInput::make('amount')
                                     ->numeric()
+                                    ->step(1)
+                                    ->minValue(0)
                                     ->required()
-                                    ->helperText('Stored in minor units, e.g. 999 = $9.99'),
+                                    ->helperText('Stored in minor units, e.g. 0 = free, 999 = $9.99'),
                                 TextInput::make('trial_days')
                                     ->numeric()
+                                    ->step(1)
+                                    ->minValue(0)
                                     ->default(0)
                                     ->required(),
                                 Toggle::make('is_active')

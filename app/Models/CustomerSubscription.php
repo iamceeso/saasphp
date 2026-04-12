@@ -28,7 +28,7 @@ class CustomerSubscription extends Model
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
+        'amount' => 'integer',
         'current_period_start' => 'datetime',
         'current_period_end' => 'datetime',
         'trial_ends_at' => 'datetime',

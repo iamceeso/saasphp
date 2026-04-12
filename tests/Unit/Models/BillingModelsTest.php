@@ -1,11 +1,11 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\Models;
 
-use App\Models\SubscriptionPlan;
-use App\Models\PlanPrice;
-use App\Models\User;
 use App\Models\CustomerSubscription;
+use App\Models\PlanPrice;
+use App\Models\SubscriptionPlan;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,7 +15,7 @@ class BillingModelsTest extends TestCase
 
     public function test_subscription_plan_creates_successfully()
     {
-        $plan = SubscriptionPlan::create([
+        SubscriptionPlan::create([
             'slug' => 'pro',
             'name' => 'Professional',
             'description' => 'Pro plan',

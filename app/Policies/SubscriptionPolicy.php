@@ -14,7 +14,7 @@ class SubscriptionPolicy
 
     public function view(User $user, CustomerSubscription $subscription): bool
     {
-        return $user->id === $subscription->user_id || $user->hasRole('admin');
+        return $user->id === $subscription->user_id || $user->isSuperAdmin();
     }
 
     public function create(User $user): bool
@@ -25,7 +25,7 @@ class SubscriptionPolicy
 
     public function update(User $user, CustomerSubscription $subscription): bool
     {
-        if ($user->id !== $subscription->user_id && !$user->hasRole('admin')) {
+        if ($user->id !== $subscription->user_id && ! $user->isSuperAdmin()) {
             return false;
         }
 
@@ -34,12 +34,12 @@ class SubscriptionPolicy
 
     public function cancel(User $user, CustomerSubscription $subscription): bool
     {
-        return $user->id === $subscription->user_id || $user->hasRole('admin');
+        return $user->id === $subscription->user_id || $user->isSuperAdmin();
     }
 
     public function resume(User $user, CustomerSubscription $subscription): bool
     {
-        if ($user->id !== $subscription->user_id && !$user->hasRole('admin')) {
+        if ($user->id !== $subscription->user_id && ! $user->isSuperAdmin()) {
             return false;
         }
 
@@ -58,6 +58,6 @@ class SubscriptionPolicy
 
     public function viewInvoices(User $user, CustomerSubscription $subscription): bool
     {
-        return $user->id === $subscription->user_id || $user->hasRole('admin');
+        return $user->id === $subscription->user_id || $user->isSuperAdmin();
     }
 }

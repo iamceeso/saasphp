@@ -225,7 +225,9 @@ class SiteSettings extends Page implements HasForms
                                     TextInput::make('social.github.client_id')
                                         ->label(__('message.client_id')),
                                     TextInput::make('social.github.client_secret')
-                                        ->label('Client Secret'),
+                                        ->label('Client Secret')
+                                        ->password()
+                                        ->revealable(),
                                     TextInput::make('social.github.redirect_uri')
                                         ->label(__('message.redirect_uri')),
                                 ]),
@@ -238,7 +240,9 @@ class SiteSettings extends Page implements HasForms
                                     TextInput::make('social.twitter.client_id')
                                         ->label(__('message.client_id')),
                                     TextInput::make('social.twitter.client_secret')
-                                        ->label(__('message.client_secret')),
+                                        ->label(__('message.client_secret'))
+                                        ->password()
+                                        ->revealable(),
                                     TextInput::make('social.twitter.redirect_uri')
                                         ->label(__('message.redirect_uri')),
                                 ]),
@@ -251,7 +255,9 @@ class SiteSettings extends Page implements HasForms
                                     TextInput::make('social.google.client_id')
                                         ->label(__('message.client_id')),
                                     TextInput::make('social.google.client_secret')
-                                        ->label('Client Secret'),
+                                        ->label('Client Secret')
+                                        ->password()
+                                        ->revealable(),
                                     TextInput::make('social.google.redirect_uri')
                                         ->label(__('message.redirect_uri')),
                                 ]),
@@ -264,7 +270,9 @@ class SiteSettings extends Page implements HasForms
                                     TextInput::make('social.yahoo.client_id')
                                         ->label(__('message.client_id')),
                                     TextInput::make('social.yahoo.client_secret')
-                                        ->label('Client Secret'),
+                                        ->label('Client Secret')
+                                        ->password()
+                                        ->revealable(),
                                     TextInput::make('social.yahoo.redirect_uri')
                                         ->label(__('message.redirect_uri')),
                                 ]),
@@ -277,7 +285,9 @@ class SiteSettings extends Page implements HasForms
                                     TextInput::make('social.microsoft.client_id')
                                         ->label(__('message.client_id')),
                                     TextInput::make('social.microsoft.client_secret')
-                                        ->label('Client Secret'),
+                                        ->label('Client Secret')
+                                        ->password()
+                                        ->revealable(),
                                     TextInput::make('social.microsoft.redirect_uri')
                                         ->label(__('message.redirect_uri')),
                                 ]),
@@ -360,7 +370,9 @@ class SiteSettings extends Page implements HasForms
                                 ->columns(2)
                                 ->schema([
                                     TextInput::make('email.mailgun.api_key')
-                                        ->label(__('message.mailgun_api_key')),
+                                        ->label(__('message.mailgun_api_key'))
+                                        ->password()
+                                        ->revealable(),
                                     TextInput::make('email.mailgun.endpoint')
                                         ->label(__('message.mailgun_endpoint')),
                                 ])->visible(fn($get) => $get('email.client_name') === 'mailgun'),
@@ -370,7 +382,9 @@ class SiteSettings extends Page implements HasForms
                                 ->collapsed()
                                 ->schema([
                                     TextInput::make('email.resend.api_key')
-                                        ->label(__('message.resend_api_key')),
+                                        ->label(__('message.resend_api_key'))
+                                        ->password()
+                                        ->revealable(),
                                 ])->visible(fn($get) => $get('email.client_name') === 'resend'),
                             Section::make('Postmark')
                                 ->icon('fas-p')
@@ -379,7 +393,9 @@ class SiteSettings extends Page implements HasForms
                                 ->columns(2)
                                 ->schema([
                                     TextInput::make('email.postmark.api_key')
-                                        ->label(__('message.postmark_api_key')),
+                                        ->label(__('message.postmark_api_key'))
+                                        ->password()
+                                        ->revealable(),
                                 ])->visible(fn($get) => $get('email.client_name') === 'postmark'),
 
                         ])->icon('heroicon-o-envelope'),
@@ -409,9 +425,13 @@ class SiteSettings extends Page implements HasForms
                                 ->collapsed()
                                 ->schema([
                                     TextInput::make('sms.vonage.api_key')
-                                        ->label(__('message.vonage_api_key')),
+                                        ->label(__('message.vonage_api_key'))
+                                        ->password()
+                                        ->revealable(),
                                     TextInput::make('sms.vonage.api_secret')
-                                        ->label(__('message.vonage_secret_key')),
+                                        ->label(__('message.vonage_secret_key'))
+                                        ->password()
+                                        ->revealable(),
                                 ])->visible(fn($get) => $get('sms.client_name') === 'vonage'),
                             Section::make('Africa talking')
                                 ->icon('bi-globe-europe-africa')
@@ -422,7 +442,9 @@ class SiteSettings extends Page implements HasForms
                                     TextInput::make('sms.africa_talking.username')
                                         ->label(__('message.africa_talking_username')),
                                     TextInput::make('sms.africa_talking.api_key')
-                                        ->label(__('message.africa_talking_api_key')),
+                                        ->label(__('message.africa_talking_api_key'))
+                                        ->password()
+                                        ->revealable(),
                                 ])->visible(fn($get) => $get('sms.client_name') === 'africa_talking'),
 
                         ])->icon('fas-sms'),
@@ -437,9 +459,13 @@ class SiteSettings extends Page implements HasForms
                                     TextInput::make('payments.stripe.public_key')
                                         ->label(__('message.stripe_public_key')),
                                     TextInput::make('payments.stripe.secret_key')
-                                        ->label(__('message.stripe_secret_key')),
+                                        ->label(__('message.stripe_secret_key'))
+                                        ->password()
+                                        ->revealable(),
                                     TextInput::make('payments.stripe.webhook_secret')
-                                        ->label(__('message.stripe_webhook_secret')),
+                                        ->label(__('message.stripe_webhook_secret'))
+                                        ->password()
+                                        ->revealable(),
                                 ]),
                             Section::make('Paddle')
                                 ->icon('si-paddle')
@@ -449,7 +475,9 @@ class SiteSettings extends Page implements HasForms
                                     TextInput::make('payments.paddle.vendor_id')
                                         ->label(__('message.paddle_vendor_id')),
                                     TextInput::make('payments.paddle.api_key')
-                                        ->label(__('message.paddle_api_key')),
+                                        ->label(__('message.paddle_api_key'))
+                                        ->password()
+                                        ->revealable(),
                                     TextInput::make('payments.paddle.public_key')
                                         ->label(__('message.paddle_public_key')), // For webhook verification
                                 ]),
@@ -461,7 +489,9 @@ class SiteSettings extends Page implements HasForms
                                     TextInput::make('payments.paystack.public_key')
                                         ->label(__('message.paystack_public_key')),
                                     TextInput::make('payments.paystack.secret_key')
-                                        ->label(__('message.paystack_secret_key')),
+                                        ->label(__('message.paystack_secret_key'))
+                                        ->password()
+                                        ->revealable(),
                                 ]),
                         ])->icon('heroicon-o-banknotes'),
                 ]),

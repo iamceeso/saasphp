@@ -39,9 +39,9 @@ export default function Dashboard() {
                                 <CardDescription>Choose or compare subscription plans.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <Link href={route('pricing.show')}>
-                                    <Button className="w-full">Open Pricing</Button>
-                                </Link>
+                                <Button asChild className="w-full">
+                                    <Link href={route('pricing.show')}>Open Pricing</Link>
+                                </Button>
                             </CardContent>
                         </Card>
 
@@ -51,9 +51,9 @@ export default function Dashboard() {
                                 <CardDescription>Manage your active subscriptions and updates.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <Link href={route('subscriptions.index')}>
-                                    <Button className="w-full" variant="outline">Manage Subscriptions</Button>
-                                </Link>
+                                <Button asChild className="w-full" variant="outline">
+                                    <Link href={route('subscriptions.index')}>Manage Subscriptions</Link>
+                                </Button>
                             </CardContent>
                         </Card>
 
@@ -63,9 +63,9 @@ export default function Dashboard() {
                                 <CardDescription>View invoices and billing events.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <Link href={route('subscriptions.index')}>
-                                    <Button className="w-full" variant="secondary">View Billing</Button>
-                                </Link>
+                                <Button asChild className="w-full" variant="secondary">
+                                    <Link href={route('subscriptions.index')}>View Billing</Link>
+                                </Button>
                             </CardContent>
                         </Card>
                     </div>

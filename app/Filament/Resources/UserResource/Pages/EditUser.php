@@ -38,7 +38,7 @@ class EditUser extends EditRecord
                 ->visible(
                     fn(User $record) =>
                     auth()->user()?->can('delete', $record) &&
-                        !$record->hasRole('admin')
+                        ! $record->isSuperAdmin()
                 ),
             Actions\RestoreAction::make()
                 ->icon('heroicon-o-arrow-path')
@@ -53,7 +53,7 @@ class EditUser extends EditRecord
                 ->visible(
                     fn(User $record) =>
                     auth()->user()?->can('forceDelete', $record) &&
-                        !$record->hasRole('admin')
+                        ! $record->isSuperAdmin()
                 ),
         ];
 
@@ -62,7 +62,7 @@ class EditUser extends EditRecord
             ->visible(
                 fn() =>
                 auth()->user()?->can('impersonate', User::class) &&
-                    $this->record->hasRole('user') &&
+                    $this->record->isStandardUser() &&
                     (!($this->record->phone && !$this->record->hasVerifiedPhone())) &&
                     (!($this->record->email && !$this->record->hasVerifiedEmail()))
             );

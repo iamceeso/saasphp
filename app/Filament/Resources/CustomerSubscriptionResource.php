@@ -28,7 +28,7 @@ class CustomerSubscriptionResource extends Resource
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->hasRole('admin') ?? false;
+        return auth()->user()?->can('viewAny', CustomerSubscription::class) ?? false;
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -73,6 +73,8 @@ class CustomerSubscriptionResource extends Resource
                             ->native(false),
                         TextInput::make('amount')
                             ->numeric()
+                            ->step(1)
+                            ->minValue(0)
                             ->required(),
                         DateTimePicker::make('current_period_start')
                             ->required(),

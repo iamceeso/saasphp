@@ -57,6 +57,20 @@ class AuthorizationPolicyTest extends TestCase
         $this->assertFalse($editor->can('update', $admin));
     }
 
+    public function test_non_admin_cannot_update_privileged_staff_user_even_with_update_permission(): void
+    {
+        Permission::findOrCreate('update_user', 'web');
+
+        $editor = User::factory()->create(['email' => 'editor2@example.com']);
+        $editor->assignRole('staff');
+        $editor->givePermissionTo('update_user');
+
+        $manager = User::factory()->create(['email' => 'manager@example.com']);
+        $manager->assignRole('staff');
+
+        $this->assertFalse($editor->can('update', $manager));
+    }
+
     public function test_view_no_role_permission_matches_generated_permission_name(): void
     {
         Permission::findOrCreate('view_no_role_role', 'web');
@@ -66,6 +80,18 @@ class AuthorizationPolicyTest extends TestCase
         $user->givePermissionTo('view_no_role_role');
 
         $this->assertTrue($user->can('viewNoRole', User::class));
+    }
+
+    public function test_verified_staff_user_can_access_panel_without_matching_site_domain(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'staff@example.org',
+            'email_verified_at' => now(),
+        ]);
+
+        $user->assignRole('staff');
+
+        $this->assertTrue($user->can('accessPanel', User::class));
     }
 
     public function test_subscription_create_policy_uses_verification_model_not_raw_column(): void

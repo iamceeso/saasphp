@@ -26,7 +26,7 @@ interface Price {
     interval: 'monthly' | 'annually';
     amount: number;
     trial_days: number;
-    stripe_price_id: string;
+    stripe_price_id: string | null;
     is_active: boolean;
 }
 
@@ -59,12 +59,73 @@ export default function PricingPage({ plans, userSubscription }: Props) {
     const { auth } = usePage<SharedData>().props;
     const isAuthenticated = Boolean(auth?.user);
     const [billingInterval, setBillingInterval] = React.useState<'monthly' | 'annually'>('monthly');
+    const [subscribingPlanId, setSubscribingPlanId] = React.useState<number | null>(null);
+    const [subscribeError, setSubscribeError] = React.useState<string | null>(null);
 
-    const handleSubscribe = (planId: number) => {
-        window.location.href = route('checkout.show', {
-            plan_id: planId,
-            interval: billingInterval,
-        });
+    const handleSubscribe = async (plan: Plan) => {
+        const price = plan.prices.find((p) => p.interval === billingInterval);
+
+        if (!price) {
+            setSubscribeError('This plan is not available for the selected billing interval.');
+            return;
+        }
+
+        if (!isAuthenticated || price.amount > 0) {
+            window.location.href = route('checkout.show', {
+                plan_id: plan.id,
+                interval: billingInterval,
+            });
+            return;
+        }
+
+        setSubscribingPlanId(plan.id);
+        setSubscribeError(null);
+
+        try {
+            const response = await fetch(route('subscribe'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    plan_id: plan.id,
+                    interval: billingInterval,
+                }),
+            });
+
+            const contentType = response.headers.get('content-type') || '';
+
+            if (!contentType.includes('application/json')) {
+                if (response.status === 401 || response.status === 403) {
+                    setSubscribeError('Your session has expired or access is denied. Please sign in again and retry.');
+                    return;
+                }
+
+                if (response.status === 419) {
+                    setSubscribeError('Your session token expired. Refresh the page and try again.');
+                    return;
+                }
+
+                setSubscribeError('Unexpected server response. Please refresh the page and try again.');
+                return;
+            }
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                setSubscribeError(data.error || 'Unable to activate the free plan.');
+                return;
+            }
+
+            window.location.href = data.redirect;
+        } catch (error) {
+            setSubscribeError(error instanceof Error ? error.message : 'Unable to activate the free plan.');
+        } finally {
+            setSubscribingPlanId(null);
+        }
     };
 
     const sortedPlans = [...plans].sort((a, b) => a.sort_order - b.sort_order);
@@ -118,6 +179,7 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                         const price = plan.prices.find((p) => p.interval === billingInterval);
                         const isCurrentPlan = userSubscription?.plan_id === plan.id;
                         const isHighlighted = plan.id === highlightedPlanId;
+                        const isFreePlan = (price?.amount ?? 0) === 0;
 
                         return (
                             <Card
@@ -171,18 +233,30 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                                     </div>
 
                                     <Button
-                                        onClick={() => handleSubscribe(plan.id)}
-                                        disabled={isCurrentPlan}
+                                        onClick={() => void handleSubscribe(plan)}
+                                        disabled={isCurrentPlan || subscribingPlanId === plan.id}
                                         className="w-full"
                                         variant={isCurrentPlan ? 'outline' : isHighlighted ? 'default' : 'secondary'}
                                     >
-                                        {isCurrentPlan ? 'Current Plan' : 'Subscribe Now'}
+                                        {isCurrentPlan
+                                            ? 'Current Plan'
+                                            : subscribingPlanId === plan.id
+                                                ? (isFreePlan ? 'Starting Free Plan...' : 'Loading...')
+                                                : isFreePlan
+                                                    ? 'Start Free'
+                                                    : 'Subscribe Now'}
                                     </Button>
                                 </CardContent>
                             </Card>
                         );
                     })}
                 </div>
+
+                {subscribeError && (
+                    <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        {subscribeError}
+                    </div>
+                )}
 
                 <div className={`${isAuthenticated ? '' : 'max-w-4xl mx-auto mt-16'} mt-6 rounded-xl border bg-card p-8`}>
                     <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
