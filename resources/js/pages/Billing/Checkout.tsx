@@ -111,7 +111,13 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
             const data = await response.json();
 
             if (data.success) {
-                if (data.clientSecret) {
+                const requiresConfirmation =
+                    Boolean(data.requiresAction) ||
+                    ['requires_action', 'requires_confirmation'].includes(
+                        data.paymentIntentStatus ?? ''
+                    );
+
+                if (requiresConfirmation && data.clientSecret) {
                     const confirmation = await stripe.confirmCardPayment(data.clientSecret);
 
                     if (confirmation.error) {

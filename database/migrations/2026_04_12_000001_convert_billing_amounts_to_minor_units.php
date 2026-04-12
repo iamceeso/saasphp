@@ -74,12 +74,12 @@ return new class extends Migration
 
     private function convertForSqlite(): void
     {
-        DB::transaction(function () {
-            DB::statement('UPDATE plan_prices SET amount = ROUND(amount * 100)');
-            DB::statement('UPDATE customer_subscriptions SET amount = ROUND(amount * 100)');
+        DB::statement('UPDATE plan_prices SET amount = ROUND(amount * 100)');
+        DB::statement('UPDATE customer_subscriptions SET amount = ROUND(amount * 100)');
 
-            DB::statement('PRAGMA foreign_keys = OFF');
+        Schema::disableForeignKeyConstraints();
 
+        try {
             Schema::table('plan_prices', function (Blueprint $table) {
                 $table->unsignedBigInteger('amount_minor')->default(0);
             });
@@ -107,16 +107,16 @@ return new class extends Migration
             Schema::table('customer_subscriptions', function (Blueprint $table) {
                 $table->renameColumn('amount_minor', 'amount');
             });
-
-            DB::statement('PRAGMA foreign_keys = ON');
-        });
+        } finally {
+            Schema::enableForeignKeyConstraints();
+        }
     }
 
     private function revertForSqlite(): void
     {
-        DB::transaction(function () {
-            DB::statement('PRAGMA foreign_keys = OFF');
+        Schema::disableForeignKeyConstraints();
 
+        try {
             Schema::table('plan_prices', function (Blueprint $table) {
                 $table->decimal('amount_decimal', 10, 2)->default(0);
             });
@@ -144,8 +144,8 @@ return new class extends Migration
             Schema::table('customer_subscriptions', function (Blueprint $table) {
                 $table->renameColumn('amount_decimal', 'amount');
             });
-
-            DB::statement('PRAGMA foreign_keys = ON');
-        });
+        } finally {
+            Schema::enableForeignKeyConstraints();
+        }
     }
 };
