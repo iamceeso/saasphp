@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\DB;
 
 class RoleHelper
 {
+    public static function superAdminRoleName(): string
+    {
+        return User::superAdminRoleName();
+    }
+
     public static function canManageAssignments(Role $role): bool
     {
         $user = auth()->user();
@@ -16,7 +21,7 @@ class RoleHelper
             return false;
         }
 
-        if (in_array(strtolower($role->name), ['admin', 'user'], true)) {
+        if (in_array(strtolower($role->name), [strtolower(static::superAdminRoleName()), 'user'], true)) {
             return $user->hasPermissionTo('assign_core_role');
         }
 
@@ -29,18 +34,18 @@ class RoleHelper
             return false;
         }
 
-        if (strtolower($role->name) !== 'admin') {
+        if (strtolower($role->name) !== strtolower(static::superAdminRoleName())) {
             return true;
         }
 
-        return static::getAdminCount() > 1 || ! $user->hasRole('admin');
+        return static::getAdminCount() > 1 || ! $user->isSuperAdmin();
     }
 
     public static function getAdminCount(): int
     {
         return DB::table('model_has_roles')
             ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-            ->where('roles.name', 'admin')
+            ->where('roles.name', static::superAdminRoleName())
             ->count();
     }
 }

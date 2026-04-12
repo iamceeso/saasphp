@@ -62,11 +62,10 @@ class PricingController extends Controller
     public function subscribe(Request $request)
     {
         $this->authorize('create', CustomerSubscription::class);
-
         $request->validate([
             'plan_id' => 'required|exists:subscription_plans,id',
             'interval' => 'required|in:monthly,annually',
-            'payment_method' => 'required|string',
+            'payment_method' => 'nullable|string',
         ]);
 
         try {
@@ -76,10 +75,19 @@ class PricingController extends Controller
                 ->where('is_active', true)
                 ->firstOrFail();
 
-            $paymentMethod = (string) $request->payment_method;
+            $paymentMethod = $request->filled('payment_method')
+                ? (string) $request->payment_method
+                : null;
             $user = auth()->user();
 
-            if (Str::startsWith($paymentMethod, 'pm_')) {
+            if ((int) $price->amount === 0) {
+                $result = $this->subscribeToPlan->handle(
+                    $user,
+                    $plan,
+                    $request->interval,
+                    null
+                );
+            } elseif ($paymentMethod && Str::startsWith($paymentMethod, 'pm_')) {
                 $result = $this->subscribeToPlan->handle(
                     $user,
                     $plan,

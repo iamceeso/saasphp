@@ -25,12 +25,16 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        Gate::before(function ($user) {
+        Gate::before(function ($user, string $ability) {
             if (!config('filament-shield.super_admin.enabled')) {
                 return null;
             }
 
-            return $user->hasRole(config('filament-shield.super_admin.name', 'admin')) ? true : null;
+            if ($ability === 'accessPanel') {
+                return null;
+            }
+
+            return $user->isSuperAdmin() ? true : null;
         });
     }
 

@@ -41,6 +41,10 @@ class SubscriptionService
             ->where('is_active', true)
             ->firstOrFail();
 
+        if ((int) $price->amount === 0) {
+            return $this->subscribeToFreePlan($user, $plan, $interval);
+        }
+
         $stripeCustomerId = $this->getOrCreateStripeCustomer($user);
         $stripePriceId = $this->getOrCreateStripePrice($plan, $price);
 
@@ -123,6 +127,64 @@ class SubscriptionService
         }
     }
 
+    public function subscribeToFreePlan(
+        User $user,
+        SubscriptionPlan $plan,
+        string $interval = 'monthly'
+    ): array {
+        $price = $plan->prices()
+            ->where('interval', $interval)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        if ((int) $price->amount !== 0) {
+            throw new \InvalidArgumentException('Selected plan price is not a free tier.');
+        }
+
+        $subscription = DB::transaction(function () use ($user, $plan, $interval, $price) {
+            $lockedUser = User::query()
+                ->whereKey($user->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $current = $this->normalizeCurrentSubscriptions($lockedUser);
+
+            if ($current instanceof CustomerSubscription) {
+                return $this->replaceWithFreePlan($current, $plan, $interval, $price);
+            }
+
+            $now = now();
+
+            return CustomerSubscription::create([
+                'user_id' => $lockedUser->id,
+                'plan_id' => $plan->id,
+                'current_subscription_key' => $this->currentSubscriptionKeyFor($lockedUser->id),
+                'stripe_subscription_id' => 'sub_free_' . $lockedUser->id . '_' . str()->uuid(),
+                'stripe_customer_id' => $lockedUser->stripe_id ?: 'cus_free_' . $lockedUser->id,
+                'status' => 'active',
+                'interval' => $interval,
+                'amount' => 0,
+                'current_period_start' => $now,
+                'current_period_end' => $now,
+                'trial_ends_at' => null,
+                'canceled_at' => null,
+                'ended_at' => null,
+                'metadata' => [
+                    'provider' => 'free',
+                    'currency' => config('services.stripe.currency', 'USD'),
+                    'free_tier' => true,
+                ],
+            ]);
+        });
+
+        return [
+            'subscription' => $subscription->refresh(),
+            'payment_intent_client_secret' => null,
+            'payment_intent_status' => null,
+            'requires_action' => false,
+        ];
+    }
+
     public function swapPlan(
         CustomerSubscription $subscription,
         SubscriptionPlan $newPlan,
@@ -134,7 +196,15 @@ class SubscriptionService
             ->where('is_active', true)
             ->firstOrFail();
 
+        if ((int) $newPrice->amount === 0) {
+            return $this->replaceWithFreePlan($subscription, $newPlan, $interval, $newPrice);
+        }
+
         $provider = data_get($subscription->metadata, 'provider');
+
+        if ($provider === 'free') {
+            throw new \InvalidArgumentException('Upgrading from a free plan requires checkout so a payment method can be collected.');
+        }
 
         if ($provider === 'local') {
             return DB::transaction(function () use ($subscription, $newPlan, $interval, $newPrice) {
@@ -189,6 +259,23 @@ class SubscriptionService
 
     public function cancel(CustomerSubscription $subscription, bool $immediately = false): void
     {
+        $provider = data_get($subscription->metadata, 'provider');
+
+        if (in_array($provider, ['free', 'local'], true)) {
+            DB::transaction(function () use ($subscription, $immediately) {
+                $endedAt = $immediately ? now() : $subscription->current_period_end;
+
+                $subscription->update([
+                    'current_subscription_key' => null,
+                    'status' => 'canceled',
+                    'canceled_at' => now(),
+                    'ended_at' => $endedAt ?: now(),
+                ]);
+            });
+
+            return;
+        }
+
         if ($immediately) {
             $stripeSubscription = $this->getStripeClient()->subscriptions->cancel($subscription->stripe_subscription_id, [
                 'invoice_now' => false,
@@ -225,6 +312,21 @@ class SubscriptionService
 
     public function resume(CustomerSubscription $subscription): CustomerSubscription
     {
+        $provider = data_get($subscription->metadata, 'provider');
+
+        if (in_array($provider, ['free', 'local'], true)) {
+            return DB::transaction(function () use ($subscription) {
+                $subscription->update([
+                    'current_subscription_key' => $this->currentSubscriptionKeyFor($subscription->user_id),
+                    'status' => 'active',
+                    'canceled_at' => null,
+                    'ended_at' => null,
+                ]);
+
+                return $subscription->refresh();
+            });
+        }
+
         $this->getStripeClient()->subscriptions->update($subscription->stripe_subscription_id, [
             'cancel_at_period_end' => false,
         ]);
@@ -361,6 +463,112 @@ class SubscriptionService
         return "user:{$userId}";
     }
 
+    public function replaceFreeSubscriptionWithPaidPlan(
+        CustomerSubscription $subscription,
+        SubscriptionPlan $plan,
+        string $interval,
+        string $paymentMethod
+    ): array {
+        if (data_get($subscription->metadata, 'provider') !== 'free') {
+            throw new \InvalidArgumentException('This subscription is not a free tier subscription.');
+        }
+
+        $price = $plan->prices()
+            ->where('interval', $interval)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        if ((int) $price->amount < 1) {
+            throw new \InvalidArgumentException('Upgrade target must be a paid plan.');
+        }
+
+        $stripeCustomerId = $this->getOrCreateStripeCustomer($subscription->user);
+        $stripePriceId = $this->getOrCreateStripePrice($plan, $price);
+
+        try {
+            $this->getStripeClient()->paymentMethods->attach($paymentMethod, [
+                'customer' => $stripeCustomerId,
+            ]);
+        } catch (ApiErrorException $e) {
+            if (!str_contains(strtolower($e->getMessage()), 'already')) {
+                throw $e;
+            }
+        }
+
+        $this->getStripeClient()->customers->update($stripeCustomerId, [
+            'invoice_settings' => [
+                'default_payment_method' => $paymentMethod,
+            ],
+        ]);
+
+        $payload = [
+            'customer' => $stripeCustomerId,
+            'items' => [
+                [
+                    'price' => $stripePriceId,
+                    'quantity' => 1,
+                ],
+            ],
+            'collection_method' => 'charge_automatically',
+            'payment_behavior' => 'default_incomplete',
+            'payment_settings' => [
+                'save_default_payment_method' => 'on_subscription',
+            ],
+            'default_payment_method' => $paymentMethod,
+            'expand' => ['latest_invoice.payment_intent'],
+        ];
+
+        if ($price->trial_days > 0) {
+            $payload['trial_period_days'] = $price->trial_days;
+        }
+
+        $stripeSubscription = $this->getStripeClient()->subscriptions->create($payload);
+
+        try {
+            $localSubscription = DB::transaction(function () use ($subscription, $plan, $interval, $stripeSubscription) {
+                $subscription->update([
+                    'current_subscription_key' => null,
+                    'status' => 'canceled',
+                    'canceled_at' => now(),
+                    'ended_at' => now(),
+                    'metadata' => array_merge($subscription->metadata ?? [], [
+                        'upgraded_to_paid' => true,
+                    ]),
+                ]);
+
+                return $this->syncSubscriptionToDB($subscription->user, $plan, $stripeSubscription, $interval);
+            });
+
+            $paymentIntent = data_get($stripeSubscription, 'latest_invoice.payment_intent');
+
+            return [
+                'subscription' => $localSubscription,
+                'payment_intent_client_secret' => data_get($paymentIntent, 'client_secret'),
+                'payment_intent_status' => data_get($paymentIntent, 'status'),
+                'requires_action' => in_array(
+                    data_get($paymentIntent, 'status'),
+                    ['requires_action', 'requires_confirmation'],
+                    true
+                ),
+            ];
+        } catch (\Throwable $e) {
+            try {
+                $this->getStripeClient()->subscriptions->cancel($stripeSubscription->id, [
+                    'invoice_now' => false,
+                    'prorate' => false,
+                ]);
+            } catch (\Throwable $rollbackException) {
+                Log::error('Failed to rollback Stripe subscription after free-tier upgrade error', [
+                    'user_id' => $subscription->user_id,
+                    'stripe_subscription_id' => $stripeSubscription->id,
+                    'error' => $rollbackException->getMessage(),
+                ]);
+            }
+
+            throw $e;
+        }
+    }
+
     private function syncSubscriptionToDB(
         User $user,
         SubscriptionPlan $plan,
@@ -456,8 +664,8 @@ class SubscriptionService
 
         $unitAmount = (int) $price->amount;
 
-        if ($unitAmount < 0) {
-            throw new \InvalidArgumentException('Plan price amount must be zero or greater.');
+        if ($unitAmount < 1) {
+            throw new \InvalidArgumentException('Free plans should not create Stripe prices.');
         }
 
         $stripePrice = $this->getStripeClient()->prices->create([
@@ -501,5 +709,47 @@ class SubscriptionService
         ]);
 
         return $stripeProduct->id;
+    }
+
+    private function replaceWithFreePlan(
+        CustomerSubscription $subscription,
+        SubscriptionPlan $plan,
+        string $interval,
+        PlanPrice $price
+    ): CustomerSubscription {
+        $provider = data_get($subscription->metadata, 'provider');
+
+        if ($provider === 'stripe' && ! empty($subscription->stripe_subscription_id)) {
+            $this->getStripeClient()->subscriptions->cancel($subscription->stripe_subscription_id, [
+                'invoice_now' => false,
+                'prorate' => false,
+            ]);
+        }
+
+        $now = now();
+
+        return DB::transaction(function () use ($subscription, $plan, $interval, $price, $now) {
+            $subscription->update([
+                'plan_id' => $plan->id,
+                'current_subscription_key' => $this->currentSubscriptionKeyFor($subscription->user_id),
+                'stripe_subscription_id' => 'sub_free_' . $subscription->user_id . '_' . str()->uuid(),
+                'stripe_customer_id' => $subscription->stripe_customer_id ?: ($subscription->user->stripe_id ?: 'cus_free_' . $subscription->user_id),
+                'status' => 'active',
+                'interval' => $interval,
+                'amount' => $price->amount,
+                'current_period_start' => $now,
+                'current_period_end' => $now,
+                'trial_ends_at' => null,
+                'canceled_at' => null,
+                'ended_at' => null,
+                'metadata' => [
+                    'provider' => 'free',
+                    'currency' => config('services.stripe.currency', 'USD'),
+                    'free_tier' => true,
+                ],
+            ]);
+
+            return $subscription->refresh();
+        });
     }
 }

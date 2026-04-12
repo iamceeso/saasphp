@@ -40,7 +40,10 @@ class UsersRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\AttachAction::make()
-                    ->recordSelectOptionsQuery(fn() => User::doesntHave('roles'))
+                    ->recordSelectOptionsQuery(fn() => User::query()->whereDoesntHave(
+                        'roles',
+                        fn($query) => $query->where('roles.id', $this->getOwnerRecord()->getKey())
+                    ))
                     ->recordSelectSearchColumns(['name', 'email', 'phone'])
                     ->authorize(fn() => RoleHelper::canManageAssignments($this->getOwnerRecord()))
                     ->hidden(fn() => ! RoleHelper::canManageAssignments($this->getOwnerRecord()))

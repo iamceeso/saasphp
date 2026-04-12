@@ -82,6 +82,50 @@ class BillingTest extends TestCase
         $this->assertEqual(29990, $annuallyPrice->amount);
     }
 
+    public function test_authenticated_user_can_subscribe_to_free_plan_without_payment_method()
+    {
+        $user = User::create([
+            'name' => 'Free User',
+            'email' => 'free@example.com',
+            'password' => bcrypt('password'),
+            'email_verified_at' => now(),
+        ]);
+
+        $plan = SubscriptionPlan::create([
+            'slug' => 'free',
+            'name' => 'Free',
+            'description' => 'Free tier',
+            'is_active' => true,
+        ]);
+
+        PlanPrice::create([
+            'plan_id' => $plan->id,
+            'interval' => 'monthly',
+            'amount' => 0,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('subscribe'), [
+            'plan_id' => $plan->id,
+            'interval' => 'monthly',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('customer_subscriptions', [
+            'user_id' => $user->id,
+            'plan_id' => $plan->id,
+            'status' => 'active',
+            'amount' => 0,
+        ]);
+
+        $subscription = CustomerSubscription::query()->where('user_id', $user->id)->firstOrFail();
+
+        $this->assertSame('free', data_get($subscription->metadata, 'provider'));
+    }
+
     private function assertEqual($expected, $actual)
     {
         $this->assertEquals($expected, $actual);

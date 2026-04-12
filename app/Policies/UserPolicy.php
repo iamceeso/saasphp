@@ -3,7 +3,6 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\Setting;
 
 class UserPolicy
 {
@@ -84,10 +83,7 @@ class UserPolicy
 
     public function accessPanel(User $user): bool
     {
-        $domainAllowed = str_ends_with($user->email, '@' . Setting::getValue('site.url', 'saasphp.com'));
-        $roleAllowed = $user->roles->isNotEmpty() && !$user->hasRole('user');
-
-        return $domainAllowed && $roleAllowed;
+        return $user->hasVerifiedEmail() && $user->hasPrivilegedRole();
     }
 
     public function byPassMaintenanceRole(User $user): bool
@@ -97,10 +93,18 @@ class UserPolicy
 
     protected function canManageTarget(User $user, User $target): bool
     {
-        if ($target->hasRole(config('filament-shield.super_admin.name', 'admin'))) {
-            return $user->hasRole(config('filament-shield.super_admin.name', 'admin'));
+        if ($user->is($target)) {
+            return true;
         }
 
-        return true;
+        if ($target->isSuperAdmin()) {
+            return $user->isSuperAdmin();
+        }
+
+        if ($target->hasPrivilegedRole()) {
+            return $user->isSuperAdmin();
+        }
+
+        return $user->hasPrivilegedRole();
     }
 }

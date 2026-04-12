@@ -33,24 +33,20 @@ return new class extends Migration
 
     private function convertForMySql(): void
     {
-        DB::transaction(function () {
-            DB::statement('UPDATE plan_prices SET amount = ROUND(amount * 100)');
-            DB::statement('UPDATE customer_subscriptions SET amount = ROUND(amount * 100)');
+        DB::statement('UPDATE plan_prices SET amount = ROUND(amount * 100)');
+        DB::statement('UPDATE customer_subscriptions SET amount = ROUND(amount * 100)');
 
-            DB::statement('ALTER TABLE plan_prices MODIFY amount BIGINT UNSIGNED NOT NULL');
-            DB::statement('ALTER TABLE customer_subscriptions MODIFY amount BIGINT UNSIGNED NOT NULL');
-        });
+        DB::statement('ALTER TABLE plan_prices MODIFY amount BIGINT UNSIGNED NOT NULL');
+        DB::statement('ALTER TABLE customer_subscriptions MODIFY amount BIGINT UNSIGNED NOT NULL');
     }
 
     private function revertForMySql(): void
     {
-        DB::transaction(function () {
-            DB::statement('ALTER TABLE plan_prices MODIFY amount DECIMAL(10, 2) NOT NULL');
-            DB::statement('ALTER TABLE customer_subscriptions MODIFY amount DECIMAL(10, 2) NOT NULL');
+        DB::statement('ALTER TABLE plan_prices MODIFY amount DECIMAL(10, 2) NOT NULL');
+        DB::statement('ALTER TABLE customer_subscriptions MODIFY amount DECIMAL(10, 2) NOT NULL');
 
-            DB::statement('UPDATE plan_prices SET amount = amount / 100');
-            DB::statement('UPDATE customer_subscriptions SET amount = amount / 100');
-        });
+        DB::statement('UPDATE plan_prices SET amount = amount / 100');
+        DB::statement('UPDATE customer_subscriptions SET amount = amount / 100');
     }
 
     private function convertForPostgres(): void

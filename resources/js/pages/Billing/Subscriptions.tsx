@@ -21,6 +21,10 @@ interface Subscription {
     trial_ends_at: string | null;
     canceled_at: string | null;
     ended_at?: string | null;
+    metadata?: {
+        provider?: string;
+        free_tier?: boolean;
+    };
     plan: {
         name: string;
         description: string;
@@ -87,21 +91,38 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                                                 Price
                                             </p>
                                             <p className="text-lg font-semibold text-gray-900">
-                                                {formatBillingPrice(subscription.amount)}
-                                                <span className="text-sm font-normal text-gray-600">
-                                                    /{subscription.interval === 'monthly' ? 'mo' : 'yr'}
-                                                </span>
+                                                {subscription.metadata?.provider === 'free' ? (
+                                                    'Free'
+                                                ) : (
+                                                    <>
+                                                        {formatBillingPrice(subscription.amount)}
+                                                        <span className="text-sm font-normal text-gray-600">
+                                                            /{subscription.interval === 'monthly' ? 'mo' : 'yr'}
+                                                        </span>
+                                                    </>
+                                                )}
                                             </p>
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 mb-1">
-                                                Current Period
-                                            </p>
-                                            <p className="text-sm text-gray-900">
-                                                {formatBillingDate(subscription.current_period_start)} -{' '}
-                                                {formatBillingDate(subscription.current_period_end)}
-                                            </p>
-                                        </div>
+                                        {subscription.metadata?.provider === 'free' ? (
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-600 mb-1">
+                                                    Access
+                                                </p>
+                                                <p className="text-sm text-gray-900">
+                                                    Active free tier
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-600 mb-1">
+                                                    Current Period
+                                                </p>
+                                                <p className="text-sm text-gray-900">
+                                                    {formatBillingDate(subscription.current_period_start)} -{' '}
+                                                    {formatBillingDate(subscription.current_period_end)}
+                                                </p>
+                                            </div>
+                                        )}
                                         {subscription.trial_ends_at && (
                                             <div>
                                                 <p className="text-sm font-medium text-gray-600 mb-1">
@@ -124,7 +145,7 @@ export default function SubscriptionsPage({ subscriptions }: Props) {
                                         )}
                                         <div>
                                             <p className="text-sm font-medium text-gray-600 mb-1">
-                                                Subscription ID
+                                                Subscription Reference
                                             </p>
                                             <p className="text-xs text-gray-600 font-mono">
                                                 {subscription.stripe_subscription_id.slice(-8)}...

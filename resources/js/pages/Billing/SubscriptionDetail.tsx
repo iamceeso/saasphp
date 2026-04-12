@@ -21,6 +21,10 @@ interface Subscription {
     canceled_at: string | null;
     ended_at?: string | null;
     trial_ends_at: string | null;
+    metadata?: {
+        provider?: string;
+        free_tier?: boolean;
+    };
     plan: {
         id: number;
         name: string;
@@ -74,6 +78,10 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
     const [selectedInterval, setSelectedInterval] = useState<'monthly' | 'annually'>('monthly');
     const [isUpdating, setIsUpdating] = useState(false);
     const [actionError, setActionError] = useState<string | null>(null);
+    const isFreeSubscription = subscription.metadata?.provider === 'free';
+    const selectedPlanRecord = availablePlans.find((plan) => plan.id === selectedPlan);
+    const selectedPlanPrice = selectedPlanRecord?.prices.find((price) => price.interval === selectedInterval);
+    const upgradingFromFreeToPaid = isFreeSubscription && (selectedPlanPrice?.amount ?? 0) > 0;
 
     const handleSwapPlan = async () => {
         if (!selectedPlan) return;
@@ -172,21 +180,38 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                     <div>
                                         <p className="text-sm font-medium text-gray-600 mb-1">Price</p>
                                         <p className="text-lg font-semibold text-gray-900">
-                                            {formatBillingPrice(subscription.amount)}
-                                            <span className="text-sm font-normal text-gray-600">
-                                                /{subscription.interval === 'monthly' ? 'mo' : 'yr'}
-                                            </span>
+                                            {isFreeSubscription ? (
+                                                'Free'
+                                            ) : (
+                                                <>
+                                                    {formatBillingPrice(subscription.amount)}
+                                                    <span className="text-sm font-normal text-gray-600">
+                                                        /{subscription.interval === 'monthly' ? 'mo' : 'yr'}
+                                                    </span>
+                                                </>
+                                            )}
                                         </p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-600 mb-1">
-                                            Current Period
-                                        </p>
-                                        <p className="text-sm text-gray-900">
-                                            {formatBillingDate(subscription.current_period_start)} -{' '}
-                                            {formatBillingDate(subscription.current_period_end)}
-                                        </p>
-                                    </div>
+                                    {isFreeSubscription ? (
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-600 mb-1">
+                                                Access
+                                            </p>
+                                            <p className="text-sm text-gray-900">
+                                                Active free tier
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-600 mb-1">
+                                                Current Period
+                                            </p>
+                                            <p className="text-sm text-gray-900">
+                                                {formatBillingDate(subscription.current_period_start)} -{' '}
+                                                {formatBillingDate(subscription.current_period_end)}
+                                            </p>
+                                        </div>
+                                    )}
                                     {subscription.trial_ends_at && (
                                         <div>
                                             <p className="text-sm font-medium text-gray-600 mb-1">
@@ -288,11 +313,21 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
 
                                             <Button
                                                 onClick={handleSwapPlan}
-                                                disabled={isUpdating}
+                                                disabled={isUpdating || upgradingFromFreeToPaid}
                                                 className="w-full"
                                             >
-                                                {isUpdating ? 'Updating...' : 'Update Plan'}
+                                                {isUpdating
+                                                    ? 'Updating...'
+                                                    : upgradingFromFreeToPaid
+                                                        ? 'Use Pricing Page to Upgrade'
+                                                        : 'Update Plan'}
                                             </Button>
+
+                                            {upgradingFromFreeToPaid && (
+                                                <p className="text-sm text-muted-foreground">
+                                                    Paid upgrades from a free plan require checkout so a payment method can be collected.
+                                                </p>
+                                            )}
 
                                             {actionError && (
                                                 <p className="text-sm text-red-600">

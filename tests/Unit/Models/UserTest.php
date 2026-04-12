@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Models\User;
 use App\Models\Setting;
+use App\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
@@ -39,6 +40,10 @@ class UserTest extends TestCase
             'type' => 'boolean',
             'group' => 'features'
         ]);
+
+        Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'web']);
     }
 
     public function test_user_gets_default_role_on_creation()
@@ -55,12 +60,8 @@ class UserTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        $user->syncRoles('admin');
-        $user->refresh();
-
-        \Illuminate\Support\Facades\Gate::shouldReceive('allows')
-            ->with('accessPanel', $user)
-            ->andReturn(true);
+        $user->assignRole('admin');
+        $this->actingAs($user);
 
         $this->assertTrue($user->canAccessPanel(new \Filament\Panel()));
     }
@@ -73,20 +74,37 @@ class UserTest extends TestCase
         ]);
 
         $user->assignRole('admin');
+        $this->actingAs($user);
 
         $this->assertFalse($user->canAccessPanel(new \Filament\Panel()));
     }
 
-    public function test_user_cannot_access_panel_with_wrong_domain()
+    public function test_verified_privileged_user_can_access_panel_regardless_of_site_domain()
     {
         $user = User::factory()->create([
             'email' => 'test@wrongdomain.com',
             'email_verified_at' => now(),
         ]);
 
-        $user->assignRole('admin');
+        $user->assignRole('staff');
+        $this->actingAs($user);
 
-        $this->assertFalse($user->canAccessPanel(new \Filament\Panel()));
+        $this->assertTrue($user->canAccessPanel(new \Filament\Panel()));
+    }
+
+    public function test_user_role_does_not_block_panel_access_when_user_also_has_privileged_role()
+    {
+        $user = User::factory()->create([
+            'email' => 'hybrid@example.com',
+            'email_verified_at' => now(),
+        ]);
+
+        $user->assignRole('staff');
+        $this->actingAs($user);
+
+        $this->assertTrue($user->hasRole('user'));
+        $this->assertTrue($user->hasRole('staff'));
+        $this->assertTrue($user->canAccessPanel(new \Filament\Panel()));
     }
 
     public function test_email_verification_status()
