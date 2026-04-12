@@ -73,7 +73,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
-        return Gate::allows('accessPanel', $this);
+        return Gate::allows('accessPanel', static::class);
     }
 
     public static function superAdminRoleName(): string

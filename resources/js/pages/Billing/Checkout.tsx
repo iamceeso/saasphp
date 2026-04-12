@@ -62,6 +62,23 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
                     }),
                 });
 
+                const contentType = response.headers.get('content-type') || '';
+
+                if (!contentType.includes('application/json')) {
+                    if (response.status === 401 || response.status === 403) {
+                        setError('Your session has expired or access is denied. Please sign in again and retry.');
+                        return;
+                    }
+
+                    if (response.status === 419) {
+                        setError('Your session token expired. Refresh the page and try again.');
+                        return;
+                    }
+
+                    setError('Unexpected server response. Please refresh the page and try again.');
+                    return;
+                }
+
                 const data = await response.json();
 
                 if (!response.ok || !data.success) {

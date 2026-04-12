@@ -91,7 +91,7 @@ class AuthorizationPolicyTest extends TestCase
 
         $user->assignRole('staff');
 
-        $this->assertTrue($user->can('accessPanel', $user));
+        $this->assertTrue($user->can('accessPanel', User::class));
     }
 
     public function test_subscription_create_policy_uses_verification_model_not_raw_column(): void

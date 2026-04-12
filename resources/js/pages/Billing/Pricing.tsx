@@ -96,6 +96,23 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                 }),
             });
 
+            const contentType = response.headers.get('content-type') || '';
+
+            if (!contentType.includes('application/json')) {
+                if (response.status === 401 || response.status === 403) {
+                    setSubscribeError('Your session has expired or access is denied. Please sign in again and retry.');
+                    return;
+                }
+
+                if (response.status === 419) {
+                    setSubscribeError('Your session token expired. Refresh the page and try again.');
+                    return;
+                }
+
+                setSubscribeError('Unexpected server response. Please refresh the page and try again.');
+                return;
+            }
+
             const data = await response.json();
 
             if (!response.ok || !data.success) {
