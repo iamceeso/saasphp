@@ -446,6 +446,14 @@ class SubscriptionService
         }
 
         $productId = $this->getOrCreateStripeProduct($plan);
+        $rawAmount = $price->getRawOriginal('amount');
+
+        if (is_numeric($rawAmount) && floor((float) $rawAmount) !== (float) $rawAmount) {
+            throw new \InvalidArgumentException(
+                'Plan price amount must be stored in minor currency units before creating a Stripe price.'
+            );
+        }
+
         $unitAmount = (int) $price->amount;
 
         if ($unitAmount < 0) {

@@ -23,7 +23,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('plan_id')->constrained('subscription_plans')->cascadeOnDelete();
             $table->enum('interval', ['monthly', 'annually'])->default('monthly');
-            $table->unsignedInteger('amount');
+            $table->decimal('amount', 10, 2);
             $table->integer('trial_days')->default(0);
             $table->string('stripe_price_id')->nullable()->unique();
             $table->boolean('is_active')->default(true);
@@ -58,7 +58,7 @@ return new class extends Migration
                 'incomplete_expired'
             ])->default('active');
             $table->enum('interval', ['monthly', 'annually'])->default('monthly');
-            $table->unsignedInteger('amount');
+            $table->decimal('amount', 10, 2);
             $table->timestamp('current_period_start');
             $table->timestamp('current_period_end');
             $table->timestamp('trial_ends_at')->nullable();
