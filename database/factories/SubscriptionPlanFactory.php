@@ -21,6 +21,10 @@ class SubscriptionPlanFactory extends Factory
             'description' => $this->faker->sentence(),
             'sort_order' => $this->faker->numberBetween(0, 10),
             'is_active' => true,
+            'is_most_popular' => false,
+            'cta_type' => 'subscribe',
+            'contact_url' => null,
+            'contact_button_text' => null,
             'stripe_product_id' => 'prod_test_' . $this->faker->unique()->word(),
         ];
     }

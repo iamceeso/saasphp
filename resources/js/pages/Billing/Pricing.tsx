@@ -16,6 +16,10 @@ interface Plan {
     description: string;
     sort_order: number;
     is_active: boolean;
+    is_most_popular: boolean;
+    cta_type: 'subscribe' | 'contact';
+    contact_url: string | null;
+    contact_button_text: string | null;
     prices: Price[];
     features: Feature[];
 }
@@ -129,7 +133,7 @@ export default function PricingPage({ plans, userSubscription }: Props) {
     };
 
     const sortedPlans = [...plans].sort((a, b) => a.sort_order - b.sort_order);
-    const highlightedPlanId = sortedPlans.length >= 2 ? sortedPlans[1].id : sortedPlans[0]?.id;
+    const highlightedPlanId = sortedPlans.find((plan) => plan.is_most_popular)?.id;
 
     const pricingContent = (
         <div className={isAuthenticated ? 'flex h-full flex-1 flex-col gap-6 rounded-xl p-4' : 'min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8'}>
@@ -180,6 +184,8 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                         const isCurrentPlan = userSubscription?.plan_id === plan.id;
                         const isHighlighted = plan.id === highlightedPlanId;
                         const isFreePlan = (price?.amount ?? 0) === 0;
+                        const isContactPlan = plan.cta_type === 'contact';
+                        const contactButtonLabel = plan.contact_button_text || 'Contact Sales';
 
                         return (
                             <Card
@@ -206,7 +212,16 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                                 </CardHeader>
                                 <CardContent className="flex-grow">
                                     <div className="mb-6">
-                                        {price ? (
+                                        {isContactPlan && !price ? (
+                                            <>
+                                                <div className="mb-2">
+                                                    <span className="text-4xl font-bold tracking-tight">Custom</span>
+                                                </div>
+                                                <p className="text-sm font-medium text-amber-700">
+                                                    Talk to our team for tailored pricing and onboarding.
+                                                </p>
+                                            </>
+                                        ) : price ? (
                                             <>
                                                 <div className="flex items-end gap-2 mb-2">
                                                     <span className="text-4xl font-bold tracking-tight">
@@ -232,20 +247,32 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                                         <PlanFeatureList features={plan.features} />
                                     </div>
 
-                                    <Button
-                                        onClick={() => void handleSubscribe(plan)}
-                                        disabled={isCurrentPlan || subscribingPlanId === plan.id}
-                                        className="w-full"
-                                        variant={isCurrentPlan ? 'outline' : isHighlighted ? 'default' : 'secondary'}
-                                    >
-                                        {isCurrentPlan
-                                            ? 'Current Plan'
-                                            : subscribingPlanId === plan.id
-                                                ? (isFreePlan ? 'Starting Free Plan...' : 'Loading...')
-                                                : isFreePlan
-                                                    ? 'Start Free'
-                                                    : 'Subscribe Now'}
-                                    </Button>
+                                    {isContactPlan ? (
+                                        <Button
+                                            asChild
+                                            className="w-full"
+                                            variant={isHighlighted ? 'default' : 'secondary'}
+                                        >
+                                            <a href={plan.contact_url || '/contact'}>
+                                                {contactButtonLabel}
+                                            </a>
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            onClick={() => void handleSubscribe(plan)}
+                                            disabled={isCurrentPlan || subscribingPlanId === plan.id}
+                                            className="w-full"
+                                            variant={isCurrentPlan ? 'outline' : isHighlighted ? 'default' : 'secondary'}
+                                        >
+                                            {isCurrentPlan
+                                                ? 'Current Plan'
+                                                : subscribingPlanId === plan.id
+                                                    ? (isFreePlan ? 'Starting Free Plan...' : 'Loading...')
+                                                    : isFreePlan
+                                                        ? 'Start Free'
+                                                        : 'Subscribe Now'}
+                                        </Button>
+                                    )}
                                 </CardContent>
                             </Card>
                         );

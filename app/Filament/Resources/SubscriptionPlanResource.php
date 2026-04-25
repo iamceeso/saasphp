@@ -7,6 +7,7 @@ use App\Models\SubscriptionPlan;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -16,6 +17,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Infolists\Components\RepeatableEntry;
 
 class SubscriptionPlanResource extends Resource
 {
@@ -58,6 +60,31 @@ class SubscriptionPlanResource extends Resource
                             ->default(0),
                         Toggle::make('is_active')
                             ->default(true),
+                        Select::make('cta_type')
+                            ->label('Plan CTA')
+                            ->options([
+                                'subscribe' => 'Subscribe',
+                                'contact' => 'Contact Sales',
+                            ])
+                            ->default('subscribe')
+                            ->native(false)
+                            ->reactive(),
+                        TextInput::make('contact_button_text')
+                            ->label('Contact button text')
+                            ->placeholder('Contact Sales')
+                            ->maxLength(255)
+                            ->visible(fn (Forms\Get $get) => $get('cta_type') === 'contact'),
+                        TextInput::make('contact_url')
+                            ->label('Contact link')
+                            ->placeholder('mailto:sales@example.com or /contact')
+                            ->maxLength(255)
+                            ->helperText('Used when this plan should lead to sales instead of checkout.')
+                            ->required(fn (Forms\Get $get) => $get('cta_type') === 'contact')
+                            ->visible(fn (Forms\Get $get) => $get('cta_type') === 'contact'),
+                        Toggle::make('is_most_popular')
+                            ->label('Most popular')
+                            ->helperText('Marks this plan as the featured option on the pricing page.')
+                            ->default(false),
                     ])
                     ->columns(2),
                 Section::make('Pricing')
@@ -139,6 +166,13 @@ class SubscriptionPlanResource extends Resource
                 IconColumn::make('is_active')
                     ->boolean()
                     ->label('Active'),
+                IconColumn::make('is_most_popular')
+                    ->boolean()
+                    ->label('Most Popular'),
+                TextColumn::make('cta_type')
+                    ->label('CTA')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state) => $state === 'contact' ? 'Contact Sales' : 'Subscribe'),
                 TextColumn::make('sort_order')
                     ->sortable(),
                 TextColumn::make('updated_at')
@@ -149,6 +183,13 @@ class SubscriptionPlanResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make()
                     ->visible(fn (SubscriptionPlan $record) => auth()->user()?->can('update', $record)),
+                Tables\Actions\Action::make('markMostPopular')
+                    ->label('Make Most Popular')
+                    ->icon('heroicon-o-star')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->action(fn (SubscriptionPlan $record) => $record->markAsMostPopular())
+                    ->visible(fn (SubscriptionPlan $record) => ! $record->is_most_popular && (auth()->user()?->can('update', $record) ?? false)),
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn (SubscriptionPlan $record) => auth()->user()?->can('delete', $record)),
             ])

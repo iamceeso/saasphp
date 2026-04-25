@@ -17,6 +17,8 @@ class BillingSeeder extends Seeder
                 'name' => 'Starter',
                 'description' => 'Perfect for individuals and small projects',
                 'sort_order' => 1,
+                'is_most_popular' => false,
+                'cta_type' => 'subscribe',
                 'prices' => [
                     ['interval' => 'monthly', 'amount' => 999, 'trial_days' => 14],
                     ['interval' => 'annually', 'amount' => 9990, 'trial_days' => 14],
@@ -33,6 +35,8 @@ class BillingSeeder extends Seeder
                 'name' => 'Professional',
                 'description' => 'For growing teams and businesses',
                 'sort_order' => 2,
+                'is_most_popular' => true,
+                'cta_type' => 'subscribe',
                 'prices' => [
                     ['interval' => 'monthly', 'amount' => 2999, 'trial_days' => 14],
                     ['interval' => 'annually', 'amount' => 29990, 'trial_days' => 14],
@@ -51,6 +55,10 @@ class BillingSeeder extends Seeder
                 'name' => 'Enterprise',
                 'description' => 'For large-scale operations',
                 'sort_order' => 3,
+                'is_most_popular' => false,
+                'cta_type' => 'contact',
+                'contact_url' => 'mailto:sales@saasphp.com',
+                'contact_button_text' => 'Contact Sales',
                 'prices' => [
                     ['interval' => 'monthly', 'amount' => 9999, 'trial_days' => 30],
                     ['interval' => 'annually', 'amount' => 99990, 'trial_days' => 30],
