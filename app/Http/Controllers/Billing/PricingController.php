@@ -9,6 +9,7 @@ use App\Models\CustomerSubscription;
 use App\Services\Billing\SubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PricingController extends Controller
@@ -142,10 +143,17 @@ class PricingController extends Controller
                 'paymentIntentStatus' => $result['payment_intent_status'],
                 'requiresAction' => $result['requires_action'],
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::warning('Subscription checkout failed', [
+                'user_id' => auth()->id(),
+                'plan_id' => $request->input('plan_id'),
+                'interval' => $request->input('interval'),
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'We could not process your subscription right now. Please try again.',
             ], 422);
         }
     }
