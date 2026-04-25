@@ -40,7 +40,7 @@ class AuthorizationPolicyTest extends TestCase
         $user->assignRole('staff');
         $user->givePermissionTo('modify_settings_role');
 
-        $this->assertTrue($user->can('modify', \App\Models\Setting::class));
+        $this->assertTrue($user->can('modify', Setting::class));
     }
 
     public function test_non_admin_cannot_update_admin_user_even_with_update_permission(): void

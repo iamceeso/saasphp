@@ -150,7 +150,7 @@ class BillingTest extends TestCase
             'plan_id' => $plan->id,
             'status' => 'active',
             'ended_at' => null,
-            'current_subscription_key' => 'user:' . $user->id,
+            'current_subscription_key' => null,
         ]);
 
         $this->actingAs($user)->get(route('pricing.show'))->assertOk();
