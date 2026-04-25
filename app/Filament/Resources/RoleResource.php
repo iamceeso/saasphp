@@ -8,16 +8,20 @@ use Illuminate\Contracts\Support\Arrayable;
 
 use Filament\Forms;
 use Filament\Tables;
-use Filament\Forms\Form;
+use Filament\Panel;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Tables\Table;
 use Filament\Facades\Filament;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use App\Filament\Resources\RoleResource\Pages;
 use BezhanSalleh\FilamentShield\Support\Utils;
 use BezhanSalleh\FilamentShield\Forms\ShieldSelectAllToggle;
 use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use App\Filament\Resources\RoleResource\RelationManagers\UsersRelationManager;
+use Illuminate\Contracts\Support\Htmlable;
 
 /**
  * Class RoleResource
@@ -62,9 +66,9 @@ class RoleResource extends Resource implements HasShieldPermissions
         return  auth()->user()?->can('viewAny', static::getModel());
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\Grid::make()
                     ->schema([
@@ -151,10 +155,10 @@ class RoleResource extends Resource implements HasShieldPermissions
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->visible(fn($record) => auth()->user()?->can('update', $record)),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->visible(fn($record) => auth()->user()?->can('delete', $record)
                         && !in_array(strtolower($record?->name), ['admin', 'user'])
                         && count($record?->users) === 0),
@@ -206,7 +210,7 @@ class RoleResource extends Resource implements HasShieldPermissions
         return Utils::isResourceNavigationRegistered();
     }
 
-    public static function getNavigationGroup(): ?string
+    public static function getNavigationGroup(): string | \UnitEnum | null
     {
         return Utils::isResourceNavigationGroupEnabled()
             ? __('filament-shield::filament-shield.nav.group')
@@ -218,7 +222,7 @@ class RoleResource extends Resource implements HasShieldPermissions
         return __('filament-shield::filament-shield.nav.role.label');
     }
 
-    public static function getNavigationIcon(): string
+    public static function getNavigationIcon(): string | \BackedEnum | Htmlable | null
     {
         return __('filament-shield::filament-shield.nav.role.icon');
     }
@@ -228,7 +232,7 @@ class RoleResource extends Resource implements HasShieldPermissions
         return Utils::getResourceNavigationSort();
     }
 
-    public static function getSlug(): string
+    public static function getSlug(?Panel $panel = null): string
     {
         return Utils::getResourceSlug();
     }

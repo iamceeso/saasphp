@@ -7,18 +7,20 @@ use App\Models\Role;
 use App\Models\User;
 
 use Filament\Forms;
+use Filament\Actions\AttachAction;
+use Filament\Actions\DetachAction;
 use Filament\Tables;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 
 class UsersRelationManager extends RelationManager
 {
     protected static string $relationship = 'users';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\TextInput::make('name')
                     ->required()
@@ -39,7 +41,7 @@ class UsersRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->recordSelectOptionsQuery(fn() => User::query()->whereDoesntHave(
                         'roles',
                         fn($query) => $query->where('roles.id', $this->getOwnerRecord()->getKey())
@@ -49,8 +51,8 @@ class UsersRelationManager extends RelationManager
                     ->hidden(fn() => ! RoleHelper::canManageAssignments($this->getOwnerRecord()))
                     ->label('Attach User To Role'),
             ])
-            ->actions([
-                Tables\Actions\DetachAction::make()
+            ->recordActions([
+                DetachAction::make()
                     ->hidden(fn(User $record) => ! RoleHelper::canDetachRoleFromUser($this->getOwnerRecord(), $record))
                     ->authorize(fn(User $record) => RoleHelper::canDetachRoleFromUser($this->getOwnerRecord(), $record))
             ])

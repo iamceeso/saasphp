@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Settings;
 
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -49,7 +49,7 @@ class SiteSettingsTest extends TestCase
         ]);
 
         Livewire::test(SiteSettings::class)
-            ->assertFormSet([
+            ->assertSchemaFormSet([
                 'data.site.name'  => 'Acme Corp',
                 'data.site.theme' => 'light',
             ]);

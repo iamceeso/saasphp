@@ -5,16 +5,21 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\SubscriptionPlanResource\Pages;
 use App\Models\SubscriptionPlan;
 use Filament\Forms;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -25,9 +30,9 @@ class SubscriptionPlanResource extends Resource
 {
     protected static ?string $model = SubscriptionPlan::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-credit-card';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
 
-    protected static ?string $navigationGroup = 'Billing';
+    protected static string | \UnitEnum | null $navigationGroup = 'Billing';
 
     protected static ?int $navigationSort = 1;
 
@@ -41,9 +46,9 @@ class SubscriptionPlanResource extends Resource
         return (bool) config('billing.enabled');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Tabs::make('PlanTabs')
                     ->persistTabInQueryString()
@@ -235,22 +240,22 @@ class SubscriptionPlanResource extends Resource
                     ->sortable()
                     ->toggleable(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->visible(fn (SubscriptionPlan $record) => auth()->user()?->can('update', $record)),
-                Tables\Actions\Action::make('markMostPopular')
+                Action::make('markMostPopular')
                     ->label('Make Most Popular')
                     ->icon('heroicon-o-star')
                     ->color('warning')
                     ->requiresConfirmation()
                     ->action(fn (SubscriptionPlan $record) => $record->markAsMostPopular())
                     ->visible(fn (SubscriptionPlan $record) => ! $record->is_most_popular && (auth()->user()?->can('update', $record) ?? false)),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->visible(fn (SubscriptionPlan $record) => auth()->user()?->can('delete', $record)),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

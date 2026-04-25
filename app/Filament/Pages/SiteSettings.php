@@ -42,7 +42,7 @@ class SiteSettings extends Page implements HasForms
      * @var array
      */
     public array $data = [];
-    protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cog-6-tooth';
     protected static string $view = 'filament.pages.site-settings';
     protected static ?string $slug = 'settings';
     protected static ?int $navigationSort = 9999;
