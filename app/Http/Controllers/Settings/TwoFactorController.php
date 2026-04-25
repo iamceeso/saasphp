@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Laravel\Fortify\TwoFactorAuthenticationProvider;
+use Inertia\Inertia;
 use Inertia\Response;
 
 class TwoFactorController extends Controller
