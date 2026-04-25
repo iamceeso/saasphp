@@ -224,9 +224,6 @@ class SubscriptionPlanResource extends Resource
                 IconColumn::make('is_active')
                     ->boolean()
                     ->label('Active'),
-                IconColumn::make('is_most_popular')
-                    ->boolean()
-                    ->label('Most Popular'),
                 TextColumn::make('cta_type')
                     ->label('CTA')
                     ->badge()
