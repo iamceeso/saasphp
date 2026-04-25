@@ -19,6 +19,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -101,14 +102,14 @@ class SubscriptionPlanResource extends Resource
                                                     ->label('Contact button text')
                                                     ->placeholder('Contact Sales')
                                                     ->maxLength(255)
-                                                    ->visible(fn (Forms\Get $get) => $get('cta_type') === 'contact'),
+                                                    ->visible(fn (Get $get) => $get('cta_type') === 'contact'),
                                                 TextInput::make('contact_url')
                                                     ->label('Contact link')
                                                     ->placeholder('mailto:sales@example.com or /contact')
                                                     ->maxLength(255)
                                                     ->helperText('Used when this plan should lead to sales instead of checkout.')
-                                                    ->required(fn (Forms\Get $get) => $get('cta_type') === 'contact')
-                                                    ->visible(fn (Forms\Get $get) => $get('cta_type') === 'contact'),
+                                                    ->required(fn (Get $get) => $get('cta_type') === 'contact')
+                                                    ->visible(fn (Get $get) => $get('cta_type') === 'contact'),
                                                 Toggle::make('is_active')
                                                     ->default(true),
                                                 Toggle::make('is_most_popular')

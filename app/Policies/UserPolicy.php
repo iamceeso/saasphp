@@ -8,77 +8,77 @@ class UserPolicy
 {
     public function view(User $user, User $target): bool
     {
-        return $user->hasPermissionTo('view_user') && $this->canManageTarget($user, $target);
+        return $user->hasPermissionSafely('view_user') && $this->canManageTarget($user, $target);
     }
 
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('view_any_user');
+        return $user->hasPermissionSafely('view_any_user');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('create_user');
+        return $user->hasPermissionSafely('create_user');
     }
 
     public function update(User $user, User $target): bool
     {
-        return $user->hasPermissionTo('update_user') && $this->canManageTarget($user, $target);
+        return $user->hasPermissionSafely('update_user') && $this->canManageTarget($user, $target);
     }
 
     public function delete(User $user, User $target): bool
     {
-        return $user->hasPermissionTo('delete_user') && $this->canManageTarget($user, $target);
+        return $user->hasPermissionSafely('delete_user') && $this->canManageTarget($user, $target);
     }
 
     public function deleteAny(User $user): bool
     {
-        return $user->hasPermissionTo('delete_any_user');
+        return $user->hasPermissionSafely('delete_any_user');
     }
 
     public function restore(User $user, User $target): bool
     {
-        return $user->hasPermissionTo('restore_user') && $this->canManageTarget($user, $target);
+        return $user->hasPermissionSafely('restore_user') && $this->canManageTarget($user, $target);
     }
 
     public function restoreAny(User $user): bool
     {
-        return $user->hasPermissionTo('restore_any_user');
+        return $user->hasPermissionSafely('restore_any_user');
     }
 
     public function forceDelete(User $user, User $target): bool
     {
-        return $user->hasPermissionTo('force_delete_user') && $this->canManageTarget($user, $target);
+        return $user->hasPermissionSafely('force_delete_user') && $this->canManageTarget($user, $target);
     }
 
     public function forceDeleteAny(User $user): bool
     {
-        return $user->hasPermissionTo('force_delete_any_user');
+        return $user->hasPermissionSafely('force_delete_any_user');
     }
 
     public function impersonate(User $user): bool
     {
-        return $user->hasPermissionTo('impersonate_role');
+        return $user->hasPermissionSafely('impersonate_role');
     }
 
     public function viewAdminRole(User $user): bool
     {
-        return $user->hasPermissionTo('view_admin_role');
+        return $user->hasPermissionSafely('view_admin_role');
     }
 
     public function viewStaffRole(User $user): bool
     {
-        return $user->hasPermissionTo('view_staff_role');
+        return $user->hasPermissionSafely('view_staff_role');
     }
 
     public function viewUserRole(User $user): bool
     {
-        return $user->hasPermissionTo('view_user_role');
+        return $user->hasPermissionSafely('view_user_role');
     }
 
     public function viewNoRole(User $user): bool
     {
-        return $user->hasPermissionTo('view_no_role_role');
+        return $user->hasPermissionSafely('view_no_role_role');
     }
 
     public function accessPanel(User $user): bool

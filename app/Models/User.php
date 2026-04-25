@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Cashier\Billable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Exceptions\PermissionDoesNotExist;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -106,6 +107,15 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function isStandardUser(): bool
     {
         return $this->hasRole('user') && ! $this->hasPrivilegedRole();
+    }
+
+    public function hasPermissionSafely(string $permission): bool
+    {
+        try {
+            return $this->hasPermissionTo($permission);
+        } catch (PermissionDoesNotExist) {
+            return false;
+        }
     }
 
     public function hasVerifiedEmail()

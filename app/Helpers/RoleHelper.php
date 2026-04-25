@@ -22,7 +22,7 @@ class RoleHelper
         }
 
         if (in_array(strtolower($role->name), [strtolower(static::superAdminRoleName()), 'user'], true)) {
-            return $user->hasPermissionTo('assign_core_role');
+            return $user->hasPermissionSafely('assign_core_role');
         }
 
         return true;

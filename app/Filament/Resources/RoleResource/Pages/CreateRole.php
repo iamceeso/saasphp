@@ -16,7 +16,7 @@ class CreateRole extends CreateRecord
 
     public static function canAccess(array $parameters = []): bool
     {
-        return auth()->user()?->hasPermissionTo('create_role');
+        return auth()->user()?->hasPermissionSafely('create_role') ?? false;
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array
