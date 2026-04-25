@@ -6,6 +6,7 @@ use Inertia\Inertia;
 
 use App\Models\Setting;
 
+use App\Services\LoadBillingConfig;
 use App\Services\LoadEmailConfig;
 use App\Services\LoadOAuthConfig;
 
@@ -16,7 +17,7 @@ use Illuminate\Support\ServiceProvider;
 
 class SettingsServiceProvider extends ServiceProvider
 {
-    use LoadEmailConfig, LoadOAuthConfig;
+    use LoadBillingConfig, LoadEmailConfig, LoadOAuthConfig;
     /**
      * Register any application services.
      */
@@ -58,6 +59,7 @@ class SettingsServiceProvider extends ServiceProvider
                 'time_format'  => Setting::getValue('site.time_format', 'H:i:s'),
             ]);
 
+            $this->loadBillingConfig();
             $this->loadOAuthConfig();
             $this->loadEmailConfig();
         });
