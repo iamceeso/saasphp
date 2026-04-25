@@ -3,44 +3,65 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
-use Inertia\Inertia;
+use Laravel\Fortify\TwoFactorAuthenticationProvider;
 use Inertia\Response;
 
 class TwoFactorController extends Controller
 {
     /**
-     * Show the user's password settings page.
+     * Show the user's two-factor authentication settings page.
      */
     public function edit(Request $request): Response
     {
-        $two_factor_confirmed =  $request->user()->two_factor_confirmed_at ? true : false;
+        $twoFactorConfirmed = $request->user()->two_factor_confirmed_at !== null;
+        $shouldExposeSetupState = $request->user()->two_factor_secret && ! $twoFactorConfirmed;
+
         return Inertia::render('settings/two-factor-authentication', [
-            'twoFactorSecret' => $request->user()->two_factor_secret,
-            'twoFactorQRCode' => $request->user()->two_factor_secret ? $request->user()->twoFactorQrCodeSvg() : '',
-            'twoFactorRecoveryCodes' => $request->user()->two_factor_secret ? $request->user()->recoveryCodes() : '',
-            'twoFactorConfirmation' =>  $two_factor_confirmed,
+            'twoFactorSecret' => $shouldExposeSetupState ? 'pending-setup' : null,
+            'twoFactorQRCode' => $shouldExposeSetupState ? $request->user()->twoFactorQrCodeSvg() : '',
+            'twoFactorRecoveryCodes' => $shouldExposeSetupState ? $request->user()->recoveryCodes() : [],
+            'twoFactorConfirmation' => $twoFactorConfirmed,
         ]);
     }
 
     /**
-     * Update the user's password.
+     * Confirm the user's pending two-factor setup.
      */
     public function update(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'current_password' => ['required', 'current_password'],
-            'password' => ['required', Password::defaults(), 'confirmed'],
+        $request->validate([
+            'code' => ['required', 'string'],
         ]);
 
-        $request->user()->update([
-            'password' => Hash::make($validated['password']),
-        ]);
+        $user = $request->user();
 
-        return back();
+        if (! $user->two_factor_secret) {
+            return back()->withErrors([
+                'code' => 'Two-factor authentication has not been enabled yet.',
+            ]);
+        }
+
+        if ($user->two_factor_confirmed_at) {
+            return back()->with('status', 'two-factor-authentication-confirmed');
+        }
+
+        $isValid = app(TwoFactorAuthenticationProvider::class)->verify(
+            decrypt($user->two_factor_secret),
+            $request->string('code')->value()
+        );
+
+        if (! $isValid) {
+            return back()->withErrors([
+                'code' => 'The provided two-factor code is invalid.',
+            ]);
+        }
+
+        $user->forceFill([
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        return back()->with('status', 'two-factor-authentication-confirmed');
     }
 }

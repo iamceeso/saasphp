@@ -6,7 +6,9 @@ use App\Models\User;
 use App\Models\SubscriptionPlan;
 use App\Models\PlanPrice;
 use App\Models\CustomerSubscription;
+use App\Services\Billing\WebhookService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
 use Tests\TestCase;
 
 class BillingTest extends TestCase
@@ -124,6 +126,59 @@ class BillingTest extends TestCase
         $subscription = CustomerSubscription::query()->where('user_id', $user->id)->firstOrFail();
 
         $this->assertSame('free', data_get($subscription->metadata, 'provider'));
+        $this->assertTrue($subscription->current_period_end->gt(now()->addYears(50)));
+    }
+
+    public function test_pricing_page_does_not_normalize_or_mutate_duplicate_subscriptions()
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $plan = SubscriptionPlan::factory()->create();
+
+        $first = CustomerSubscription::factory()->create([
+            'user_id' => $user->id,
+            'plan_id' => $plan->id,
+            'status' => 'active',
+            'ended_at' => null,
+            'current_subscription_key' => 'user:' . $user->id,
+        ]);
+
+        $second = CustomerSubscription::factory()->create([
+            'user_id' => $user->id,
+            'plan_id' => $plan->id,
+            'status' => 'active',
+            'ended_at' => null,
+            'current_subscription_key' => 'user:' . $user->id,
+        ]);
+
+        $this->actingAs($user)->get(route('pricing.show'))->assertOk();
+
+        $this->assertSame('active', $first->fresh()->status);
+        $this->assertNull($first->fresh()->ended_at);
+        $this->assertSame('active', $second->fresh()->status);
+        $this->assertNull($second->fresh()->ended_at);
+    }
+
+    public function test_webhook_controller_returns_a_generic_error_message()
+    {
+        $service = Mockery::mock(WebhookService::class);
+        $service->shouldReceive('handleWebhook')
+            ->once()
+            ->andThrow(new \Exception('Stripe webhook signature verification failed.'));
+
+        $this->app->instance(WebhookService::class, $service);
+
+        $response = $this->postJson(route('webhooks.stripe'), [], [
+            'Stripe-Signature' => 'test-signature',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJson([
+                'error' => 'Webhook could not be processed.',
+            ]);
     }
 
     private function assertEqual($expected, $actual)

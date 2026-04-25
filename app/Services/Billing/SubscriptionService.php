@@ -14,6 +14,8 @@ use Stripe\Exception\ApiErrorException;
 
 class SubscriptionService
 {
+    private const FREE_PLAN_PERIOD_YEARS = 100;
+
     private ?StripeClient $stripe = null;
 
     private function getStripeClient(): StripeClient
@@ -154,6 +156,7 @@ class SubscriptionService
             }
 
             $now = now();
+            $periodEnd = $now->copy()->addYears(self::FREE_PLAN_PERIOD_YEARS);
 
             return CustomerSubscription::create([
                 'user_id' => $lockedUser->id,
@@ -165,7 +168,7 @@ class SubscriptionService
                 'interval' => $interval,
                 'amount' => 0,
                 'current_period_start' => $now,
-                'current_period_end' => $now,
+                'current_period_end' => $periodEnd,
                 'trial_ends_at' => null,
                 'canceled_at' => null,
                 'ended_at' => null,
@@ -458,6 +461,15 @@ class SubscriptionService
         return $current->refresh();
     }
 
+    public function getCurrentSubscriptionForDisplay(User $user): ?CustomerSubscription
+    {
+        return $user->subscriptions()
+            ->whereIn('status', CustomerSubscription::CURRENT_SLOT_STATUSES)
+            ->whereNull('ended_at')
+            ->orderByDesc('created_at')
+            ->first();
+    }
+
     public function currentSubscriptionKeyFor(int $userId): string
     {
         return "user:{$userId}";
@@ -727,8 +739,9 @@ class SubscriptionService
         }
 
         $now = now();
+        $periodEnd = $now->copy()->addYears(self::FREE_PLAN_PERIOD_YEARS);
 
-        return DB::transaction(function () use ($subscription, $plan, $interval, $price, $now) {
+        return DB::transaction(function () use ($subscription, $plan, $interval, $price, $now, $periodEnd) {
             $subscription->update([
                 'plan_id' => $plan->id,
                 'current_subscription_key' => $this->currentSubscriptionKeyFor($subscription->user_id),
@@ -738,7 +751,7 @@ class SubscriptionService
                 'interval' => $interval,
                 'amount' => $price->amount,
                 'current_period_start' => $now,
-                'current_period_end' => $now,
+                'current_period_end' => $periodEnd,
                 'trial_ends_at' => null,
                 'canceled_at' => null,
                 'ended_at' => null,

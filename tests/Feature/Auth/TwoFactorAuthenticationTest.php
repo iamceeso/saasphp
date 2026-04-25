@@ -203,4 +203,24 @@ class TwoFactorAuthenticationTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_confirmed_two_factor_screen_does_not_expose_the_raw_secret()
+    {
+        $secret = (new Google2FA())->generateSecretKey();
+
+        $this->user->forceFill([
+            'two_factor_secret' => encrypt($secret),
+            'two_factor_confirmed_at' => now(),
+            'two_factor_recovery_codes' => encrypt(json_encode(['code1', 'code2'])),
+        ])->save();
+
+        $response = $this->actingAs($this->user)->get('/settings/security');
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('settings/two-factor-authentication')
+            ->where('twoFactorSecret', null)
+            ->where('twoFactorQRCode', '')
+            ->where('twoFactorRecoveryCodes', [])
+            ->where('twoFactorConfirmation', true));
+    }
 }

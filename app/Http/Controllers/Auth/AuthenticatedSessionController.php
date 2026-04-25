@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Models\User;
+use Throwable;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -64,7 +65,7 @@ class AuthenticatedSessionController extends Controller
         return Socialite::driver('github')->redirect();
     }
 
-    public function handleGithubCallback(Request $request): RedirectResponse
+    public function handleGithubCallback(): RedirectResponse
     {
         return $this->socialLoginCallback('github');
     }
@@ -74,35 +75,108 @@ class AuthenticatedSessionController extends Controller
         return Socialite::driver('twitter')->redirect();
     }
 
-    public function handleTwitterCallback(Request $request): RedirectResponse
+    public function handleTwitterCallback(): RedirectResponse
     {
         return $this->socialLoginCallback('twitter');
     }
 
 
-    private function socialLoginCallback($provider): RedirectResponse
+    private function socialLoginCallback(string $provider): RedirectResponse
     {
-        $user = Socialite::driver($provider)->user();
-        $social_user = User::firstOrCreate(
-            ['email' => $user->email],
-            [
-                'email' => $user->email,
-                'name' => $user->name,
-                'password' => bcrypt(Str::random(16)),
-                'email_verified_at' => now(),
-            ]
-        );
-
-        // Do not change users password on login
-        if (!$social_user->wasRecentlyCreated) {
-            $social_user->update([
-                'name' => $user->name,
-                'email' => $user->email,
-                'email_verified_at' => now(),
+        try {
+            $providerUser = Socialite::driver($provider)->user();
+        } catch (Throwable $e) {
+            return redirect()->route('login')->withErrors([
+                'login' => 'We could not complete your social login. Please try again.',
             ]);
         }
 
-        Auth::login($social_user, true);
+        $email = $providerUser->email;
+        $providerId = (string) $providerUser->getId();
+
+        if (blank($email) || blank($providerId)) {
+            return redirect()->route('login')->withErrors([
+                'login' => 'Your social account did not provide the information required to sign in.',
+            ]);
+        }
+
+        if (! $this->providerEmailIsVerified($provider, $providerUser)) {
+            return redirect()->route('login')->withErrors([
+                'login' => 'Your social account email must be verified before you can sign in.',
+            ]);
+        }
+
+        $socialUser = User::query()
+            ->where('oauth_provider', $provider)
+            ->where('oauth_provider_id', $providerId)
+            ->first();
+
+        if (! $socialUser) {
+            $existingUser = User::query()->where('email', $email)->first();
+
+            if ($existingUser) {
+                return redirect()->route('login')->withErrors([
+                    'login' => 'An account with that email already exists. Please sign in with your existing method first.',
+                ]);
+            }
+
+            $socialUser = User::create([
+                'email' => $email,
+                'name' => $providerUser->name ?: Str::before($email, '@'),
+                'password' => bcrypt(Str::random(16)),
+                'email_verified_at' => now(),
+            ]);
+
+            $socialUser->forceFill([
+                'oauth_provider' => $provider,
+                'oauth_provider_id' => $providerId,
+            ])->save();
+        } else {
+            $emailOwner = User::query()
+                ->where('email', $email)
+                ->whereKeyNot($socialUser->getKey())
+                ->first();
+
+            if ($emailOwner) {
+                return redirect()->route('login')->withErrors([
+                    'login' => 'That verified social email is already in use by another account.',
+                ]);
+            }
+
+            $updates = [
+                'name' => $providerUser->name ?: $socialUser->name,
+                'email' => $email,
+            ];
+
+            if ($socialUser->email_verified_at === null) {
+                $updates['email_verified_at'] = now();
+            }
+
+            $socialUser->fill($updates)->save();
+        }
+
+        Auth::login($socialUser, true);
         return redirect()->intended(route('dashboard', absolute: false));
+    }
+
+    private function providerEmailIsVerified(string $provider, object $providerUser): bool
+    {
+        $rawUser = property_exists($providerUser, 'user') && is_array($providerUser->user)
+            ? $providerUser->user
+            : [];
+
+        $verificationFlags = [
+            data_get($rawUser, 'verified_email'),
+            data_get($rawUser, 'email_verified'),
+            data_get($rawUser, 'verified'),
+        ];
+
+        foreach ($verificationFlags as $flag) {
+            if (filter_var($flag, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

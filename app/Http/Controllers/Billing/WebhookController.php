@@ -27,13 +27,13 @@ class WebhookController extends Controller
             $this->webhookService->handleWebhook($payload, $signature);
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            Log::error('Stripe webhook error', [
+            Log::warning('Stripe webhook rejected', [
                 'error' => $e->getMessage(),
                 'event_id' => data_get($event, 'id'),
                 'event_type' => data_get($event, 'type'),
             ]);
 
-            return response()->json(['error' => $e->getMessage()], 422);
+            return response()->json(['error' => 'Webhook could not be processed.'], 422);
         }
     }
 }
