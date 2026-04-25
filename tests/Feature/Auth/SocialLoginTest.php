@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Socialite\AbstractUser;
 use Laravel\Socialite\Facades\Socialite;
 use Mockery;
 use Tests\TestCase;
@@ -25,16 +26,12 @@ class SocialLoginTest extends TestCase
 
     public function test_verified_google_user_can_sign_in_and_create_an_account(): void
     {
-        $providerUser = new class {
-            public string $email = 'social@example.com';
-            public string $name = 'Social User';
-            public array $user = ['verified_email' => true];
-
-            public function getId(): string
-            {
-                return 'google-user-1';
-            }
-        };
+        $providerUser = $this->fakeProviderUser(
+            id: 'google-user-1',
+            email: 'social@example.com',
+            name: 'Social User',
+            raw: ['verified_email' => true],
+        );
 
         $driver = Mockery::mock();
         $driver->shouldReceive('user')->once()->andReturn($providerUser);
@@ -58,16 +55,12 @@ class SocialLoginTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        $providerUser = new class {
-            public string $email = 'existing@example.com';
-            public string $name = 'Existing User';
-            public array $user = ['verified_email' => true];
-
-            public function getId(): string
-            {
-                return 'google-user-2';
-            }
-        };
+        $providerUser = $this->fakeProviderUser(
+            id: 'google-user-2',
+            email: 'existing@example.com',
+            name: 'Existing User',
+            raw: ['verified_email' => true],
+        );
 
         $driver = Mockery::mock();
         $driver->shouldReceive('user')->once()->andReturn($providerUser);
@@ -82,5 +75,52 @@ class SocialLoginTest extends TestCase
             'oauth_provider' => 'google',
             'oauth_provider_id' => 'google-user-2',
         ]);
+    }
+
+    public function test_github_user_with_verified_primary_email_can_sign_in(): void
+    {
+        $providerUser = $this->fakeProviderUser(
+            id: 'github-user-1',
+            email: 'maintainer@example.com',
+            name: 'Repo Maintainer',
+            raw: ['login' => 'maintainer'],
+        );
+
+        $driver = Mockery::mock();
+        $driver->shouldReceive('user')->once()->andReturn($providerUser);
+        Socialite::shouldReceive('driver')->with('github')->once()->andReturn($driver);
+
+        $response = $this->get('/auth/github/callback');
+
+        $response->assertRedirect('/dashboard');
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', [
+            'email' => 'maintainer@example.com',
+            'oauth_provider' => 'github',
+            'oauth_provider_id' => 'github-user-1',
+        ]);
+    }
+
+    private function fakeProviderUser(string $id, ?string $email, ?string $name, array $raw = [], ?string $nickname = null): AbstractUser
+    {
+        return (new class($id, $email, $name, $raw, $nickname) extends AbstractUser {
+            public function __construct(
+                private string $providerId,
+                ?string $email,
+                ?string $name,
+                array $raw,
+                ?string $nickname
+            ) {
+                $this->email = $email;
+                $this->name = $name;
+                $this->nickname = $nickname;
+                $this->user = $raw;
+            }
+
+            public function getId()
+            {
+                return $this->providerId;
+            }
+        });
     }
 }
