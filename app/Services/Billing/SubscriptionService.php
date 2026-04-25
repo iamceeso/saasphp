@@ -38,6 +38,8 @@ class SubscriptionService
         string $interval = 'monthly',
         ?string $paymentMethod = null
     ): array {
+        $this->ensurePlanIsActive($plan);
+
         $price = $plan->prices()
             ->where('interval', $interval)
             ->where('is_active', true)
@@ -134,6 +136,8 @@ class SubscriptionService
         SubscriptionPlan $plan,
         string $interval = 'monthly'
     ): array {
+        $this->ensurePlanIsActive($plan);
+
         $price = $plan->prices()
             ->where('interval', $interval)
             ->where('is_active', true)
@@ -194,6 +198,8 @@ class SubscriptionService
         string $interval = 'monthly',
         bool $prorateCosts = true
     ): CustomerSubscription {
+        $this->ensurePlanIsActive($newPlan);
+
         $newPrice = $newPlan->prices()
             ->where('interval', $interval)
             ->where('is_active', true)
@@ -413,52 +419,66 @@ class SubscriptionService
 
     public function normalizeCurrentSubscriptions(User $user): ?CustomerSubscription
     {
-        $currentSubscriptions = $user->subscriptions()
-            ->whereIn('status', CustomerSubscription::CURRENT_SLOT_STATUSES)
-            ->whereNull('ended_at')
-            ->orderByDesc('created_at')
-            ->lockForUpdate()
-            ->get();
+        return DB::transaction(function () use ($user) {
+            $currentSubscriptions = $user->subscriptions()
+                ->whereIn('status', CustomerSubscription::CURRENT_SLOT_STATUSES)
+                ->whereNull('ended_at')
+                ->orderByDesc('created_at')
+                ->lockForUpdate()
+                ->get();
 
-        $current = $currentSubscriptions->first();
+            $current = $currentSubscriptions->first();
 
-        if (!$current) {
-            return null;
-        }
-
-        $duplicates = $currentSubscriptions->slice(1);
-
-        foreach ($duplicates as $duplicate) {
-            $provider = data_get($duplicate->metadata, 'provider');
-
-            if ($provider === 'stripe' && !empty($duplicate->stripe_subscription_id)) {
-                try {
-                    $this->getStripeClient()->subscriptions->cancel($duplicate->stripe_subscription_id, [
-                        'invoice_now' => false,
-                        'prorate' => false,
-                    ]);
-                } catch (\Throwable $e) {
-                    Log::warning('Failed to cancel duplicate Stripe subscription during normalization', [
-                        'user_id' => $user->id,
-                        'subscription_id' => $duplicate->id,
-                        'stripe_subscription_id' => $duplicate->stripe_subscription_id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
+            if (!$current) {
+                return null;
             }
 
-            $duplicate->update([
-                'current_subscription_key' => null,
-                'status' => 'canceled',
-                'canceled_at' => now(),
-                'ended_at' => now(),
-                'metadata' => array_merge($duplicate->metadata ?? [], [
-                    'normalized_duplicate' => true,
-                ]),
-            ]);
-        }
+            $duplicates = $currentSubscriptions->slice(1);
+            $stripeDuplicates = [];
 
-        return $current->refresh();
+            foreach ($duplicates as $duplicate) {
+                $provider = data_get($duplicate->metadata, 'provider');
+
+                if ($provider === 'stripe' && !empty($duplicate->stripe_subscription_id)) {
+                    $stripeDuplicates[] = [
+                        'subscription_id' => $duplicate->id,
+                        'stripe_subscription_id' => $duplicate->stripe_subscription_id,
+                    ];
+                }
+
+                $duplicate->update([
+                    'current_subscription_key' => null,
+                    'status' => 'canceled',
+                    'canceled_at' => now(),
+                    'ended_at' => now(),
+                    'metadata' => array_merge($duplicate->metadata ?? [], [
+                        'normalized_duplicate' => true,
+                    ]),
+                ]);
+            }
+
+            if ($stripeDuplicates !== []) {
+                DB::afterCommit(function () use ($user, $stripeDuplicates): void {
+                    foreach ($stripeDuplicates as $duplicate) {
+                        try {
+                            $this->getStripeClient()->subscriptions->cancel($duplicate['stripe_subscription_id'], [
+                                'invoice_now' => false,
+                                'prorate' => false,
+                            ]);
+                        } catch (\Throwable $e) {
+                            Log::warning('Failed to cancel duplicate Stripe subscription during normalization', [
+                                'user_id' => $user->id,
+                                'subscription_id' => $duplicate['subscription_id'],
+                                'stripe_subscription_id' => $duplicate['stripe_subscription_id'],
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+                });
+            }
+
+            return $current->refresh();
+        });
     }
 
     public function getCurrentSubscriptionForDisplay(User $user): ?CustomerSubscription
@@ -481,6 +501,8 @@ class SubscriptionService
         string $interval,
         string $paymentMethod
     ): array {
+        $this->ensurePlanIsActive($plan);
+
         if (data_get($subscription->metadata, 'provider') !== 'free') {
             throw new \InvalidArgumentException('This subscription is not a free tier subscription.');
         }
@@ -764,5 +786,12 @@ class SubscriptionService
 
             return $subscription->refresh();
         });
+    }
+
+    private function ensurePlanIsActive(SubscriptionPlan $plan): void
+    {
+        if (! $plan->is_active) {
+            throw new \InvalidArgumentException('Selected plan is not active.');
+        }
     }
 }

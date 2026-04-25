@@ -8,7 +8,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\CustomerSubscription;
 use App\Services\Billing\SubscriptionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -41,11 +41,14 @@ class PricingController extends Controller
     public function checkout(Request $request)
     {
         $request->validate([
-            'plan_id' => 'required|exists:subscription_plans,id',
+            'plan_id' => [
+                'required',
+                Rule::exists('subscription_plans', 'id')->where('is_active', true),
+            ],
             'interval' => 'required|in:monthly,annually',
         ]);
 
-        $plan = SubscriptionPlan::findOrFail($request->plan_id);
+        $plan = SubscriptionPlan::active()->findOrFail($request->plan_id);
         $price = $plan->prices()
             ->where('interval', $request->interval)
             ->where('is_active', true)
@@ -65,13 +68,16 @@ class PricingController extends Controller
     {
         $this->authorize('create', CustomerSubscription::class);
         $request->validate([
-            'plan_id' => 'required|exists:subscription_plans,id',
+            'plan_id' => [
+                'required',
+                Rule::exists('subscription_plans', 'id')->where('is_active', true),
+            ],
             'interval' => 'required|in:monthly,annually',
-            'payment_method' => 'nullable|string',
+            'payment_method' => ['nullable', 'string', 'regex:/^pm_[A-Za-z0-9]+$/'],
         ]);
 
         try {
-            $plan = SubscriptionPlan::findOrFail($request->plan_id);
+            $plan = SubscriptionPlan::active()->findOrFail($request->plan_id);
             $price = $plan->prices()
                 ->where('interval', $request->interval)
                 ->where('is_active', true)
@@ -89,7 +95,7 @@ class PricingController extends Controller
                     $request->interval,
                     null
                 );
-            } elseif ($paymentMethod && Str::startsWith($paymentMethod, 'pm_')) {
+            } elseif ($paymentMethod) {
                 $result = $this->subscribeToPlan->handle(
                     $user,
                     $plan,
