@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Laravel\Socialite\AbstractUser as SocialiteAbstractUser;
+use Laravel\Socialite\Contracts\User as SocialiteUser;
 use Laravel\Socialite\Facades\Socialite;
 
 class AuthenticatedSessionController extends Controller
@@ -84,6 +86,7 @@ class AuthenticatedSessionController extends Controller
     private function socialLoginCallback(string $provider): RedirectResponse
     {
         try {
+            /** @var SocialiteUser $providerUser */
             $providerUser = Socialite::driver($provider)->user();
         } catch (Throwable $e) {
             return redirect()->route('login')->withErrors([
@@ -91,8 +94,9 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        $email = $providerUser->email;
+        $email = $this->providerEmail($providerUser);
         $providerId = (string) $providerUser->getId();
+        $displayName = $providerUser->getName() ?: $providerUser->getNickname() ?: Str::before($email, '@');
 
         if (blank($email) || blank($providerId)) {
             return redirect()->route('login')->withErrors([
@@ -122,7 +126,7 @@ class AuthenticatedSessionController extends Controller
 
             $socialUser = User::create([
                 'email' => $email,
-                'name' => $providerUser->name ?: Str::before($email, '@'),
+                'name' => $displayName,
                 'password' => bcrypt(Str::random(16)),
                 'email_verified_at' => now(),
             ]);
@@ -144,7 +148,7 @@ class AuthenticatedSessionController extends Controller
             }
 
             $updates = [
-                'name' => $providerUser->name ?: $socialUser->name,
+                'name' => $providerUser->getName() ?: $providerUser->getNickname() ?: $socialUser->name,
                 'email' => $email,
             ];
 
@@ -159,17 +163,35 @@ class AuthenticatedSessionController extends Controller
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
-    private function providerEmailIsVerified(string $provider, object $providerUser): bool
+    private function providerEmailIsVerified(string $provider, SocialiteUser $providerUser): bool
     {
-        $rawUser = property_exists($providerUser, 'user') && is_array($providerUser->user)
-            ? $providerUser->user
-            : [];
+        $rawUser = $this->providerRawUser($providerUser);
 
-        $verificationFlags = [
-            data_get($rawUser, 'verified_email'),
-            data_get($rawUser, 'email_verified'),
-            data_get($rawUser, 'verified'),
-        ];
+        if ($provider === 'github') {
+            // Socialite's GitHub driver only returns an email from /user/emails when it is primary and verified.
+            return filled($this->providerEmail($providerUser));
+        }
+
+        $verificationFlags = match ($provider) {
+            'google' => [
+                data_get($rawUser, 'verified_email'),
+                data_get($rawUser, 'email_verified'),
+            ],
+            'microsoft' => [
+                data_get($rawUser, 'mail'),
+                data_get($rawUser, 'userPrincipalName'),
+                data_get($rawUser, 'email'),
+            ],
+            'yahoo' => [
+                data_get($rawUser, 'email_verified'),
+                data_get($rawUser, 'verified'),
+            ],
+            default => [
+                data_get($rawUser, 'verified_email'),
+                data_get($rawUser, 'email_verified'),
+                data_get($rawUser, 'verified'),
+            ],
+        };
 
         foreach ($verificationFlags as $flag) {
             if (filter_var($flag, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true) {
@@ -177,6 +199,38 @@ class AuthenticatedSessionController extends Controller
             }
         }
 
+        if ($provider === 'microsoft') {
+            return filter_var($this->providerEmail($providerUser), FILTER_VALIDATE_EMAIL) !== false;
+        }
+
         return false;
+    }
+
+    private function providerEmail(SocialiteUser $providerUser): ?string
+    {
+        $email = $providerUser->getEmail();
+
+        if (filled($email)) {
+            return $email;
+        }
+
+        $rawUser = $this->providerRawUser($providerUser);
+        $fallbackEmail = data_get($rawUser, 'mail') ?: data_get($rawUser, 'email');
+
+        return filled($fallbackEmail) ? (string) $fallbackEmail : null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function providerRawUser(SocialiteUser $providerUser): array
+    {
+        if (! $providerUser instanceof SocialiteAbstractUser) {
+            return [];
+        }
+
+        $rawUser = $providerUser->getRaw();
+
+        return is_array($rawUser) ? $rawUser : [];
     }
 }
