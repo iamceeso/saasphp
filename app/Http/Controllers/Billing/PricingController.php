@@ -9,6 +9,7 @@ use App\Models\CustomerSubscription;
 use App\Services\Billing\SubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
@@ -27,8 +28,8 @@ class PricingController extends Controller
             ->get();
 
         $userSubscription = null;
-        if (auth()->check()) {
-            $userSubscription = $this->subscriptionService->getCurrentSubscriptionForDisplay(auth()->user());
+        if (Auth::check()) {
+            $userSubscription = $this->subscriptionService->getCurrentSubscriptionForDisplay(Auth::user());
         }
 
         return Inertia::render('Billing/Pricing', [
@@ -50,7 +51,7 @@ class PricingController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        $user = auth()->user();
+        $user = Auth::user();
 
         return Inertia::render('Billing/Checkout', [
             'plan' => $plan,
@@ -79,7 +80,7 @@ class PricingController extends Controller
             $paymentMethod = $request->filled('payment_method')
                 ? (string) $request->payment_method
                 : null;
-            $user = auth()->user();
+            $user = Auth::user();
 
             if ((int) $price->amount === 0) {
                 $result = $this->subscribeToPlan->handle(
@@ -145,7 +146,7 @@ class PricingController extends Controller
             ]);
         } catch (\Throwable $e) {
             Log::warning('Subscription checkout failed', [
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'plan_id' => $request->input('plan_id'),
                 'interval' => $request->input('interval'),
                 'error' => $e->getMessage(),
