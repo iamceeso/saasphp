@@ -204,14 +204,12 @@ class RoleResource extends Resource implements HasShieldPermissions
 
     public static function shouldRegisterNavigation(): bool
     {
-        return Utils::isResourceNavigationRegistered();
+        return true;
     }
 
     public static function getNavigationGroup(): string|\UnitEnum|null
     {
-        return Utils::isResourceNavigationGroupEnabled()
-            ? __('filament-shield::filament-shield.nav.group')
-            : '';
+        return __('filament-shield::filament-shield.nav.group');
     }
 
     public static function getNavigationLabel(): string
@@ -226,7 +224,7 @@ class RoleResource extends Resource implements HasShieldPermissions
 
     public static function getNavigationSort(): ?int
     {
-        return Utils::getResourceNavigationSort();
+        return 9998;
     }
 
     public static function getSlug(?Panel $panel = null): string
@@ -236,18 +234,16 @@ class RoleResource extends Resource implements HasShieldPermissions
 
     public static function getNavigationBadge(): ?string
     {
-        return Utils::isResourceNavigationBadgeEnabled()
-            ? strval(static::getEloquentQuery()->count())
-            : null;
+        return strval(static::getEloquentQuery()->count());
     }
 
     public static function isScopedToTenant(): bool
     {
-        return Utils::isScopedToTenant();
+        return false;
     }
 
     public static function canGloballySearch(): bool
     {
-        return Utils::isResourceGloballySearchable() && count(static::getGloballySearchableAttributes()) && static::canViewAny();
+        return false;
     }
 }

@@ -49,7 +49,7 @@ class SiteSettingsTest extends TestCase
         ]);
 
         Livewire::test(SiteSettings::class)
-            ->assertSchemaFormSet([
+            ->assertSchemaStateSet([
                 'data.site.name' => 'Acme Corp',
                 'data.site.theme' => 'light',
             ]);

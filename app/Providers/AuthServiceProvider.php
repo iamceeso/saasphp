@@ -4,14 +4,17 @@ namespace App\Providers;
 
 use App\Models\CustomerSubscription;
 use App\Models\SubscriptionPlan;
+use App\Models\User;
 use App\Policies\PlanPolicy;
 use App\Policies\SubscriptionPolicy;
+use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
 {
     protected $policies = [
+        User::class => UserPolicy::class,
         CustomerSubscription::class => SubscriptionPolicy::class,
         SubscriptionPlan::class => PlanPolicy::class,
     ];

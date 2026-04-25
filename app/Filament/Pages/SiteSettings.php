@@ -5,18 +5,19 @@ namespace App\Filament\Pages;
 use App\Events\ImageUpdated;
 use App\Models\Setting;
 use DateTimeZone;
-use Filament\Forms\Components\Actions;
-use Filament\Forms\Components\Actions\Action as FormAction;
+use Filament\Actions\Action as FormAction;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Illuminate\Support\Arr;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -96,7 +97,7 @@ class SiteSettings extends Page implements HasForms
             Tabs::make('SettingsTabs')
                 ->statePath('data')
                 ->tabs([
-                    Tabs\Tab::make('Site')->label(__('message.site_tab'))
+                    Tab::make('Site')->label(__('message.site_tab'))
                         ->schema([
                             Section::make('Information')
                                 ->collapsible()
@@ -210,7 +211,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.site_time_format')),
                                 ]),
                         ])->icon('heroicon-o-clipboard-document-check'),
-                    Tabs\Tab::make('Social Login')->label(__('message.social_login_tab'))
+                    Tab::make('Social Login')->label(__('message.social_login_tab'))
                         ->schema([
                             Section::make('Github')
                                 ->icon('bi-github')
@@ -290,7 +291,7 @@ class SiteSettings extends Page implements HasForms
                                 ]),
 
                         ])->icon('heroicon-o-lock-closed'),
-                    Tabs\Tab::make('Features')
+                    Tab::make('Features')
                         ->label(__('message.features_tab'))
                         ->schema([
                             Section::make('Email Options')
@@ -340,7 +341,7 @@ class SiteSettings extends Page implements HasForms
                                 ]),
 
                         ])->icon('heroicon-o-battery-50'),
-                    Tabs\Tab::make('Email Clients')
+                    Tab::make('Email Clients')
                         ->label(__('message.email_clients_tab'))
                         ->schema([
                             Select::make('email.client_name')
@@ -396,7 +397,7 @@ class SiteSettings extends Page implements HasForms
                                 ])->visible(fn ($get) => $get('email.client_name') === 'postmark'),
 
                         ])->icon('heroicon-o-envelope'),
-                    Tabs\Tab::make('SMS Clients')
+                    Tab::make('SMS Clients')
                         ->label(__('message.sms_clients_tab'))
                         ->schema([
                             Select::make('sms.client_name')
@@ -445,7 +446,7 @@ class SiteSettings extends Page implements HasForms
                                 ])->visible(fn ($get) => $get('sms.client_name') === 'africa_talking'),
 
                         ])->icon('fas-sms'),
-                    Tabs\Tab::make('Payment Gateways')
+                    Tab::make('Payment Gateways')
                         ->label(__('message.payment_gateways_tab'))
                         ->schema([
                             Section::make('Stripe')
