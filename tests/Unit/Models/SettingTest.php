@@ -98,6 +98,44 @@ class SettingTest extends TestCase
         $this->assertFalse(Setting::getBooleanValue('non.existent.key', false));
     }
 
+    public function test_updates_forget_cached_setting_values()
+    {
+        $setting = Setting::create([
+            'key' => 'test.cached',
+            'value' => 'first value',
+            'type' => 'string',
+            'group' => 'test'
+        ]);
+
+        $this->assertEquals('first value', Setting::getValue('test.cached'));
+
+        $setting->update([
+            'value' => 'updated value',
+        ]);
+
+        $this->assertEquals('updated value', Setting::getValue('test.cached'));
+    }
+
+    public function test_renaming_setting_forgets_old_and_new_cache_keys()
+    {
+        $setting = Setting::create([
+            'key' => 'test.old',
+            'value' => 'before rename',
+            'type' => 'string',
+            'group' => 'test'
+        ]);
+
+        $this->assertEquals('before rename', Setting::getValue('test.old'));
+
+        $setting->update([
+            'key' => 'test.new',
+            'value' => 'after rename',
+        ]);
+
+        $this->assertNull(Setting::getValue('test.old'));
+        $this->assertEquals('after rename', Setting::getValue('test.new'));
+    }
+
     public function test_value_is_encrypted_in_database()
     {
         $setting = Setting::create([

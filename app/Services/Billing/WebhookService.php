@@ -29,9 +29,9 @@ class WebhookService
         try {
             $event = Webhook::constructEvent($payload, $signature, $secret);
         } catch (SignatureVerificationException $e) {
-            throw new Exception("Webhook signature verification failed: {$e->getMessage()}", 0, $e);
+            throw new Exception('Stripe webhook signature verification failed.', 0, $e);
         } catch (Exception $e) {
-            throw new Exception("Webhook payload validation failed: {$e->getMessage()}", 0, $e);
+            throw new Exception('Stripe webhook payload validation failed.', 0, $e);
         }
 
         $decodedPayload = json_decode($payload, true);

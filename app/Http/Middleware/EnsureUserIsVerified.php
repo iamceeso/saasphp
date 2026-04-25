@@ -10,50 +10,70 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureUserIsVerified
 {
+    private const EMAIL_SENT_SESSION_KEY = 'verification.email_prompt_sent';
+    private const PHONE_SENT_SESSION_KEY = 'verification.phone_prompt_sent';
+
     /**
      * Handle an incoming request.
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    
+
     public function handle(Request $request, Closure $next)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
         $emailVerified = $user->hasVerifiedEmail();
         $phoneVerified = $user->hasVerifiedPhone();
 
-        // If both are verified, proceed
         if ($emailVerified && $phoneVerified) {
+            $request->session()->forget([
+                self::EMAIL_SENT_SESSION_KEY,
+                self::PHONE_SENT_SESSION_KEY,
+            ]);
+
             return $next($request);
         }
 
-        // If user has both email and phone, but either is not verified
-        if ($user->email && $user->phone && (!$emailVerified || !$phoneVerified)) {
-            if (!$emailVerified) {
-                $user->sendVerificationEmailWithRateLimit();
-            }
-            if (!$phoneVerified) {
-                $user->sendPhoneVerificationCodeWithRateLimit();
-            }
+        if ($user->email && ! $emailVerified) {
+            $this->sendVerificationEmailOnce($request, $user);
+        }
+
+        if ($user->phone && ! $phoneVerified) {
+            $this->sendPhoneVerificationOnce($request, $user);
+        }
+
+        if ($user->phone && ! $phoneVerified) {
             return Inertia::render('auth/verify-phone');
         }
 
-        // If only phone exists and not verified
-        if (!$phoneVerified && $user->phone) {
-            $user->sendPhoneVerificationCodeWithRateLimit();
-            return Inertia::render('auth/verify-phone');
-        }
-
-        // If only email exists and not verified
-        if (!$emailVerified && $user->email) {
-                $user->sendVerificationEmailWithRateLimit();
+        if ($user->email && ! $emailVerified) {
             return Inertia::render('auth/verify-email');
         }
 
         return $next($request);
+    }
+
+    private function sendVerificationEmailOnce(Request $request, $user): void
+    {
+        if ($request->session()->has(self::EMAIL_SENT_SESSION_KEY)) {
+            return;
+        }
+
+        $user->sendVerificationEmailWithRateLimit();
+        $request->session()->put(self::EMAIL_SENT_SESSION_KEY, true);
+    }
+
+    private function sendPhoneVerificationOnce(Request $request, $user): void
+    {
+        if ($request->session()->has(self::PHONE_SENT_SESSION_KEY)) {
+            return;
+        }
+
+        $user->sendPhoneVerificationCodeWithRateLimit();
+        $request->session()->put(self::PHONE_SENT_SESSION_KEY, true);
     }
 }

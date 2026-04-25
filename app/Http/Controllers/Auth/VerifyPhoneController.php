@@ -7,15 +7,11 @@ use App\Models\PhoneCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
-use App\Services\LoadSmsConfig;
 
 class VerifyPhoneController extends Controller
 {
-    use LoadSmsConfig;
-
     public function send(Request $request): RedirectResponse
     {
         /** @var \App\Models\User $user */
@@ -28,8 +24,6 @@ class VerifyPhoneController extends Controller
         if (!$user->sendPhoneVerificationCodeWithRateLimit()) {
             return back()->withErrors(['code' => 'Too many attempts. Try again later.']);
         }
-
-        $this->loadDynamicSmsConfig();
 
         return back()->with('status', 'verification-link-sent');
     }

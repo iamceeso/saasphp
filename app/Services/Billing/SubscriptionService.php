@@ -14,6 +14,8 @@ use Stripe\Exception\ApiErrorException;
 
 class SubscriptionService
 {
+    private const FREE_PLAN_PERIOD_YEARS = 100;
+
     private ?StripeClient $stripe = null;
 
     private function getStripeClient(): StripeClient
@@ -36,6 +38,8 @@ class SubscriptionService
         string $interval = 'monthly',
         ?string $paymentMethod = null
     ): array {
+        $this->ensurePlanIsActive($plan);
+
         $price = $plan->prices()
             ->where('interval', $interval)
             ->where('is_active', true)
@@ -132,6 +136,8 @@ class SubscriptionService
         SubscriptionPlan $plan,
         string $interval = 'monthly'
     ): array {
+        $this->ensurePlanIsActive($plan);
+
         $price = $plan->prices()
             ->where('interval', $interval)
             ->where('is_active', true)
@@ -154,6 +160,7 @@ class SubscriptionService
             }
 
             $now = now();
+            $periodEnd = $now->copy()->addYears(self::FREE_PLAN_PERIOD_YEARS);
 
             return CustomerSubscription::create([
                 'user_id' => $lockedUser->id,
@@ -165,7 +172,7 @@ class SubscriptionService
                 'interval' => $interval,
                 'amount' => 0,
                 'current_period_start' => $now,
-                'current_period_end' => $now,
+                'current_period_end' => $periodEnd,
                 'trial_ends_at' => null,
                 'canceled_at' => null,
                 'ended_at' => null,
@@ -191,6 +198,8 @@ class SubscriptionService
         string $interval = 'monthly',
         bool $prorateCosts = true
     ): CustomerSubscription {
+        $this->ensurePlanIsActive($newPlan);
+
         $newPrice = $newPlan->prices()
             ->where('interval', $interval)
             ->where('is_active', true)
@@ -410,52 +419,75 @@ class SubscriptionService
 
     public function normalizeCurrentSubscriptions(User $user): ?CustomerSubscription
     {
-        $currentSubscriptions = $user->subscriptions()
+        return DB::transaction(function () use ($user) {
+            $currentSubscriptions = $user->subscriptions()
+                ->whereIn('status', CustomerSubscription::CURRENT_SLOT_STATUSES)
+                ->whereNull('ended_at')
+                ->orderByDesc('created_at')
+                ->lockForUpdate()
+                ->get();
+
+            $current = $currentSubscriptions->first();
+
+            if (!$current) {
+                return null;
+            }
+
+            $duplicates = $currentSubscriptions->slice(1);
+            $stripeDuplicates = [];
+
+            foreach ($duplicates as $duplicate) {
+                $provider = data_get($duplicate->metadata, 'provider');
+
+                if ($provider === 'stripe' && !empty($duplicate->stripe_subscription_id)) {
+                    $stripeDuplicates[] = [
+                        'subscription_id' => $duplicate->id,
+                        'stripe_subscription_id' => $duplicate->stripe_subscription_id,
+                    ];
+                }
+
+                $duplicate->update([
+                    'current_subscription_key' => null,
+                    'status' => 'canceled',
+                    'canceled_at' => now(),
+                    'ended_at' => now(),
+                    'metadata' => array_merge($duplicate->metadata ?? [], [
+                        'normalized_duplicate' => true,
+                    ]),
+                ]);
+            }
+
+            if ($stripeDuplicates !== []) {
+                DB::afterCommit(function () use ($user, $stripeDuplicates): void {
+                    foreach ($stripeDuplicates as $duplicate) {
+                        try {
+                            $this->getStripeClient()->subscriptions->cancel($duplicate['stripe_subscription_id'], [
+                                'invoice_now' => false,
+                                'prorate' => false,
+                            ]);
+                        } catch (\Throwable $e) {
+                            Log::warning('Failed to cancel duplicate Stripe subscription during normalization', [
+                                'user_id' => $user->id,
+                                'subscription_id' => $duplicate['subscription_id'],
+                                'stripe_subscription_id' => $duplicate['stripe_subscription_id'],
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+                });
+            }
+
+            return $current->refresh();
+        });
+    }
+
+    public function getCurrentSubscriptionForDisplay(User $user): ?CustomerSubscription
+    {
+        return $user->subscriptions()
             ->whereIn('status', CustomerSubscription::CURRENT_SLOT_STATUSES)
             ->whereNull('ended_at')
             ->orderByDesc('created_at')
-            ->lockForUpdate()
-            ->get();
-
-        $current = $currentSubscriptions->first();
-
-        if (!$current) {
-            return null;
-        }
-
-        $duplicates = $currentSubscriptions->slice(1);
-
-        foreach ($duplicates as $duplicate) {
-            $provider = data_get($duplicate->metadata, 'provider');
-
-            if ($provider === 'stripe' && !empty($duplicate->stripe_subscription_id)) {
-                try {
-                    $this->getStripeClient()->subscriptions->cancel($duplicate->stripe_subscription_id, [
-                        'invoice_now' => false,
-                        'prorate' => false,
-                    ]);
-                } catch (\Throwable $e) {
-                    Log::warning('Failed to cancel duplicate Stripe subscription during normalization', [
-                        'user_id' => $user->id,
-                        'subscription_id' => $duplicate->id,
-                        'stripe_subscription_id' => $duplicate->stripe_subscription_id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-
-            $duplicate->update([
-                'current_subscription_key' => null,
-                'status' => 'canceled',
-                'canceled_at' => now(),
-                'ended_at' => now(),
-                'metadata' => array_merge($duplicate->metadata ?? [], [
-                    'normalized_duplicate' => true,
-                ]),
-            ]);
-        }
-
-        return $current->refresh();
+            ->first();
     }
 
     public function currentSubscriptionKeyFor(int $userId): string
@@ -469,6 +501,8 @@ class SubscriptionService
         string $interval,
         string $paymentMethod
     ): array {
+        $this->ensurePlanIsActive($plan);
+
         if (data_get($subscription->metadata, 'provider') !== 'free') {
             throw new \InvalidArgumentException('This subscription is not a free tier subscription.');
         }
@@ -727,8 +761,9 @@ class SubscriptionService
         }
 
         $now = now();
+        $periodEnd = $now->copy()->addYears(self::FREE_PLAN_PERIOD_YEARS);
 
-        return DB::transaction(function () use ($subscription, $plan, $interval, $price, $now) {
+        return DB::transaction(function () use ($subscription, $plan, $interval, $price, $now, $periodEnd) {
             $subscription->update([
                 'plan_id' => $plan->id,
                 'current_subscription_key' => $this->currentSubscriptionKeyFor($subscription->user_id),
@@ -738,7 +773,7 @@ class SubscriptionService
                 'interval' => $interval,
                 'amount' => $price->amount,
                 'current_period_start' => $now,
-                'current_period_end' => $now,
+                'current_period_end' => $periodEnd,
                 'trial_ends_at' => null,
                 'canceled_at' => null,
                 'ended_at' => null,
@@ -751,5 +786,12 @@ class SubscriptionService
 
             return $subscription->refresh();
         });
+    }
+
+    private function ensurePlanIsActive(SubscriptionPlan $plan): void
+    {
+        if (! $plan->is_active) {
+            throw new \InvalidArgumentException('Selected plan is not active.');
+        }
     }
 }

@@ -12,6 +12,7 @@ use App\Models\SubscriptionPlan;
 use App\Services\Billing\SubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class SubscriptionController extends Controller
@@ -61,13 +62,16 @@ class SubscriptionController extends Controller
         $this->authorize('swapPlan', $subscription);
 
         $request->validate([
-            'plan_id' => 'required|exists:subscription_plans,id',
+            'plan_id' => [
+                'required',
+                Rule::exists('subscription_plans', 'id')->where('is_active', true),
+            ],
             'interval' => 'required|in:monthly,annually',
             'prorate' => 'boolean',
         ]);
 
         try {
-            $newPlan = SubscriptionPlan::findOrFail($request->plan_id);
+            $newPlan = SubscriptionPlan::active()->findOrFail($request->plan_id);
             $updated = $this->swapSubscriptionPlan->handle(
                 $subscription,
                 $newPlan,
@@ -80,10 +84,18 @@ class SubscriptionController extends Controller
                 'subscription' => $updated,
                 'message' => 'Plan updated successfully',
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::warning('Subscription plan swap failed', [
+                'subscription_id' => $subscription->id,
+                'user_id' => $subscription->user_id,
+                'plan_id' => $request->input('plan_id'),
+                'interval' => $request->input('interval'),
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'We could not update your subscription plan right now. Please try again.',
             ], 422);
         }
     }
@@ -107,10 +119,17 @@ class SubscriptionController extends Controller
                 'subscription' => $updated,
                 'message' => 'Billing cycle updated successfully',
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::warning('Subscription billing cycle change failed', [
+                'subscription_id' => $subscription->id,
+                'user_id' => $subscription->user_id,
+                'interval' => $request->input('interval'),
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'We could not update your billing cycle right now. Please try again.',
             ], 422);
         }
     }
@@ -135,10 +154,17 @@ class SubscriptionController extends Controller
                     ? 'Subscription canceled immediately'
                     : 'Subscription will be canceled at the end of the billing period',
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::warning('Subscription cancellation failed', [
+                'subscription_id' => $subscription->id,
+                'user_id' => $subscription->user_id,
+                'immediately' => $request->boolean('immediately', false),
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'We could not cancel your subscription right now. Please try again.',
             ], 422);
         }
     }
@@ -155,10 +181,16 @@ class SubscriptionController extends Controller
                 'subscription' => $updated,
                 'message' => 'Subscription resumed successfully',
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::warning('Subscription resume failed', [
+                'subscription_id' => $subscription->id,
+                'user_id' => $subscription->user_id,
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'We could not resume your subscription right now. Please try again.',
             ], 422);
         }
     }

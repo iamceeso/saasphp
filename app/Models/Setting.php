@@ -35,6 +35,17 @@ class Setting extends Model
         'value' => 'encrypted', // auto decrypt/encrypt
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(function (self $setting): void {
+            $setting->forgetCachedValues();
+        });
+
+        static::deleted(function (self $setting): void {
+            $setting->forgetCachedValues();
+        });
+    }
+
     /**
      * Retrieve a setting value by its key, using cache and a fallback default.
      *
@@ -62,5 +73,17 @@ class Setting extends Model
             static::getValue($key, $default),
             FILTER_VALIDATE_BOOLEAN
         );
+    }
+
+    public function forgetCachedValues(): void
+    {
+        $keys = array_filter([
+            $this->key,
+            $this->getOriginal('key'),
+        ]);
+
+        foreach (array_unique($keys) as $key) {
+            cache()->forget("setting.{$key}");
+        }
     }
 }

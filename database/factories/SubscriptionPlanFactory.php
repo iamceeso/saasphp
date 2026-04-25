@@ -13,9 +13,10 @@ class SubscriptionPlanFactory extends Factory
     {
         $names = ['Free', 'Pro', 'Enterprise'];
         $name = $this->faker->randomElement($names);
+        $slugBase = strtolower($name);
 
         return [
-            'slug' => strtolower($name),
+            'slug' => $this->faker->unique()->lexify($slugBase . '-????'),
             'name' => $name,
             'description' => $this->faker->sentence(),
             'sort_order' => $this->faker->numberBetween(0, 10),

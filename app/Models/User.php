@@ -10,6 +10,7 @@ use App\Services\LoadEmailConfig;
 use Filament\Models\Contracts\FilamentUser;
 
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\RateLimiter;
@@ -22,6 +23,15 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Cashier\Billable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string|null $phone
+ * @property string|null $stripe_id
+ * @property \Illuminate\Support\Carbon|null $email_verified_at
+ * @property \Illuminate\Support\Carbon|null $phone_verified_at
+ */
 class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -201,7 +211,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
             return true;
         } catch (\Throwable $e) {
             // Log failure, never crash request
-            \Log::warning('Email verification failed', [
+            Log::warning('Email verification failed', [
                 'user_id' => $this->id,
                 'exception' => $e->getMessage(),
             ]);

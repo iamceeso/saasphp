@@ -8,7 +8,9 @@ use App\Models\SubscriptionPlan;
 use App\Models\CustomerSubscription;
 use App\Services\Billing\SubscriptionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PricingController extends Controller
@@ -26,8 +28,8 @@ class PricingController extends Controller
             ->get();
 
         $userSubscription = null;
-        if (auth()->check()) {
-            $userSubscription = $this->subscriptionService->normalizeCurrentSubscriptions(auth()->user());
+        if (Auth::check()) {
+            $userSubscription = $this->subscriptionService->getCurrentSubscriptionForDisplay(Auth::user());
         }
 
         return Inertia::render('Billing/Pricing', [
@@ -39,17 +41,20 @@ class PricingController extends Controller
     public function checkout(Request $request)
     {
         $request->validate([
-            'plan_id' => 'required|exists:subscription_plans,id',
+            'plan_id' => [
+                'required',
+                Rule::exists('subscription_plans', 'id')->where('is_active', true),
+            ],
             'interval' => 'required|in:monthly,annually',
         ]);
 
-        $plan = SubscriptionPlan::findOrFail($request->plan_id);
+        $plan = SubscriptionPlan::active()->findOrFail($request->plan_id);
         $price = $plan->prices()
             ->where('interval', $request->interval)
             ->where('is_active', true)
             ->firstOrFail();
 
-        $user = auth()->user();
+        $user = Auth::user();
 
         return Inertia::render('Billing/Checkout', [
             'plan' => $plan,
@@ -63,13 +68,16 @@ class PricingController extends Controller
     {
         $this->authorize('create', CustomerSubscription::class);
         $request->validate([
-            'plan_id' => 'required|exists:subscription_plans,id',
+            'plan_id' => [
+                'required',
+                Rule::exists('subscription_plans', 'id')->where('is_active', true),
+            ],
             'interval' => 'required|in:monthly,annually',
-            'payment_method' => 'nullable|string',
+            'payment_method' => ['nullable', 'string', 'regex:/^pm_[A-Za-z0-9]+$/'],
         ]);
 
         try {
-            $plan = SubscriptionPlan::findOrFail($request->plan_id);
+            $plan = SubscriptionPlan::active()->findOrFail($request->plan_id);
             $price = $plan->prices()
                 ->where('interval', $request->interval)
                 ->where('is_active', true)
@@ -78,7 +86,7 @@ class PricingController extends Controller
             $paymentMethod = $request->filled('payment_method')
                 ? (string) $request->payment_method
                 : null;
-            $user = auth()->user();
+            $user = Auth::user();
 
             if ((int) $price->amount === 0) {
                 $result = $this->subscribeToPlan->handle(
@@ -87,7 +95,7 @@ class PricingController extends Controller
                     $request->interval,
                     null
                 );
-            } elseif ($paymentMethod && Str::startsWith($paymentMethod, 'pm_')) {
+            } elseif ($paymentMethod) {
                 $result = $this->subscribeToPlan->handle(
                     $user,
                     $plan,
@@ -142,10 +150,17 @@ class PricingController extends Controller
                 'paymentIntentStatus' => $result['payment_intent_status'],
                 'requiresAction' => $result['requires_action'],
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::warning('Subscription checkout failed', [
+                'user_id' => Auth::id(),
+                'plan_id' => $request->input('plan_id'),
+                'interval' => $request->input('interval'),
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'We could not process your subscription right now. Please try again.',
             ], 422);
         }
     }

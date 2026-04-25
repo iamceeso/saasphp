@@ -2,11 +2,23 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string $slug
+ * @property string $name
+ * @property string|null $description
+ * @property int|null $sort_order
+ * @property bool $is_active
+ * @property string|null $stripe_product_id
+ */
 class SubscriptionPlan extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'slug',
         'name',
