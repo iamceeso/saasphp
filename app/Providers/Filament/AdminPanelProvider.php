@@ -9,6 +9,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Assets\Css;
 use Filament\Support\Colors\Color;
 use Filament\Widgets;
 use App\Filament\Pages\SiteSettings;
@@ -45,8 +46,17 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName($this->name())
+            ->font('Manrope')
             ->colors([
-                'primary' => Color::Green,
+                'danger' => Color::Rose,
+                'gray' => Color::Slate,
+                'info' => Color::Sky,
+                'primary' => '#0f766e',
+                'success' => Color::Emerald,
+                'warning' => Color::Amber,
+            ])
+            ->assets([
+                Css::make('admin-theme', resource_path('css/filament/admin/theme.css')),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

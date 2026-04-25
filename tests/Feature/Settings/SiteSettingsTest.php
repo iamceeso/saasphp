@@ -62,7 +62,6 @@ class SiteSettingsTest extends TestCase
             // we don’t set logo or the required selects
             ->call('submit')
             ->assertHasErrors([
-                'data.site.logo'        => 'required',
                 'data.site.timezone'    => 'required',
                 'data.site.date_format' => 'required',
                 'data.site.language'    => 'required',
@@ -70,11 +69,11 @@ class SiteSettingsTest extends TestCase
     }
 
     #[Test]
-    public function file_upload_logo_is_required_if_not_already_set()
+    public function file_upload_logo_is_optional_if_not_already_set()
     {
         // no logo seeded in DB
         Livewire::test(SiteSettings::class)
             ->call('submit')
-            ->assertHasErrors(['data.site.logo' => 'required']);
+            ->assertHasNoErrors(['data.site.logo']);
     }
 }

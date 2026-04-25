@@ -154,7 +154,7 @@ class SiteSettings extends Page implements HasForms
                                             '1:1',
                                         ])
                                         ->reactive()
-                                        ->required()
+                                        ->nullable()
                                         ->columnSpanFull(),
                                 ])->label(_('message.logo_section')),
                             Section::make('Miscellaneous')
@@ -520,6 +520,10 @@ class SiteSettings extends Page implements HasForms
         $flat = Arr::dot($state);
 
         foreach ($flat as $key => $value) {
+            if ($key === 'site.logo' && blank($value)) {
+                continue;
+            }
+
             // Handle file upload
             if ($value instanceof TemporaryUploadedFile) {
                 $value = $value->storePublicly('logos', 'public');
@@ -593,12 +597,8 @@ class SiteSettings extends Page implements HasForms
             'data.site.timezone'    => ['required'],
             'data.site.date_format' => ['required'],
             'data.site.language'    => ['required'],
+            'data.site.logo'        => ['nullable', 'image'],
         ];
-
-        // only require a logo upload if you don’t already have one
-        if (empty($this->data['site']['logo'])) {
-            $rules['data.site.logo'] = ['required', 'image'];
-        }
 
         return $rules;
     }

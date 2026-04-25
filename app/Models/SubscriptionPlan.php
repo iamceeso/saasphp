@@ -13,6 +13,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $description
  * @property int|null $sort_order
  * @property bool $is_active
+ * @property bool $is_most_popular
+ * @property string $cta_type
+ * @property string|null $contact_url
+ * @property string|null $contact_button_text
  * @property string|null $stripe_product_id
  */
 class SubscriptionPlan extends Model
@@ -25,12 +29,31 @@ class SubscriptionPlan extends Model
         'description',
         'sort_order',
         'is_active',
+        'is_most_popular',
+        'cta_type',
+        'contact_url',
+        'contact_button_text',
         'stripe_product_id',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_most_popular' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(function (self $plan): void {
+            if (! $plan->is_most_popular) {
+                return;
+            }
+
+            static::query()
+                ->whereKeyNot($plan->getKey())
+                ->where('is_most_popular', true)
+                ->update(['is_most_popular' => false]);
+        });
+    }
 
     public function prices(): HasMany
     {
@@ -55,6 +78,16 @@ class SubscriptionPlan extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order');
+    }
+
+    public function markAsMostPopular(): void
+    {
+        $this->forceFill(['is_most_popular' => true])->save();
+    }
+
+    public function isContactPlan(): bool
+    {
+        return $this->cta_type === 'contact';
     }
 
     public function getMonthlyPrice(): ?PlanPrice

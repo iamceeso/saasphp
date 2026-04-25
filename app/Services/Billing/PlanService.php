@@ -47,6 +47,10 @@ class PlanService
             'stripe_product_id' => $stripeProductId,
             'sort_order' => $data['sort_order'] ?? 0,
             'is_active' => $data['is_active'] ?? true,
+            'is_most_popular' => $data['is_most_popular'] ?? false,
+            'cta_type' => $data['cta_type'] ?? 'subscribe',
+            'contact_url' => $data['contact_url'] ?? null,
+            'contact_button_text' => $data['contact_button_text'] ?? null,
         ]);
 
         if (isset($data['prices'])) {
