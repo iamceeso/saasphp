@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Billing\PricingController;
 use App\Http\Controllers\Billing\SubscriptionController;
 use App\Http\Controllers\Billing\WebhookController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('billing')->group(function () {
     Route::get('pricing', [PricingController::class, 'show'])->name('pricing.show');

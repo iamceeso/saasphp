@@ -45,14 +45,14 @@ trait FireImageUpdatedEvent
         });
 
         static::deleting(function ($model) {
-            if (!empty($model->image)) {
+            if (! empty($model->image)) {
                 event(new ImageUpdated(
                     $model,
                     [$model->image],
                 ));
             }
 
-            if (!empty($model->attachments)) {
+            if (! empty($model->attachments)) {
                 event(new ImageUpdated(
                     $model,
                     $model->attachments,
@@ -60,7 +60,7 @@ trait FireImageUpdatedEvent
             }
 
             // Handle logo or favicon on delete (value field)
-            if (in_array($model->key ?? '', ['site.logo']) && !empty($model->value)) {
+            if (in_array($model->key ?? '', ['site.logo']) && ! empty($model->value)) {
                 event(new ImageUpdated(
                     $model,
                     [$model->value],

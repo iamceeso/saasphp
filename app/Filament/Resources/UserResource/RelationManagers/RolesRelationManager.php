@@ -4,14 +4,12 @@ namespace App\Filament\Resources\UserResource\RelationManagers;
 
 use App\Helpers\RoleHelper;
 use App\Models\Role;
-use Filament\Forms;
 use Filament\Actions\DetachAction;
+use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class RolesRelationManager extends RelationManager
 {
@@ -42,8 +40,8 @@ class RolesRelationManager extends RelationManager
             ])
             ->recordActions([
                 DetachAction::make()
-                    ->hidden(fn(Role $record) => ! RoleHelper::canDetachRoleFromUser($record, $this->getOwnerRecord()))
-                    ->authorize(fn(Role $record) => RoleHelper::canDetachRoleFromUser($record, $this->getOwnerRecord()))
+                    ->hidden(fn (Role $record) => ! RoleHelper::canDetachRoleFromUser($record, $this->getOwnerRecord()))
+                    ->authorize(fn (Role $record) => RoleHelper::canDetachRoleFromUser($record, $this->getOwnerRecord())),
             ])
             ->bulkActions([
                 // No bulk actions available

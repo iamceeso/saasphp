@@ -1,13 +1,14 @@
 <?php
 
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Inertia\Testing\AssertableInertia as Assert;
-use App\Models\Setting;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 test('email verification screen can be rendered', function () {
     // Ensure email verification is enabled
@@ -38,7 +39,7 @@ test('email can be verified', function () {
         'verification.verify',
         now()->addMinutes(60),
         [
-            'id'   => $user->id,
+            'id' => $user->id,
             'hash' => sha1($user->email),
         ]
     );

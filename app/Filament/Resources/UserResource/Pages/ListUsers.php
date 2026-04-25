@@ -2,8 +2,9 @@
 
 namespace App\Filament\Resources\UserResource\Pages;
 
-use Filament\Actions;
 use App\Filament\Resources\UserResource;
+use App\Models\User;
+use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
 class ListUsers extends ListRecords
@@ -14,7 +15,7 @@ class ListUsers extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->visible(fn() => auth()->user()?->can('create', \App\Models\User::class)),
+                ->visible(fn () => auth()->user()?->can('create', User::class)),
         ];
     }
 }

@@ -2,26 +2,24 @@
 
 namespace App\Models;
 
-use App\Models\Setting;
-
-use App\Services\LoadSmsConfig;
 use App\Services\LoadEmailConfig;
-
+use App\Services\LoadSmsConfig;
+use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
-
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\RateLimiter;
-use Laravel\Fortify\TwoFactorAuthenticatable;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-
-use Laravel\Cashier\Billable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Laravel\Cashier\Billable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
@@ -29,13 +27,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $email
  * @property string|null $phone
  * @property string|null $stripe_id
- * @property \Illuminate\Support\Carbon|null $email_verified_at
- * @property \Illuminate\Support\Carbon|null $phone_verified_at
+ * @property Carbon|null $email_verified_at
+ * @property Carbon|null $phone_verified_at
  */
-class User extends Authenticatable implements MustVerifyEmail, FilamentUser
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles, SoftDeletes, LoadEmailConfig, LoadSmsConfig, Billable;
+    /** @use HasFactory<UserFactory> */
+    use Billable, HasFactory, HasRoles, LoadEmailConfig, LoadSmsConfig, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -66,10 +64,10 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
      * @return array<string>
      */
     protected $casts = [
-        'email_verified_at'         => 'datetime',
-        'phone_verified_at'         => 'datetime',
-        'password'                  => 'hashed',            // ← hashed cast
-        'two_factor_secret'         => 'encrypted',
+        'email_verified_at' => 'datetime',
+        'phone_verified_at' => 'datetime',
+        'password' => 'hashed',            // ← hashed cast
+        'two_factor_secret' => 'encrypted',
         'two_factor_recovery_codes' => 'encrypted:array',
     ];
 
@@ -81,7 +79,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
         });
     }
 
-    public function canAccessPanel(\Filament\Panel $panel): bool
+    public function canAccessPanel(Panel $panel): bool
     {
         return Gate::allows('accessPanel', static::class);
     }
@@ -113,20 +111,20 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
     public function hasVerifiedEmail()
     {
         // Skip check if verification is disabled in settings
-        if (!Setting::getBooleanValue('features.enable_email_verification', true)) {
+        if (! Setting::getBooleanValue('features.enable_email_verification', true)) {
             return true;
         }
 
-        return !is_null($this->email_verified_at);
+        return ! is_null($this->email_verified_at);
     }
 
     public function hasVerifiedPhone()
     {
-        if (!Setting::getBooleanValue('features.enable_phone_verification', true)) {
+        if (! Setting::getBooleanValue('features.enable_phone_verification', true)) {
             return true;
         }
 
-        return !is_null($this->phone_verified_at);
+        return ! is_null($this->phone_verified_at);
     }
 
     public function markEmailAsVerified()
@@ -179,7 +177,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 
     public function sendVerificationEmailWithRateLimit(): bool
     {
-        $key = 'verify-email:' . $this->id;
+        $key = 'verify-email:'.$this->id;
         $attemptCacheKey = "{$key}:attempts";
 
         if ((int) cache()->get($attemptCacheKey, 0) >= 3) {
@@ -222,7 +220,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 
     public function sendPhoneVerificationCodeWithRateLimit(): bool
     {
-        $key = 'verify-phone:' . $this->id;
+        $key = 'verify-phone:'.$this->id;
 
         if (RateLimiter::attempts($key) >= 3) {
             return false;
@@ -231,6 +229,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
         $this->loadDynamicSmsConfig();
 
         RateLimiter::hit($key, now()->diffInSeconds(now()->addMinutes(15)));
+
         return true;
     }
 

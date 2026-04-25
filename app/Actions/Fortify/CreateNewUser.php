@@ -2,8 +2,8 @@
 
 namespace App\Actions\Fortify;
 
-use App\Models\User;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -63,7 +63,7 @@ class CreateNewUser implements CreatesNewUsers
         }
 
         $validated = Validator::make($input, $rules)->validate();
-        
+
         return User::create([
             'name' => $validated['name'],
             'email' => $validated['email'] ?? null,

@@ -19,12 +19,13 @@ class WebhookController extends Controller
         $signature = $request->header('Stripe-Signature');
         $event = json_decode($payload, true);
 
-        if (!$signature) {
+        if (! $signature) {
             return response()->json(['error' => 'Missing signature'], 400);
         }
 
         try {
             $this->webhookService->handleWebhook($payload, $signature);
+
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             Log::warning('Stripe webhook rejected', [

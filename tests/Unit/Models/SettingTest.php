@@ -16,13 +16,13 @@ class SettingTest extends TestCase
             'key' => 'test.key',
             'value' => 'test value',
             'type' => 'string',
-            'group' => 'test'
+            'group' => 'test',
         ]);
 
         $this->assertDatabaseHas('settings', [
             'key' => 'test.key',
             'type' => 'string',
-            'group' => 'test'
+            'group' => 'test',
         ]);
 
         $this->assertEquals('test value', $setting->value);
@@ -34,7 +34,7 @@ class SettingTest extends TestCase
             'key' => 'test.key',
             'value' => 'test value',
             'type' => 'string',
-            'group' => 'test'
+            'group' => 'test',
         ]);
 
         $value = Setting::getValue('test.key');
@@ -53,7 +53,7 @@ class SettingTest extends TestCase
             'key' => 'test.boolean',
             'value' => 'true',
             'type' => 'boolean',
-            'group' => 'test'
+            'group' => 'test',
         ]);
 
         $value = Setting::getBooleanValue('test.boolean');
@@ -63,13 +63,13 @@ class SettingTest extends TestCase
     public function test_boolean_value_handles_various_true_values()
     {
         $trueValues = ['true', '1', 'yes', 'on'];
-        
+
         foreach ($trueValues as $value) {
             Setting::create([
                 'key' => "test.boolean.{$value}",
                 'value' => $value,
                 'type' => 'boolean',
-                'group' => 'test'
+                'group' => 'test',
             ]);
 
             $this->assertTrue(Setting::getBooleanValue("test.boolean.{$value}"));
@@ -79,13 +79,13 @@ class SettingTest extends TestCase
     public function test_boolean_value_handles_various_false_values()
     {
         $falseValues = ['false', '0', 'no', 'off'];
-        
+
         foreach ($falseValues as $value) {
             Setting::create([
                 'key' => "test.boolean.{$value}",
                 'value' => $value,
                 'type' => 'boolean',
-                'group' => 'test'
+                'group' => 'test',
             ]);
 
             $this->assertFalse(Setting::getBooleanValue("test.boolean.{$value}"));
@@ -104,7 +104,7 @@ class SettingTest extends TestCase
             'key' => 'test.cached',
             'value' => 'first value',
             'type' => 'string',
-            'group' => 'test'
+            'group' => 'test',
         ]);
 
         $this->assertEquals('first value', Setting::getValue('test.cached'));
@@ -122,7 +122,7 @@ class SettingTest extends TestCase
             'key' => 'test.old',
             'value' => 'before rename',
             'type' => 'string',
-            'group' => 'test'
+            'group' => 'test',
         ]);
 
         $this->assertEquals('before rename', Setting::getValue('test.old'));
@@ -142,13 +142,13 @@ class SettingTest extends TestCase
             'key' => 'test.encrypted',
             'value' => 'sensitive data',
             'type' => 'string',
-            'group' => 'test'
+            'group' => 'test',
         ]);
 
         // The value in the database should be encrypted
         $this->assertNotEquals('sensitive data', $setting->getRawOriginal('value'));
-        
+
         // But we should still be able to access it normally
         $this->assertEquals('sensitive data', $setting->value);
     }
-} 
+}

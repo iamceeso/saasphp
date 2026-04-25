@@ -3,22 +3,22 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Setting;
 use App\Models\MagicLink;
+use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Cache\RateLimiter;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class MagicLinkController extends Controller
 {
     protected function throttleKey(Request $request): string
     {
-        return Str::lower($request->input('email', '') . '|' . $request->ip());
+        return Str::lower($request->input('email', '').'|'.$request->ip());
     }
 
     public function send(Request $request)
@@ -27,7 +27,7 @@ class MagicLinkController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        $key = 'magic-link-send:' . $this->throttleKey($request);
+        $key = 'magic-link-send:'.$this->throttleKey($request);
 
         if (app(RateLimiter::class)->tooManyAttempts($key, 5)) {
             return back()->withErrors([
@@ -53,8 +53,8 @@ class MagicLinkController extends Controller
 
         // Save hashed code
         MagicLink::create([
-            'user_id'    => $user->id,
-            'code'       => $hashedCode,
+            'user_id' => $user->id,
+            'code' => $hashedCode,
             'expires_at' => $expiresAt,
         ]);
 
@@ -64,7 +64,7 @@ class MagicLinkController extends Controller
         // Send email
         Mail::raw("Click here to login: $url", function ($message) use ($user) {
             $message->to($user->email)
-                ->subject(Setting::getValue('site.name') . ' Magic Login Link');
+                ->subject(Setting::getValue('site.name').' Magic Login Link');
         });
 
         return back()->with('status', 'If your email address exists in our system, a login link has been sent.');
@@ -74,10 +74,10 @@ class MagicLinkController extends Controller
     {
         $request->validate([
             'email' => ['required', 'email'],
-            'code'  => ['required', 'string'],
+            'code' => ['required', 'string'],
         ]);
 
-        $key = 'magic-link-login:' . $this->throttleKey($request);
+        $key = 'magic-link-login:'.$this->throttleKey($request);
 
         if (app(RateLimiter::class)->tooManyAttempts($key, 10)) {
             return redirect()->route('login')->withErrors([
@@ -103,7 +103,7 @@ class MagicLinkController extends Controller
             ->latest()
             ->first();
 
-        if (!$magicLink || !Hash::check($request->code, $magicLink->code)) {
+        if (! $magicLink || ! Hash::check($request->code, $magicLink->code)) {
             return redirect()->route('login')->withErrors(['code' => 'Invalid or expired magic link.']);
         }
 
@@ -114,7 +114,7 @@ class MagicLinkController extends Controller
         Auth::login($user);
 
         // Verify unverified email
-        if (!$user->hasVerifiedEmail()) {
+        if (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
         }
 

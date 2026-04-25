@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\SubscriptionPlan;
-use App\Models\PlanPrice;
 use App\Models\PlanFeature;
+use App\Models\PlanPrice;
+use App\Models\SubscriptionPlan;
 use Illuminate\Database\Seeder;
 
 class BillingSeeder extends Seeder

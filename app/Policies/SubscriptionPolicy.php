@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\CustomerSubscription;
+use App\Models\User;
 
 class SubscriptionPolicy
 {
@@ -29,7 +29,7 @@ class SubscriptionPolicy
             return false;
         }
 
-        return !$subscription->isCanceled();
+        return ! $subscription->isCanceled();
     }
 
     public function cancel(User $user, CustomerSubscription $subscription): bool

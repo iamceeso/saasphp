@@ -43,7 +43,7 @@ class PlanPrice extends Model
 
     public function getFormattedAmount(): string
     {
-        return '$' . number_format($this->amount / 100, 2);
+        return '$'.number_format($this->amount / 100, 2);
     }
 
     public function hasFreeTrial(): bool

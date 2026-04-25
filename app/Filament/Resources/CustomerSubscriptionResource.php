@@ -4,33 +4,32 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CustomerSubscriptionResource\Pages;
 use App\Models\CustomerSubscription;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class CustomerSubscriptionResource extends Resource
 {
     protected static ?string $model = CustomerSubscription::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-receipt-percent';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-receipt-percent';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Billing';
+    protected static string|\UnitEnum|null $navigationGroup = 'Billing';
 
     protected static ?int $navigationSort = 2;
 
     public static function canAccess(): bool
     {
-        return Auth::user()?->can('viewAny', CustomerSubscription::class) ?? false;
+        return Gate::allows('viewAny', CustomerSubscription::class);
     }
 
     public static function shouldRegisterNavigation(): bool

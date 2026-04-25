@@ -2,26 +2,24 @@
 
 namespace App\Filament\Pages;
 
-use DateTimeZone;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Radio;
-use Filament\Pages\Page;
+use App\Events\ImageUpdated;
 use App\Models\Setting;
+use DateTimeZone;
+use Filament\Forms\Components\Actions;
+use Filament\Forms\Components\Actions\Action as FormAction;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Section;
-use Filament\Notifications\Notification;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Notifications\Notification;
+use Filament\Pages\Page;
 use Illuminate\Support\Arr;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
-use App\Events\ImageUpdated;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Actions;
-use Filament\Forms\Components\Actions\Action as FormAction;
-
 
 /**
  * Class SiteSettings
@@ -29,8 +27,6 @@ use Filament\Forms\Components\Actions\Action as FormAction;
  * This Filament page handles application-wide settings stored in the `settings` table.
  * Settings are grouped into tabs and sections including Site Info, Social Login, Features,
  * Email Clients, SMS Clients, and Payment Gateways.
- *
- * @package App\Filament\Pages
  */
 class SiteSettings extends Page implements HasForms
 {
@@ -38,13 +34,15 @@ class SiteSettings extends Page implements HasForms
 
     /**
      * Form data state.
-     *
-     * @var array
      */
     public array $data = [];
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cog-6-tooth';
-    protected static string $view = 'filament.pages.site-settings';
+
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';
+
+    protected string $view = 'filament.pages.site-settings';
+
     protected static ?string $slug = 'settings';
+
     protected static ?int $navigationSort = 9999;
 
     /** this flag drives your button-disabled checks */
@@ -71,7 +69,6 @@ class SiteSettings extends Page implements HasForms
     /**
      * Initialize settings form with values from database.
      */
-
     public function mount(): void
     {
         $payload = [];
@@ -210,7 +207,7 @@ class SiteSettings extends Page implements HasForms
                                         ->searchable()
                                         ->required(),
                                     TextInput::make('site.time_format')
-                                        ->label(__('message.site_time_format'))
+                                        ->label(__('message.site_time_format')),
                                 ]),
                         ])->icon('heroicon-o-clipboard-document-check'),
                     Tabs\Tab::make('Social Login')->label(__('message.social_login_tab'))
@@ -339,7 +336,7 @@ class SiteSettings extends Page implements HasForms
                                     Toggle::make('features.enable_registration')
                                         ->label(__('message.enable_registration')),
                                     Toggle::make('features.phone_email_at_registration')
-                                        ->label(__('message.phone_email_at_registration'))
+                                        ->label(__('message.phone_email_at_registration')),
                                 ]),
 
                         ])->icon('heroicon-o-battery-50'),
@@ -349,7 +346,7 @@ class SiteSettings extends Page implements HasForms
                             Select::make('email.client_name')
                                 ->label(__('message.email_client_name'))
                                 ->options([
-                                    'resend'  => 'Resend',
+                                    'resend' => 'Resend',
                                     'postmark' => 'Postmark',
                                     'mailgun' => 'Mailgun',
                                     'log' => 'Log [development only]',
@@ -375,7 +372,7 @@ class SiteSettings extends Page implements HasForms
                                         ->revealable(),
                                     TextInput::make('email.mailgun.endpoint')
                                         ->label(__('message.mailgun_endpoint')),
-                                ])->visible(fn($get) => $get('email.client_name') === 'mailgun'),
+                                ])->visible(fn ($get) => $get('email.client_name') === 'mailgun'),
                             Section::make('Resend')
                                 ->icon('si-resend')
                                 ->collapsible()
@@ -385,7 +382,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.resend_api_key'))
                                         ->password()
                                         ->revealable(),
-                                ])->visible(fn($get) => $get('email.client_name') === 'resend'),
+                                ])->visible(fn ($get) => $get('email.client_name') === 'resend'),
                             Section::make('Postmark')
                                 ->icon('fas-p')
                                 ->collapsible()
@@ -396,7 +393,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.postmark_api_key'))
                                         ->password()
                                         ->revealable(),
-                                ])->visible(fn($get) => $get('email.client_name') === 'postmark'),
+                                ])->visible(fn ($get) => $get('email.client_name') === 'postmark'),
 
                         ])->icon('heroicon-o-envelope'),
                     Tabs\Tab::make('SMS Clients')
@@ -405,7 +402,7 @@ class SiteSettings extends Page implements HasForms
                             Select::make('sms.client_name')
                                 ->label(__('message.sms_client_name'))
                                 ->options([
-                                    'vonage'  => 'Vonage',
+                                    'vonage' => 'Vonage',
                                     'africa_talking' => 'Africa talking',
 
                                 ])
@@ -432,7 +429,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.vonage_secret_key'))
                                         ->password()
                                         ->revealable(),
-                                ])->visible(fn($get) => $get('sms.client_name') === 'vonage'),
+                                ])->visible(fn ($get) => $get('sms.client_name') === 'vonage'),
                             Section::make('Africa talking')
                                 ->icon('bi-globe-europe-africa')
                                 ->collapsible()
@@ -445,7 +442,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.africa_talking_api_key'))
                                         ->password()
                                         ->revealable(),
-                                ])->visible(fn($get) => $get('sms.client_name') === 'africa_talking'),
+                                ])->visible(fn ($get) => $get('sms.client_name') === 'africa_talking'),
 
                         ])->icon('fas-sms'),
                     Tabs\Tab::make('Payment Gateways')
@@ -502,14 +499,13 @@ class SiteSettings extends Page implements HasForms
                     ->requiresConfirmation()
                     ->action(function () {
 
-
                         $this->submit();
-                    })
+                    }),
             ])
                 ->columnSpanFull(),
         ];
     }
-    
+
     /**
      * Save the form state to the settings table.
      */
@@ -560,7 +556,7 @@ class SiteSettings extends Page implements HasForms
                 'key' => $key,
             ], [
                 'value' => $plain,
-                'type'  => is_bool($value) ? 'boolean' : 'string',
+                'type' => is_bool($value) ? 'boolean' : 'string',
                 'group' => explode('.', $key)[0],
             ]);
         }
@@ -573,17 +569,16 @@ class SiteSettings extends Page implements HasForms
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        if (isset($data['site']['favicon']) && !str_starts_with($data['site']['favicon'], 'storage/')) {
-            $data['site']['favicon'] = 'storage/' . $data['site']['favicon'];
+        if (isset($data['site']['favicon']) && ! str_starts_with($data['site']['favicon'], 'storage/')) {
+            $data['site']['favicon'] = 'storage/'.$data['site']['favicon'];
         }
 
-        if (isset($data['site']['logo']) && !str_starts_with($data['site']['logo'], 'storage/')) {
-            $data['site']['logo'] = 'storage/' . $data['site']['logo'];
+        if (isset($data['site']['logo']) && ! str_starts_with($data['site']['logo'], 'storage/')) {
+            $data['site']['logo'] = 'storage/'.$data['site']['logo'];
         }
 
         return $data;
     }
-
 
     /**
      * Livewire validation rules must mirror the $data property keys.
@@ -591,13 +586,13 @@ class SiteSettings extends Page implements HasForms
     public function rules(): array
     {
         $rules = [
-            'data.site.name'        => ['required', 'max:255'],
-            'data.site.url'         => ['required', 'max:255', 'regex:/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/', 'not_regex:/http[s]?:\/\//', 'not_regex:/\//'],
+            'data.site.name' => ['required', 'max:255'],
+            'data.site.url' => ['required', 'max:255', 'regex:/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/', 'not_regex:/http[s]?:\/\//', 'not_regex:/\//'],
             'data.site.description' => ['required', 'max:255'],
-            'data.site.timezone'    => ['required'],
+            'data.site.timezone' => ['required'],
             'data.site.date_format' => ['required'],
-            'data.site.language'    => ['required'],
-            'data.site.logo'        => ['nullable', 'image'],
+            'data.site.language' => ['required'],
+            'data.site.logo' => ['nullable', 'image'],
         ];
 
         return $rules;

@@ -2,14 +2,14 @@
 
 namespace App\Filament\Resources\RoleResource\Pages;
 
+use App\Filament\Resources\RoleResource;
+use App\Models\User;
+use BezhanSalleh\FilamentShield\Support\Utils;
+use Filament\Actions;
+use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-
-use Filament\Actions;
-use App\Models\User;
-use Filament\Resources\Pages\EditRecord;
-use App\Filament\Resources\RoleResource;
-use BezhanSalleh\FilamentShield\Support\Utils;
+use Spatie\Permission\Models\Role;
 
 class EditRole extends EditRecord
 {
@@ -26,13 +26,12 @@ class EditRole extends EditRecord
             return false;
         }
 
-        if (! $record instanceof \Spatie\Permission\Models\Role) {
+        if (! $record instanceof Role) {
             $record = RoleResource::getModel()::find($record);
         }
 
         return $record ? $user?->can('update', $record) : false;
     }
-
 
     protected function getActions(): array
     {
@@ -44,8 +43,7 @@ class EditRole extends EditRecord
         return [
             Actions\DeleteAction::make()
                 ->visible(
-                    fn($record) =>
-                    !in_array(strtolower($record->name), [strtolower(User::superAdminRoleName()), 'user'], true) &&
+                    fn ($record) => ! in_array(strtolower($record->name), [strtolower(User::superAdminRoleName()), 'user'], true) &&
                         $record->users()->count() === 0
                 ),
         ];
@@ -57,7 +55,7 @@ class EditRole extends EditRecord
         $submitted = collect($data['role'] ?? []);
         $original = $this->record->permissions
             ->pluck('name')
-            ->filter(fn($name) => str($name)->endsWith('_role'));
+            ->filter(fn ($name) => str($name)->endsWith('_role'));
 
         if (
             ! auth()->user()->isSuperAdmin()
@@ -77,7 +75,6 @@ class EditRole extends EditRecord
             ->values()
             ->flatten()
             ->unique();
-
 
         if (Arr::has($data, Utils::getTenantModelForeignKey())) {
             return Arr::only($data, ['name', 'guard_name', Utils::getTenantModelForeignKey()]);

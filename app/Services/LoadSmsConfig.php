@@ -2,33 +2,30 @@
 
 namespace App\Services;
 
-use App\Models\Setting;
-use App\Models\PhoneCode;
+use AfricasTalking\SDK\AfricasTalking;
 use App\Enums\SmsProviders;
-
+use App\Models\PhoneCode;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
-
-use AfricasTalking\SDK\AfricasTalking;
-
 use Vonage\Client as VonageClient;
 use Vonage\Client\Credentials\Basic as VonageCredentials;
+use Vonage\SMS\Message\SMS;
 
 trait LoadSmsConfig
 {
     public function loadDynamicSmsConfig(?string $message = null, ?string $phone = null): void
     {
         $user = Auth::user();
-        if (!Schema::hasTable('settings')) return;
-
-
-
-        // Check if SMS sending is enabled
-        if (!Setting::getBooleanValue('features.sms_sending', false)) {
+        if (! Schema::hasTable('settings')) {
             return;
         }
 
+        // Check if SMS sending is enabled
+        if (! Setting::getBooleanValue('features.sms_sending', false)) {
+            return;
+        }
 
         $code = rand(100000, 999999);
         $expiresAt = now()->addMinutes(5);
@@ -45,14 +42,15 @@ trait LoadSmsConfig
             ]);
         }
 
-
         $client = Setting::getValue('sms.client_name');
-        $from   = Setting::getValue('sms.from.address');
+        $from = Setting::getValue('sms.from.address');
 
         // Use passed phone number or fall back to $this->phone
         $recipient = $phone ?? $user->phone;
 
-        if (!$recipient) return;
+        if (! $recipient) {
+            return;
+        }
 
         $finalMessage = $message ?? "Your code is: {$code}";
 
@@ -69,7 +67,7 @@ trait LoadSmsConfig
 
             $messageText = $finalMessage;
             $client->sms()->send(
-                new \Vonage\SMS\Message\SMS($recipient, config('services.vonage.sms_from'), $messageText)
+                new SMS($recipient, config('services.vonage.sms_from'), $messageText)
             );
         }
         if ($client === SmsProviders::AFRICA_TALKING->value) {
@@ -77,13 +75,13 @@ trait LoadSmsConfig
             config()->set('services.africa_talking.username', Setting::getValue('sms.africa_talking.username'));
             config()->set('services.africa_talking.api', Setting::getValue('sms.africa_talking.api'));
 
-            $username   = Setting::getValue('sms.africa_talking.username');
-            $apiKey     = Setting::getValue('sms.africa_talking.api_key');
-            $AT         = new AfricasTalking($username, $apiKey);
-            $sms        = $AT->sms();
+            $username = Setting::getValue('sms.africa_talking.username');
+            $apiKey = Setting::getValue('sms.africa_talking.api_key');
+            $AT = new AfricasTalking($username, $apiKey);
+            $sms = $AT->sms();
 
             $sms->send([
-                'to'      => $recipient,
+                'to' => $recipient,
                 'message' => $finalMessage,
             ]);
         }

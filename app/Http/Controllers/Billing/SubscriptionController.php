@@ -205,8 +205,8 @@ class SubscriptionController extends Controller
 
         try {
             $provider = data_get($subscription->metadata, 'provider');
-            $hasStripeCustomer = !empty($subscription->user?->stripe_id);
-            $hasStripeSubscription = !empty($subscription->stripe_subscription_id);
+            $hasStripeCustomer = ! empty($subscription->user?->stripe_id);
+            $hasStripeSubscription = ! empty($subscription->stripe_subscription_id);
 
             if ($provider !== 'local' && $hasStripeCustomer && $hasStripeSubscription) {
                 $invoices = collect($this->subscriptionService->getStripeInvoices($subscription));

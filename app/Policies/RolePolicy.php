@@ -25,7 +25,7 @@ class RolePolicy
             return $user->hasPermissionTo('update_admin_role');
         }
 
-        if (!in_array($name, ['admin', 'user'])) {
+        if (! in_array($name, ['admin', 'user'])) {
             return $user->hasPermissionTo('update_staff_role');
         }
 
@@ -35,7 +35,7 @@ class RolePolicy
     public function delete(User $user, Role $role): bool
     {
         return $user->hasPermissionTo('delete_role') &&
-            !in_array(strtolower($role->name), ['admin', 'user']) &&
+            ! in_array(strtolower($role->name), ['admin', 'user']) &&
             $role->users()->count() === 0;
     }
 

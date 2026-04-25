@@ -5,14 +5,13 @@ namespace App\Filament\Resources\RoleResource\RelationManagers;
 use App\Helpers\RoleHelper;
 use App\Models\Role;
 use App\Models\User;
-
-use Filament\Forms;
 use Filament\Actions\AttachAction;
 use Filament\Actions\DetachAction;
-use Filament\Tables;
-use Filament\Tables\Table;
+use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Tables;
+use Filament\Tables\Table;
 
 class UsersRelationManager extends RelationManager
 {
@@ -42,19 +41,19 @@ class UsersRelationManager extends RelationManager
             ])
             ->headerActions([
                 AttachAction::make()
-                    ->recordSelectOptionsQuery(fn() => User::query()->whereDoesntHave(
+                    ->recordSelectOptionsQuery(fn () => User::query()->whereDoesntHave(
                         'roles',
-                        fn($query) => $query->where('roles.id', $this->getOwnerRecord()->getKey())
+                        fn ($query) => $query->where('roles.id', $this->getOwnerRecord()->getKey())
                     ))
                     ->recordSelectSearchColumns(['name', 'email', 'phone'])
-                    ->authorize(fn() => RoleHelper::canManageAssignments($this->getOwnerRecord()))
-                    ->hidden(fn() => ! RoleHelper::canManageAssignments($this->getOwnerRecord()))
+                    ->authorize(fn () => RoleHelper::canManageAssignments($this->getOwnerRecord()))
+                    ->hidden(fn () => ! RoleHelper::canManageAssignments($this->getOwnerRecord()))
                     ->label('Attach User To Role'),
             ])
             ->recordActions([
                 DetachAction::make()
-                    ->hidden(fn(User $record) => ! RoleHelper::canDetachRoleFromUser($this->getOwnerRecord(), $record))
-                    ->authorize(fn(User $record) => RoleHelper::canDetachRoleFromUser($this->getOwnerRecord(), $record))
+                    ->hidden(fn (User $record) => ! RoleHelper::canDetachRoleFromUser($this->getOwnerRecord(), $record))
+                    ->authorize(fn (User $record) => RoleHelper::canDetachRoleFromUser($this->getOwnerRecord(), $record)),
             ])
             ->bulkActions([
                 // Tables\Actions\DetachBulkAction::make()

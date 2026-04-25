@@ -17,7 +17,7 @@ class PlanPriceFactory extends Factory
             'interval' => $this->faker->randomElement(['monthly', 'annually']),
             'amount' => $this->faker->randomElement([999, 2999, 9999]),
             'trial_days' => $this->faker->randomElement([0, 7, 14, 30]),
-            'stripe_price_id' => 'price_test_' . $this->faker->unique()->word(),
+            'stripe_price_id' => 'price_test_'.$this->faker->unique()->word(),
             'is_active' => true,
         ];
     }

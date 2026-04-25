@@ -6,17 +6,17 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
-use Laravel\Fortify\Fortify;
-use Inertia\Inertia;
 use App\Models\Setting;
 use App\Models\User;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -27,6 +27,7 @@ class FortifyServiceProvider extends ServiceProvider
     {
         //
     }
+
     /**
      * Bootstrap any application services.
      */
@@ -38,7 +39,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())) . '|' . $request->ip());
+            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
             return Limit::perMinute(5)->by($throttleKey);
         });
@@ -68,7 +69,9 @@ class FortifyServiceProvider extends ServiceProvider
             $registrationEnabled = Setting::getBooleanValue('features.enable_registration', 'false');
             $twoFactorEnabled = Setting::getBooleanValue('features.enable_two_factor_auth', 'false');
 
-            if (!$registrationEnabled) return Inertia::render('auth/login');
+            if (! $registrationEnabled) {
+                return Inertia::render('auth/login');
+            }
 
             return Inertia::render('auth/register', ['twoFactorEnabled' => $twoFactorEnabled]);
         });
@@ -79,8 +82,10 @@ class FortifyServiceProvider extends ServiceProvider
 
         Fortify::verifyEmailView(function () {
             if (
-                !Setting::getBooleanValue('features.enable_email_verification', 'false')
-            ) return redirect('/');
+                ! Setting::getBooleanValue('features.enable_email_verification', 'false')
+            ) {
+                return redirect('/');
+            }
 
             return Inertia::render('auth/verify-email');
         });
@@ -89,14 +94,12 @@ class FortifyServiceProvider extends ServiceProvider
         //     return Inertia::render('auth/reset-password');
         // });
 
-        
-
         Fortify::confirmPasswordView(function () {
             return Inertia::render('auth/confirm-password');
         });
 
         Fortify::authenticateUsing(function (Request $request) {
-          
+
             $request->validate([
                 'login' => 'required|string',
                 'password' => 'required|string',

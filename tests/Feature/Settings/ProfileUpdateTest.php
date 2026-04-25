@@ -1,8 +1,9 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -72,12 +73,11 @@ test('user can soft-delete their account', function () {
         'id' => $user->id,
     ]);
 
-    //—or, if you prefer to check via the model instance—
+    // —or, if you prefer to check via the model instance—
     $trashed = User::withTrashed()->find($user->id);
     expect($trashed)->not->toBeNull();
     expect($trashed->trashed())->toBeTrue();
 });
-
 
 test('correct password must be provided to delete account', function () {
     $user = User::factory()->create();

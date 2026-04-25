@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+
 return [
 
     /*
@@ -98,7 +101,6 @@ return [
 
     'system_route_prefix' => 'filament',
 
-
     /*
     |--------------------------------------------------------------------------
     | Authentication Guard
@@ -107,7 +109,7 @@ return [
     | This is the authentication guard that Filament will use to authenticate
     | users. You may use any of the guards defined in the `config/auth.php`.
     |
-    | If you are using Laravel Breeze, you may use the `web` guard.             
+    | If you are using Laravel Breeze, you may use the `web` guard.
     | If you are using Laravel Jetstream, you may use the `sanctum` guard.
     |
     | If you are using Laravel Fortify, you may use the `fortify` guard.
@@ -120,14 +122,13 @@ return [
         'guard' => 'web',
 
         'user' => [
-            'model' => App\Models\User::class,
+            'model' => User::class,
 
-            'resolve' => fn() => \Illuminate\Support\Facades\Auth::user(),
+            'resolve' => fn () => Auth::user(),
 
             // ✅ Check user role to deny access
-            'can_access' => fn($user) => $user?->canAccessPanel(filament()->getCurrentPanel()),
+            'can_access' => fn ($user) => $user?->canAccessPanel(filament()->getCurrentPanel()),
         ],
     ],
-
 
 ];

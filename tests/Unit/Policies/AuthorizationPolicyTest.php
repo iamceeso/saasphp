@@ -2,10 +2,10 @@
 
 namespace Tests\Unit\Policies;
 
+use App\Models\CustomerSubscription;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
-use App\Models\CustomerSubscription;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
