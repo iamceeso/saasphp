@@ -19,6 +19,7 @@ yarn-error.log
 /.fleet
 /.idea
 /.nova
+.codex
 /.vscode
 /.zed
 .DS_Store
