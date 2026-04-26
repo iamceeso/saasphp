@@ -1,20 +1,12 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import type { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
-
-interface ResetPasswordForm {
-    token: string;
-    email: string;
-    password: string;
-    password_confirmation: string;
-    [key: string]: string;
-}
 
 export default function ResetPassword() {
     const page = usePage();
@@ -23,7 +15,7 @@ export default function ResetPassword() {
     const token = url.pathname.split('/').pop() ?? '';
     const email = url.searchParams.get('email') ?? '';
 
-    const { data, setData, post, processing, errors, reset } = useForm<ResetPasswordForm>({
+    const { data, setData, post, processing, errors, reset } = useForm({
         token: token,
         email: email,
         password: '',

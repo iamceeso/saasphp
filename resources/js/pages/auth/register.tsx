@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import type { FormEventHandler } from 'react';
 
 interface SocialIds {
     google_id: string;
@@ -17,17 +17,8 @@ interface SocialIds {
     twitter_id: string;
 }
 
-interface RegisterForm {
-    name: string;
-    email: string;
-    phone: string;
-    password: string;
-    password_confirmation: string;
-    [key: string]: string; 
-}
-
 export default function Register() {
-    const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
+    const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
         phone: '',

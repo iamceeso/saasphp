@@ -1,7 +1,10 @@
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
+import type { ComponentPropsWithoutRef } from 'react';
 
-export default function AppLogoIcon() {
+type AppLogoIconProps = ComponentPropsWithoutRef<'img'>;
+
+export default function AppLogoIcon({ className, alt, ...props }: AppLogoIconProps) {
     const { site } = usePage<SharedData>().props;
     const logo = site.logo?.trim() || '/logos/logo.png';
     const src = logo.startsWith('http://') || logo.startsWith('https://') || logo.startsWith('/')
@@ -11,11 +14,12 @@ export default function AppLogoIcon() {
     return (
         <img
             src={src}
-            alt={site.name}
-            className="h-full w-full object-contain"
+            alt={alt ?? site.name}
+            className={className ?? 'h-full w-full object-contain'}
             onError={(event) => {
                 event.currentTarget.src = '/logos/logo.png';
             }}
+            {...props}
         />
     );
 }

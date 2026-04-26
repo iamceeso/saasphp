@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import type { FormEventHandler } from 'react';
 
 interface SocialIds {
     google_id: string;
@@ -23,15 +23,9 @@ interface LoginProps {
     canResetPassword: boolean;
     social_ids: SocialIds;
 }
-interface LoginForm {
-    login: string;
-    password: string;
-    remember: boolean;
-    [key: string]: string | boolean;
-}
 
 export default function Login() {
-    const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
+    const { data, setData, post, processing, errors, reset } = useForm({
         login: '',
         password: '',
         remember: false,
@@ -73,7 +67,7 @@ export default function Login() {
                             onChange={(e) => setData('login', e.target.value)}
                             placeholder="email@example.com"
                         />
-                        <InputError message={errors.email} />
+                        <InputError message={errors.login} />
                     </div>
 
                     <div className="grid gap-2">
