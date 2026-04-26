@@ -57,7 +57,7 @@ The runtime values for these services are usually loaded from the database setti
 
 ## Billing feature flags
 
-`config/billing.php` defines three flags:
+`config/billing.php` defines these flags:
 
 - `billing.enabled`: enables or disables billing route registration entirely
 - `billing.navigation.enabled`: toggles billing navigation

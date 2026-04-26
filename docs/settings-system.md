@@ -108,7 +108,7 @@ When a setting is saved or deleted, the cache for that key is cleared automatica
 
 ## Image updates
 
-The `Setting` model uses `FireImageUpdatedEvent`, and the admin site settings page emits logo-related updates through Livewire and Filament upload handling. This is the part of the app that manages runtime branding assets like the site logo.
+The `Setting` model uses `FireImageUpdatedEvent`. In the current implementation that event handling explicitly watches for `site.logo` changes so old logo files can be cleaned up when branding is updated from the admin settings page.
 
 ## Why this matters
 
