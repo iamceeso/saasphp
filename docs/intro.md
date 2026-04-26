@@ -5,7 +5,7 @@ sidebar_position: 1
 
 # SaaS PHP
 
-SaaS PHP is a Laravel 12 starter kit for subscription products. It combines a customer-facing React and Inertia app with a Filament admin panel, Stripe billing primitives, account security features, and a database-backed settings system.
+SaaS PHP is a Laravel starter kit for subscription products. It combines a customer-facing React and Inertia app with a Filament admin panel, Stripe billing primitives, account security features, and a database-backed settings system.
 
 This documentation is based on the current code in this repository, not on marketing copy. Where the code differs from the existing README, this docs set follows the implementation in the app.
 

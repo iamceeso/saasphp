@@ -73,7 +73,7 @@ trait LoadSmsConfig
         if ($client === SmsProviders::AFRICA_TALKING->value) {
 
             config()->set('services.africa_talking.username', Setting::getValue('sms.africa_talking.username'));
-            config()->set('services.africa_talking.api', Setting::getValue('sms.africa_talking.api'));
+            config()->set('services.africa_talking.api_key', Setting::getValue('sms.africa_talking.api_key'));
 
             $username = Setting::getValue('sms.africa_talking.username');
             $apiKey = Setting::getValue('sms.africa_talking.api_key');
