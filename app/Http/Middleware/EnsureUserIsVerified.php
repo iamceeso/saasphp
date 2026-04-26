@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,16 +12,17 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsureUserIsVerified
 {
     private const EMAIL_SENT_SESSION_KEY = 'verification.email_prompt_sent';
+
     private const PHONE_SENT_SESSION_KEY = 'verification.phone_prompt_sent';
 
     /**
      * Handle an incoming request.
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     *
+     * @param  Closure(Request): (Response)  $next
      */
-
     public function handle(Request $request, Closure $next)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         if (! $user) {
             return redirect()->route('login');

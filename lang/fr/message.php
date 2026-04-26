@@ -5,9 +5,9 @@
 | Lignes de traduction de l'application
 |--------------------------------------------------------------------------
 |
-| Ce fichier contient toutes les chaînes de traduction personnalisées 
+| Ce fichier contient toutes les chaînes de traduction personnalisées
 | utilisées par l'application. Cela inclut les libellés, onglets, sections,
-| textes des boutons et notifications pour les paramètres du site et les 
+| textes des boutons et notifications pour les paramètres du site et les
 | pages associées.
 |
 | Chaque clé correspond à un texte lisible dans l'interface utilisateur (UI).
@@ -83,7 +83,7 @@ return [
     'vonage_api_key' => 'Clé API Vonage',
     'vonage_secret_key' => 'Clé Secrète Vonage',
     'africa_talking_api_key' => 'Clé API Africa Talking',
-    'africa_talking_username' => 'Nom d’utilisateur Africa Talking',
+    'africa_talking_username' => 'Nom d\'utilisateur Africa Talking',
 
     // Stripe
     'stripe_public_key' => 'Clé Publique Stripe',

@@ -2,14 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\Pivot;
 use App\Services\FireImageUpdatedEvent;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
-    use HasFactory, FireImageUpdatedEvent;
+    use FireImageUpdatedEvent, HasFactory;
 
     protected $table = 'settings';
 
@@ -49,8 +48,8 @@ class Setting extends Model
     /**
      * Retrieve a setting value by its key, using cache and a fallback default.
      *
-     * @param  string       $key      The setting key.
-     * @param  mixed|null   $default  The default value to return if not found.
+     * @param  string  $key  The setting key.
+     * @param  mixed|null  $default  The default value to return if not found.
      * @return mixed
      */
     public static function getValue(string $key, $default = null)
@@ -63,9 +62,8 @@ class Setting extends Model
     /**
      * Retrieve a setting value as a boolean, using cache and a fallback default.
      *
-     * @param  string       $key      The setting key.
-     * @param  mixed|null   $default  The default value to use if not found.
-     * @return bool
+     * @param  string  $key  The setting key.
+     * @param  mixed|null  $default  The default value to use if not found.
      */
     public static function getBooleanValue(string $key, $default = false): bool
     {

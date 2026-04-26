@@ -8,6 +8,6 @@ class SettingPolicy
 {
     public function modify(User $user): bool
     {
-        return $user->hasPermissionTo('modify_settings_role');
+        return $user->hasPermissionSafely('modify_settings_role');
     }
 }

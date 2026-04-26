@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Settings;
 
-use App\Models\User;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class AppearanceSettingsTest extends TestCase
 {
@@ -20,23 +20,23 @@ class AppearanceSettingsTest extends TestCase
 
         // Create default appearance settings
         Setting::create([
-            'key'   => 'appearance.theme',
+            'key' => 'appearance.theme',
             'value' => 'light',
-            'type'  => 'string',
+            'type' => 'string',
             'group' => 'appearance',
         ]);
 
         Setting::create([
-            'key'   => 'appearance.font_size',
+            'key' => 'appearance.font_size',
             'value' => 'medium',
-            'type'  => 'string',
+            'type' => 'string',
             'group' => 'appearance',
         ]);
 
         Setting::create([
-            'key'   => 'appearance.color_scheme',
+            'key' => 'appearance.color_scheme',
             'value' => 'default',
-            'type'  => 'string',
+            'type' => 'string',
             'group' => 'appearance',
         ]);
 
@@ -50,8 +50,7 @@ class AppearanceSettingsTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn(Assert $page) =>
-            $page->component('settings/appearance')
+            fn (Assert $page) => $page->component('settings/appearance')
         );
     }
 
@@ -65,8 +64,8 @@ class AppearanceSettingsTest extends TestCase
     {
         $this->actingAs($this->user)
             ->patch('/settings/appearance', [
-                'theme'        => 'dark',
-                'font_size'    => 'large',
+                'theme' => 'dark',
+                'font_size' => 'large',
                 'color_scheme' => 'blue',
             ]);
 
@@ -77,8 +76,7 @@ class AppearanceSettingsTest extends TestCase
         $response = $this->get('/settings/appearance');
         $response->assertStatus(200);
         $response->assertInertia(
-            fn(Assert $page) =>
-            $page->component('settings/appearance')
+            fn (Assert $page) => $page->component('settings/appearance')
         );
     }
 }

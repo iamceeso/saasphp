@@ -2,11 +2,10 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-// We need DB & Hash in order to insert and hash passwords
 use Illuminate\Support\Facades\DB;
+// We need DB & Hash in order to insert and hash passwords
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {

@@ -12,7 +12,7 @@ class DeleteOldImage
      */
     public function __construct()
     {
-        // 
+        //
     }
 
     /**
@@ -21,7 +21,7 @@ class DeleteOldImage
     public function handle(ImageUpdated $event): void
     {
         foreach ((array) $event->paths as $path) {
-            if (!empty($path) && Storage::disk('public')->exists($path)) {
+            if (! empty($path) && Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
             }
         }

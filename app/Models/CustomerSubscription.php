@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CustomerSubscription extends Model
 {
@@ -101,7 +101,7 @@ class CustomerSubscription extends Model
 
     public function onGracePeriod(): bool
     {
-        if (!$this->canceled_at) {
+        if (! $this->canceled_at) {
             return false;
         }
 
@@ -116,12 +116,13 @@ class CustomerSubscription extends Model
     public function getFormattedAmount(): string
     {
         $currency = $this->metadata['currency'] ?? 'USD';
-        return $currency . ' ' . number_format($this->amount / 100, 2);
+
+        return $currency.' '.number_format($this->amount / 100, 2);
     }
 
     public function getNextBillingDate(): ?Carbon
     {
-        if (!$this->current_period_end || $this->ended_at) {
+        if (! $this->current_period_end || $this->ended_at) {
             return null;
         }
 
@@ -132,7 +133,7 @@ class CustomerSubscription extends Model
     {
         $nextBillingDate = $this->getNextBillingDate();
 
-        if (!$nextBillingDate) {
+        if (! $nextBillingDate) {
             return null;
         }
 

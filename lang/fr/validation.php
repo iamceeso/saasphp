@@ -26,7 +26,7 @@ return [
     'ascii' => 'Le champ :attribute doit seulement contenir des caractères ASCII.',
     'before' => 'Le champ :attribute doit être une date antérieure à :date.',
     'before_or_equal' => 'Le champ :attribute doit être une date antérieure ou égale à :date.',
-    
+
     'between' => [
         'array' => 'Le champ :attribute doit contenir entre :min et :max éléments.',
         'file' => 'Le champ :attribute doit être entre :min et :max kilo-octets.',

@@ -2,20 +2,21 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Models\User;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Fortify\TwoFactorAuthenticationProvider;
-use Tests\TestCase;
 use Inertia\Testing\AssertableInertia as Assert;
-use PragmaRX\Google2FA\Google2FA;
 use Laravel\Fortify\RecoveryCode;
+use Laravel\Fortify\TwoFactorAuthenticationProvider;
+use PragmaRX\Google2FA\Google2FA;
+use Tests\TestCase;
 
 class TwoFactorAuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $user;
+
     protected $provider;
 
     protected function setUp(): void
@@ -28,7 +29,7 @@ class TwoFactorAuthenticationTest extends TestCase
             [
                 'value' => true,
                 'type' => 'boolean',
-                'group' => 'features'
+                'group' => 'features',
             ]
         );
 
@@ -43,8 +44,7 @@ class TwoFactorAuthenticationTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn(Assert $page) =>
-            $page->component('settings/two-factor-authentication')
+            fn (Assert $page) => $page->component('settings/two-factor-authentication')
         );
     }
 
@@ -54,7 +54,7 @@ class TwoFactorAuthenticationTest extends TestCase
             ->post('/user/two-factor-authentication');
 
         $this->user->forceFill([
-            'two_factor_secret' => encrypt((new Google2FA())->generateSecretKey()),
+            'two_factor_secret' => encrypt((new Google2FA)->generateSecretKey()),
             'two_factor_recovery_codes' => encrypt(json_encode(['test-code-1', 'test-code-2'])),
         ])->save();
 
@@ -62,10 +62,9 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->assertNotNull($this->user->fresh()->two_factor_recovery_codes);
     }
 
-
     public function test_two_factor_authentication_can_be_disabled()
     {
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
         $secret = $google2fa->generateSecretKey();
 
         $this->user->forceFill([
@@ -79,7 +78,6 @@ class TwoFactorAuthenticationTest extends TestCase
             ->withSession(['auth.password_confirmed_at' => now()->getTimestamp()])
             ->delete('/user/two-factor-authentication');
 
-
         $user = $this->user->fresh();
 
         $this->assertNull($user->two_factor_secret);
@@ -87,10 +85,9 @@ class TwoFactorAuthenticationTest extends TestCase
         $response->assertSessionHas('status', 'two-factor-authentication-disabled');
     }
 
-
     public function test_two_factor_authentication_can_be_confirmed()
     {
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
         $plainSecret = $google2fa->generateSecretKey(); // 16+ char base32
 
         $this->user->forceFill([
@@ -122,7 +119,7 @@ class TwoFactorAuthenticationTest extends TestCase
 
         $response->assertSessionHasErrors();
     }
-    
+
     public function test_recovery_codes_can_be_regenerated()
     {
         // First enable 2FA
@@ -143,20 +140,20 @@ class TwoFactorAuthenticationTest extends TestCase
 
     public function test_two_factor_authentication_is_required_when_enabled()
     {
-        $google2fa   = new Google2FA();
-        $secret      = $google2fa->generateSecretKey();
-        $recoveryCodes = collect(range(1, 8))->map(fn() => RecoveryCode::generate())->all();
+        $google2fa = new Google2FA;
+        $secret = $google2fa->generateSecretKey();
+        $recoveryCodes = collect(range(1, 8))->map(fn () => RecoveryCode::generate())->all();
 
         $this->user->forceFill([
-            'two_factor_secret'          => encrypt($secret),
-            'two_factor_confirmed_at'    => now(),
-            'two_factor_recovery_codes'  => encrypt(json_encode($recoveryCodes)),
+            'two_factor_secret' => encrypt($secret),
+            'two_factor_confirmed_at' => now(),
+            'two_factor_recovery_codes' => encrypt(json_encode($recoveryCodes)),
         ])->save();
 
         $this->post('/logout');
 
         $response = $this->post('/login', [
-            'login'    => $this->user->email,
+            'login' => $this->user->email,
             'password' => 'password',
         ]);
 
@@ -165,20 +162,20 @@ class TwoFactorAuthenticationTest extends TestCase
 
     public function test_two_factor_authentication_can_be_bypassed_with_recovery_code()
     {
-        $secret = (new Google2FA())->generateSecretKey();
-        $plainCodes = collect(range(1, 8))->map(fn() => RecoveryCode::generate())->values();
+        $secret = (new Google2FA)->generateSecretKey();
+        $plainCodes = collect(range(1, 8))->map(fn () => RecoveryCode::generate())->values();
         $firstCode = $plainCodes[0];
 
         $this->user->forceFill([
-            'two_factor_secret'          => encrypt($secret),
-            'two_factor_confirmed_at'    => now(),
-            'two_factor_recovery_codes'  => encrypt(json_encode($plainCodes)),
+            'two_factor_secret' => encrypt($secret),
+            'two_factor_confirmed_at' => now(),
+            'two_factor_recovery_codes' => encrypt(json_encode($plainCodes)),
         ])->save();
 
         $this->post('/logout');
 
         $this->post('/login', [
-            'login'    => $this->user->email,
+            'login' => $this->user->email,
             'password' => 'password',
         ])->assertRedirect('/two-factor-challenge');
 
@@ -193,7 +190,7 @@ class TwoFactorAuthenticationTest extends TestCase
     public function test_two_factor_authentication_feature_can_be_disabled()
     {
         Setting::updateOrCreate(
-            ['key'   => 'features.enable_two_factor_auth'],
+            ['key' => 'features.enable_two_factor_auth'],
             ['value' => false, 'type' => 'boolean', 'group' => 'features']
         );
 
@@ -206,7 +203,7 @@ class TwoFactorAuthenticationTest extends TestCase
 
     public function test_confirmed_two_factor_screen_does_not_expose_the_raw_secret()
     {
-        $secret = (new Google2FA())->generateSecretKey();
+        $secret = (new Google2FA)->generateSecretKey();
 
         $this->user->forceFill([
             'two_factor_secret' => encrypt($secret),

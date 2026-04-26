@@ -2,13 +2,11 @@
 
 namespace App\Filament\Resources\RoleResource\Pages;
 
-use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
-
-use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\RoleResource;
 use BezhanSalleh\FilamentShield\Support\Utils;
-
+use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 
 class CreateRole extends CreateRecord
 {
@@ -18,7 +16,7 @@ class CreateRole extends CreateRecord
 
     public static function canAccess(array $parameters = []): bool
     {
-        return auth()->user()?->hasPermissionTo('create_role');
+        return auth()->user()?->hasPermissionSafely('create_role') ?? false;
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array

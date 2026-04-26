@@ -1,11 +1,11 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -21,13 +21,11 @@ return new class extends Migration
             $table->timestamps();
         });
 
-       
-
         // Create or find the "admin" role.
         $adminRoleId = DB::table('roles')->where('name', 'admin')->value('id');
-        if (!$adminRoleId) {
+        if (! $adminRoleId) {
             $adminRoleId = DB::table('roles')->insertGetId([
-                'name'       => 'admin',
+                'name' => 'admin',
                 'guard_name' => 'web',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -36,9 +34,9 @@ return new class extends Migration
 
         // Create or find the "user" role.
         $userRoleId = DB::table('roles')->where('name', 'user')->value('id');
-        if (!$userRoleId) {
+        if (! $userRoleId) {
             $userRoleId = DB::table('roles')->insertGetId([
-                'name'       => 'user',
+                'name' => 'user',
                 'guard_name' => 'web',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -50,11 +48,11 @@ return new class extends Migration
             ->where('email', 'admin@saasphp.com')
             ->value('id');
 
-        if (!$adminUserId) {
+        if (! $adminUserId) {
             $adminUserId = DB::table('users')->insertGetId([
-                'name'       => 'Admin User',
-                'email'      => 'admin@saasphp.com',
-                'password'   => Hash::make('password'), // <— Change this default if you like
+                'name' => 'Admin User',
+                'email' => 'admin@saasphp.com',
+                'password' => Hash::make('password'), // < Change this default if you like
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -66,11 +64,11 @@ return new class extends Migration
             ->where('email', 'user1@saasphp.com')
             ->value('id');
 
-        if (!$userOneId) {
+        if (! $userOneId) {
             $userOneId = DB::table('users')->insertGetId([
-                'name'       => 'User One',
-                'email'      => 'user1@saasphp.com',
-                'password'   => Hash::make('password'),
+                'name' => 'User One',
+                'email' => 'user1@saasphp.com',
+                'password' => Hash::make('password'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -83,9 +81,9 @@ return new class extends Migration
 
         if (! $userTwoId) {
             $userTwoId = DB::table('users')->insertGetId([
-                'name'       => 'User Two',
-                'email'      => 'user2@saasphp.com',
-                'password'   => Hash::make('password'),
+                'name' => 'User Two',
+                'email' => 'user2@saasphp.com',
+                'password' => Hash::make('password'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -93,44 +91,44 @@ return new class extends Migration
 
         // Attach the roles to those users via model_has_roles.
         $exists = DB::table('model_has_roles')
-            ->where('model_type', \App\Models\User::class)
+            ->where('model_type', User::class)
             ->where('model_id', $adminUserId)
             ->where('role_id', $adminRoleId)
             ->exists();
 
         if (! $exists) {
             DB::table('model_has_roles')->updateOrInsert([
-                'role_id'    => $adminRoleId,
-                'model_type' => \App\Models\User::class,
-                'model_id'   => $adminUserId,
+                'role_id' => $adminRoleId,
+                'model_type' => User::class,
+                'model_id' => $adminUserId,
             ]);
         }
 
         $exists = DB::table('model_has_roles')
-            ->where('model_type', \App\Models\User::class)
+            ->where('model_type', User::class)
             ->where('model_id', $userOneId)
             ->where('role_id', $userRoleId)
             ->exists();
 
         if (! $exists) {
             DB::table('model_has_roles')->updateOrInsert([
-                'role_id'    => $userRoleId,
-                'model_type' => \App\Models\User::class,
-                'model_id'   => $userOneId,
+                'role_id' => $userRoleId,
+                'model_type' => User::class,
+                'model_id' => $userOneId,
             ]);
         }
 
         $exists = DB::table('model_has_roles')
-            ->where('model_type', \App\Models\User::class)
+            ->where('model_type', User::class)
             ->where('model_id', $userTwoId)
             ->where('role_id', $userRoleId)
             ->exists();
 
         if (! $exists) {
             DB::table('model_has_roles')->updateOrInsert([
-                'role_id'    => $userRoleId,
-                'model_type' => \App\Models\User::class,
-                'model_id'   => $userTwoId,
+                'role_id' => $userRoleId,
+                'model_type' => User::class,
+                'model_id' => $userTwoId,
             ]);
         }
 

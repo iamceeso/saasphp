@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Foundation\Inspiring;
-use App\Models\Setting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -56,7 +55,7 @@ class HandleInertiaRequests extends Middleware
                     ],
                 ],
             ],
-            'status' => fn() => session('status'),
+            'status' => fn () => session('status'),
         ];
     }
 }

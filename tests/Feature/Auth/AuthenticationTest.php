@@ -1,11 +1,12 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 test('login screen can be rendered', function () {
     $response = $this->get('/login');
@@ -17,8 +18,6 @@ test('login screen can be rendered', function () {
     });
 });
 
-
-
 test('users can authenticate using the login screen', function () {
     $this->withoutMiddleware(VerifyCsrfToken::class);
 
@@ -27,14 +26,13 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $response = $this->post('/login', [
-        'login'    => $user->email,
+        'login' => $user->email,
         'password' => 'password',
     ]);
 
     $this->assertAuthenticatedAs($user);
     $response->assertRedirect('/');
 });
-
 
 test('users can not authenticate with invalid password', function () {
     $user = User::factory()->create();

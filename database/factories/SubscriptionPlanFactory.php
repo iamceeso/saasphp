@@ -16,7 +16,7 @@ class SubscriptionPlanFactory extends Factory
         $slugBase = strtolower($name);
 
         return [
-            'slug' => $this->faker->unique()->lexify($slugBase . '-????'),
+            'slug' => $this->faker->unique()->lexify($slugBase.'-????'),
             'name' => $name,
             'description' => $this->faker->sentence(),
             'sort_order' => $this->faker->numberBetween(0, 10),
@@ -25,7 +25,7 @@ class SubscriptionPlanFactory extends Factory
             'cta_type' => 'subscribe',
             'contact_url' => null,
             'contact_button_text' => null,
-            'stripe_product_id' => 'prod_test_' . $this->faker->unique()->word(),
+            'stripe_product_id' => 'prod_test_'.$this->faker->unique()->word(),
         ];
     }
 

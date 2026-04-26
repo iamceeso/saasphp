@@ -11,9 +11,9 @@ class SettingHelper
      */
     public static function get(string $key, $default = null)
     {
-       $setting = Setting::where('key', $key)->first();
+        $setting = Setting::where('key', $key)->first();
 
-        if (!$setting) {
+        if (! $setting) {
             return $default;
         }
 

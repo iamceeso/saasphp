@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
-use Throwable;
-use Illuminate\Support\Str;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Str;
 use Laravel\Socialite\AbstractUser as SocialiteAbstractUser;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
 use Laravel\Socialite\Facades\Socialite;
+use Throwable;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -27,7 +27,6 @@ class AuthenticatedSessionController extends Controller
 
         return redirect('/');
     }
-
 
     /**
      * Social authentication
@@ -81,7 +80,6 @@ class AuthenticatedSessionController extends Controller
     {
         return $this->socialLoginCallback('twitter');
     }
-
 
     private function socialLoginCallback(string $provider): RedirectResponse
     {
@@ -160,6 +158,7 @@ class AuthenticatedSessionController extends Controller
         }
 
         Auth::login($socialUser, true);
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

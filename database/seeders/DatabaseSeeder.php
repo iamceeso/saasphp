@@ -66,5 +66,9 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $userTwo->syncRoles([$userRole]);
+
+        if ((bool) config('billing.enabled')) {
+            $this->call(BillingSeeder::class);
+        }
     }
 }

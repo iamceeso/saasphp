@@ -1,15 +1,15 @@
 <?php
 
-namespace Tests\Feature\Auth;
+namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\Setting;
 use App\Models\PhoneCode;
+use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
-use Tests\TestCase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class PhoneVerificationTest extends TestCase
 {
@@ -44,7 +44,7 @@ class PhoneVerificationTest extends TestCase
 
         $this->user = User::factory()->create([
             'phone' => '1234567890',
-            'phone_verified_at' => null
+            'phone_verified_at' => null,
         ]);
     }
 
@@ -53,8 +53,7 @@ class PhoneVerificationTest extends TestCase
         $response = $this->actingAs($this->user)->get('/dashboard');
 
         $response->assertInertia(
-            fn(Assert $page) =>
-            $page->component('auth/verify-phone')
+            fn (Assert $page) => $page->component('auth/verify-phone')
         );
 
         $response->assertStatus(200);
@@ -67,7 +66,7 @@ class PhoneVerificationTest extends TestCase
 
         $response->assertSessionHas('status', 'verification-link-sent');
         $this->assertDatabaseHas('phone_codes', [
-            'user_id' => $this->user->id
+            'user_id' => $this->user->id,
         ]);
     }
 
@@ -75,7 +74,7 @@ class PhoneVerificationTest extends TestCase
     {
         $user = User::factory()->create([
             'phone' => null,
-            'phone_verified_at' => null
+            'phone_verified_at' => null,
         ]);
 
         $response = $this->actingAs($user)
@@ -91,12 +90,12 @@ class PhoneVerificationTest extends TestCase
         PhoneCode::create([
             'user_id' => $this->user->id,
             'code' => Hash::make($code),
-            'expires_at' => now()->addMinutes(5)
+            'expires_at' => now()->addMinutes(5),
         ]);
 
         $response = $this->actingAs($this->user)
             ->post('/phone/verify', [
-                'code' => $code
+                'code' => $code,
             ]);
 
         $response->assertRedirect('/dashboard');
@@ -107,7 +106,7 @@ class PhoneVerificationTest extends TestCase
     {
         $response = $this->actingAs($this->user)
             ->post('/phone/verify', [
-                'code' => 'invalid-code'
+                'code' => 'invalid-code',
             ]);
 
         $response->assertSessionHasErrors('code');
@@ -121,12 +120,12 @@ class PhoneVerificationTest extends TestCase
         PhoneCode::create([
             'user_id' => $this->user->id,
             'code' => Hash::make($code),
-            'expires_at' => now()->subMinutes(1)
+            'expires_at' => now()->subMinutes(1),
         ]);
 
         $response = $this->actingAs($this->user)
             ->post('/phone/verify', [
-                'code' => $code
+                'code' => $code,
             ]);
 
         $response->assertSessionHasErrors('code');
@@ -139,14 +138,13 @@ class PhoneVerificationTest extends TestCase
 
         // Simulate hitting the rate limit
         for ($i = 0; $i < 3; $i++) {
-            RateLimiter::hit('verify-phone:' . $this->user->id, 900); // 15 minutes
+            RateLimiter::hit('verify-phone:'.$this->user->id, 900); // 15 minutes
         }
 
         $response = $this->post('/phone/send');
 
         $response->assertSessionHasErrors('code');
     }
-
 
     public function test_phone_verification_is_not_required_when_disabled()
     {
@@ -162,25 +160,22 @@ class PhoneVerificationTest extends TestCase
         $response->assertStatus(200);
     }
 
-
     public function test_phone_verification_is_skipped_when_already_verified()
     {
         $user = User::factory()->create([
             'phone' => '1234567890',
-            'phone_verified_at' => now()
+            'phone_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($user)
             ->get('/dashboard');
 
         $response->assertInertia(
-            fn(Assert $page) =>
-            $page->component('dashboard')
+            fn (Assert $page) => $page->component('dashboard')
         );
 
         $response->assertStatus(200);
     }
-
 
     public function test_used_verification_codes_cannot_be_reused()
     {
@@ -190,12 +185,12 @@ class PhoneVerificationTest extends TestCase
             'user_id' => $this->user->id,
             'code' => Hash::make($code),
             'expires_at' => now()->addMinutes(5),
-            'used_at' => now() // simulate already used
+            'used_at' => now(), // simulate already used
         ]);
 
         $response = $this->actingAs($this->user)
             ->post('/phone/verify', [
-                'code' => $code
+                'code' => $code,
             ]);
 
         $response->assertSessionHasErrors('code');

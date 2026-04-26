@@ -4,31 +4,32 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CustomerSubscriptionResource\Pages;
 use App\Models\CustomerSubscription;
-use Filament\Forms;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Gate;
 
 class CustomerSubscriptionResource extends Resource
 {
     protected static ?string $model = CustomerSubscription::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-receipt-percent';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-receipt-percent';
 
-    protected static ?string $navigationGroup = 'Billing';
+    protected static string|\UnitEnum|null $navigationGroup = 'Billing';
 
     protected static ?int $navigationSort = 2;
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->can('viewAny', CustomerSubscription::class) ?? false;
+        return Gate::allows('viewAny', CustomerSubscription::class);
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -36,9 +37,9 @@ class CustomerSubscriptionResource extends Resource
         return (bool) config('billing.enabled');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Section::make('Subscription')
                     ->schema([
@@ -150,9 +151,9 @@ class CustomerSubscriptionResource extends Resource
                         'annually' => 'Annually',
                     ]),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                ViewAction::make(),
             ])
             ->defaultSort('created_at', 'desc');
     }

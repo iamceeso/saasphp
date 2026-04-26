@@ -29,8 +29,9 @@ class SPRemovePlugin extends Command
     public function handle(): void
     {
         $package = $this->argument('package');
-        if (!Str::contains($package, '/')) {
+        if (! Str::contains($package, '/')) {
             $this->error('Please provide the plugin in Vendor/Plugin format.');
+
             return;
         }
 
@@ -41,8 +42,9 @@ class SPRemovePlugin extends Command
         $basePath = config('filament.plugin_path', base_path('app/Plugins'));
         $pluginPath = "{$basePath}/{$vendor}/{$plugin}";
 
-        if (!File::exists($pluginPath)) {
+        if (! File::exists($pluginPath)) {
             $this->error("Plugin [{$vendor}/{$plugin}] not found at path {$pluginPath}.");
+
             return;
         }
 
@@ -51,7 +53,7 @@ class SPRemovePlugin extends Command
         if (File::isDirectory($migrationDir) && count(File::files($migrationDir)) > 0) {
             if ($this->confirm("Migrations found for {$vendor}/{$plugin}. Rollback before removal?")) {
                 $this->call('migrate:rollback', [
-                    '--path'     => $migrationDir,
+                    '--path' => $migrationDir,
                     '--realpath' => true,
                 ]);
                 $this->info("Rolled back migrations in: {$migrationDir}");
@@ -60,8 +62,9 @@ class SPRemovePlugin extends Command
             }
         }
 
-        if (!$this->confirm("Are you sure you want to remove the plugin [{$vendor}/{$plugin}] and all its files?")) {
+        if (! $this->confirm("Are you sure you want to remove the plugin [{$vendor}/{$plugin}] and all its files?")) {
             $this->info('Operation cancelled.');
+
             return;
         }
 
@@ -79,7 +82,7 @@ class SPRemovePlugin extends Command
 
             $this->info("✅ Successfully removed plugin {$vendor}/{$plugin}.");
         } catch (\Exception $e) {
-            $this->error("❌ Error removing plugin: " . $e->getMessage());
+            $this->error('❌ Error removing plugin: '.$e->getMessage());
         }
     }
 
@@ -89,15 +92,17 @@ class SPRemovePlugin extends Command
     protected function cleanRootComposerJson(string $vendor, string $plugin, string $pluginPath): void
     {
         $composerFile = base_path('composer.json');
-        if (!File::exists($composerFile)) {
+        if (! File::exists($composerFile)) {
             $this->warn('composer.json not found, skipping composer cleanup.');
+
             return;
         }
 
         $json = File::get($composerFile);
         $data = json_decode($json, true);
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             $this->warn('Invalid composer.json format, skipping cleanup.');
+
             return;
         }
 
@@ -110,11 +115,11 @@ class SPRemovePlugin extends Command
         }
 
         // Remove path repository
-        if (!empty($data['repositories']) && is_array($data['repositories'])) {
+        if (! empty($data['repositories']) && is_array($data['repositories'])) {
             $data['repositories'] = array_filter($data['repositories'], function ($repo) use ($pluginPath) {
-                return !(isset($repo['type'], $repo['url'])
+                return ! (isset($repo['type'], $repo['url'])
                     && $repo['type'] === 'path'
-                    && Str::endsWith(trim($repo['url'], '/'), trim(str_replace(base_path() . '/', '', $pluginPath), '/')));
+                    && Str::endsWith(trim($repo['url'], '/'), trim(str_replace(base_path().'/', '', $pluginPath), '/')));
             });
             $this->info('Cleaned path repository entries.');
         }
@@ -127,7 +132,7 @@ class SPRemovePlugin extends Command
         }
 
         // Remove provider registration in extra.laravel.providers
-        if (!empty($data['extra']['laravel']['providers']) && is_array($data['extra']['laravel']['providers'])) {
+        if (! empty($data['extra']['laravel']['providers']) && is_array($data['extra']['laravel']['providers'])) {
             $providerClass = "App\\Plugins\\{$plugin}\\{$plugin}ServiceProvider";
             $data['extra']['laravel']['providers'] = array_filter(
                 $data['extra']['laravel']['providers'],

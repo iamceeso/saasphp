@@ -16,8 +16,8 @@ class CustomerSubscriptionFactory extends Factory
         return [
             'user_id' => User::factory(),
             'plan_id' => SubscriptionPlan::factory(),
-            'stripe_subscription_id' => 'sub_test_' . $this->faker->unique()->word(),
-            'stripe_customer_id' => 'cus_test_' . $this->faker->unique()->word(),
+            'stripe_subscription_id' => 'sub_test_'.$this->faker->unique()->word(),
+            'stripe_customer_id' => 'cus_test_'.$this->faker->unique()->word(),
             'status' => 'active',
             'interval' => 'monthly',
             'amount' => 2999,

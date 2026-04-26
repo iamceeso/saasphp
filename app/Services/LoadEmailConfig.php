@@ -4,15 +4,13 @@ namespace App\Services;
 
 use App\Models\Setting;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 trait LoadEmailConfig
 {
     /**
      * Load email service configuration dynamically from database.
-     *
-     * @return void
      */
     public function loadEmailConfig(): void
     {
@@ -20,24 +18,23 @@ trait LoadEmailConfig
             return;
         }
 
-        if (!Setting::getBooleanValue('features.email_sending', false)) {
+        if (! Setting::getBooleanValue('features.email_sending', false)) {
             return;
         }
 
         // Retrieve common settings
-        $client   = Setting::getValue('email.client_name');
-        $from     = Setting::getValue('email.from.address', 'no-reply@example.com');
+        $client = Setting::getValue('email.client_name');
+        $from = Setting::getValue('email.from.address', 'no-reply@example.com');
         [$local, $domain] = explode('@', $from, 2);
         $siteName = Setting::getValue('site.name', 'Built with SaaS PHP');
 
         // Silent warning message
-        if (!$from || !$client) {
+        if (! $from || ! $client) {
             Log::warning('Email config not fully set:', [
                 'client' => $client,
                 'from' => $from,
             ]);
         }
-
 
         // Apply global "from" configuration
         Config::set('mail.from.address', $from);

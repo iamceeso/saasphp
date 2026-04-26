@@ -1,12 +1,11 @@
 <?php
 
 use App\Models\User;
-use Inertia\Testing\AssertableInertia as Assert;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Hashing\BcryptHasher;
+use Inertia\Testing\AssertableInertia as Assert;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 test('confirm password screen can be rendered', function () {
     $user = User::factory()->create();
@@ -21,11 +20,10 @@ test('confirm password screen can be rendered', function () {
     });
 });
 
-
 test('user can confirm their password', function () {
 
     $user = User::factory()->create([
-        'password' => Hash::make('password'), 
+        'password' => Hash::make('password'),
     ]);
 
     $this->assertTrue(Hash::check('password', $user->password));
@@ -38,7 +36,6 @@ test('user can confirm their password', function () {
     $response->assertRedirect();
     // $response->assertSessionHasNoErrors();
 });
-
 
 test('password is not confirmed with invalid password', function () {
     $user = User::factory()->create([

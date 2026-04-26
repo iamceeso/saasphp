@@ -4,17 +4,13 @@ namespace App\Services;
 
 use App\Models\Setting;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
-
-use function PHPUnit\Framework\isEmpty;
+use Illuminate\Support\Facades\Schema;
 
 trait LoadOAuthConfig
 {
     /**
      * Dynamically load OAuth provider credentials from the database.
-     *
-     * @return void
      */
     public function loadOAuthConfig(): void
     {

@@ -6,7 +6,7 @@
 |--------------------------------------------------------------------------
 |
 | This file contains all the custom translation strings used by the application.
-| These include labels, tabs, sections, button texts, and notifications for 
+| These include labels, tabs, sections, button texts, and notifications for
 | the Site Settings and related pages.
 |
 | Each key here maps to a human-readable text used in the user interface (UI).

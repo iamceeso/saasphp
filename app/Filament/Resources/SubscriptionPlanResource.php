@@ -4,30 +4,32 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SubscriptionPlanResource\Pages;
 use App\Models\SubscriptionPlan;
-use Filament\Forms;
-use Filament\Forms\Components\Grid;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Filament\Infolists\Components\RepeatableEntry;
 
 class SubscriptionPlanResource extends Resource
 {
     protected static ?string $model = SubscriptionPlan::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-credit-card';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-credit-card';
 
-    protected static ?string $navigationGroup = 'Billing';
+    protected static string|\UnitEnum|null $navigationGroup = 'Billing';
 
     protected static ?int $navigationSort = 1;
 
@@ -41,12 +43,11 @@ class SubscriptionPlanResource extends Resource
         return (bool) config('billing.enabled');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Tabs::make('PlanTabs')
-                    ->persistTabInQueryString()
                     ->columnSpanFull()
                     ->tabs([
                         Tabs\Tab::make('Overview')
@@ -79,12 +80,14 @@ class SubscriptionPlanResource extends Resource
                                                 'default' => 1,
                                                 'xl' => 2,
                                             ]),
-                                        Section::make('Visibility & CTA')
-                                            ->description('How this plan should appear on the pricing page.')
+                                        Section::make('Display')
+                                            ->description('Control how this plan is presented across the pricing page.')
                                             ->schema([
                                                 TextInput::make('sort_order')
+                                                    ->label('Display order')
                                                     ->numeric()
-                                                    ->default(0),
+                                                    ->default(0)
+                                                    ->minValue(0),
                                                 Select::make('cta_type')
                                                     ->label('Plan CTA')
                                                     ->options([
@@ -93,19 +96,21 @@ class SubscriptionPlanResource extends Resource
                                                     ])
                                                     ->default('subscribe')
                                                     ->native(false)
-                                                    ->reactive(),
+                                                    ->live(),
                                                 TextInput::make('contact_button_text')
                                                     ->label('Contact button text')
                                                     ->placeholder('Contact Sales')
                                                     ->maxLength(255)
-                                                    ->visible(fn (Forms\Get $get) => $get('cta_type') === 'contact'),
+                                                    ->visible(fn (callable $get): bool => $get('cta_type') === 'contact')
+                                                    ->dehydrated(fn (callable $get): bool => $get('cta_type') === 'contact'),
                                                 TextInput::make('contact_url')
                                                     ->label('Contact link')
                                                     ->placeholder('mailto:sales@example.com or /contact')
                                                     ->maxLength(255)
                                                     ->helperText('Used when this plan should lead to sales instead of checkout.')
-                                                    ->required(fn (Forms\Get $get) => $get('cta_type') === 'contact')
-                                                    ->visible(fn (Forms\Get $get) => $get('cta_type') === 'contact'),
+                                                    ->required(fn (callable $get): bool => $get('cta_type') === 'contact')
+                                                    ->visible(fn (callable $get): bool => $get('cta_type') === 'contact')
+                                                    ->dehydrated(fn (callable $get): bool => $get('cta_type') === 'contact'),
                                                 Toggle::make('is_active')
                                                     ->default(true),
                                                 Toggle::make('is_most_popular')
@@ -131,7 +136,7 @@ class SubscriptionPlanResource extends Resource
                                                 default => 'Pricing option',
                                             })
                                             ->schema([
-                                                Forms\Components\Select::make('interval')
+                                                Select::make('interval')
                                                     ->options([
                                                         'monthly' => 'Monthly',
                                                         'annually' => 'Annually',
@@ -235,22 +240,22 @@ class SubscriptionPlanResource extends Resource
                     ->sortable()
                     ->toggleable(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->visible(fn (SubscriptionPlan $record) => auth()->user()?->can('update', $record)),
-                Tables\Actions\Action::make('markMostPopular')
+                Action::make('markMostPopular')
                     ->label('Make Most Popular')
                     ->icon('heroicon-o-star')
                     ->color('warning')
                     ->requiresConfirmation()
                     ->action(fn (SubscriptionPlan $record) => $record->markAsMostPopular())
                     ->visible(fn (SubscriptionPlan $record) => ! $record->is_most_popular && (auth()->user()?->can('update', $record) ?? false)),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->visible(fn (SubscriptionPlan $record) => auth()->user()?->can('delete', $record)),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

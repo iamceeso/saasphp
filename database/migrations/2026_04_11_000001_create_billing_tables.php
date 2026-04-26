@@ -55,7 +55,7 @@ return new class extends Migration
                 'canceled',
                 'unpaid',
                 'incomplete',
-                'incomplete_expired'
+                'incomplete_expired',
             ])->default('active');
             $table->enum('interval', ['monthly', 'annually'])->default('monthly');
             $table->decimal('amount', 10, 2);

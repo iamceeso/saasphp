@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\SubscriptionPlan;
-use App\Models\PlanPrice;
 use App\Models\CustomerSubscription;
+use App\Models\PlanPrice;
+use App\Models\SubscriptionPlan;
+use App\Models\User;
 use App\Services\Billing\WebhookService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
@@ -205,7 +205,7 @@ class BillingTest extends TestCase
             'interval' => 'monthly',
             'ended_at' => null,
             'metadata' => ['provider' => 'local', 'currency' => 'USD'],
-            'current_subscription_key' => 'user:' . $user->id,
+            'current_subscription_key' => 'user:'.$user->id,
         ]);
 
         PlanPrice::factory()->create([
@@ -239,7 +239,7 @@ class BillingTest extends TestCase
             'plan_id' => $plan->id,
             'status' => 'active',
             'ended_at' => null,
-            'current_subscription_key' => 'user:' . $user->id,
+            'current_subscription_key' => 'user:'.$user->id,
         ]);
 
         $second = CustomerSubscription::factory()->create([

@@ -4,34 +4,34 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\PhoneCode;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class VerifyPhoneController extends Controller
 {
     public function send(Request $request): RedirectResponse
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
 
-        if (!$user || !$user->phone) {
+        if (! $user || ! $user->phone) {
             return back()->withErrors(['code' => 'No phone number available.']);
         }
 
-        if (!$user->sendPhoneVerificationCodeWithRateLimit()) {
+        if (! $user->sendPhoneVerificationCodeWithRateLimit()) {
             return back()->withErrors(['code' => 'Too many attempts. Try again later.']);
         }
 
         return back()->with('status', 'verification-link-sent');
     }
 
-
     public function verify(Request $request): RedirectResponse
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
 
         $validator = Validator::make($request->all(), [
@@ -51,7 +51,7 @@ class VerifyPhoneController extends Controller
             ->latest()
             ->first();
 
-        if (!$record || !Hash::check($codeInput, $record->code)) {
+        if (! $record || ! Hash::check($codeInput, $record->code)) {
             return back()->withErrors(['code' => 'Invalid or expired verification code.']);
         }
 

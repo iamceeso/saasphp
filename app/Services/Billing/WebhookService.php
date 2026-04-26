@@ -2,16 +2,16 @@
 
 namespace App\Services\Billing;
 
-use App\Models\WebhookLog;
 use App\Models\BillingEvent;
 use App\Models\CustomerSubscription;
+use App\Models\WebhookLog;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Stripe\Event;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\StripeClient;
 use Stripe\Webhook;
-use Exception;
 
 class WebhookService
 {
@@ -20,7 +20,7 @@ class WebhookService
     public function handleWebhook(string $payload, string $signature): WebhookLog
     {
         $secret = config('services.stripe.webhook_secret');
-        if (!$secret) {
+        if (! $secret) {
             throw new \InvalidArgumentException(
                 'Stripe webhook secret is not configured. Please set STRIPE_WEBHOOK_SECRET in your .env file.'
             );
@@ -210,12 +210,12 @@ class WebhookService
             $stripeSubscription->id
         )->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             return;
         }
 
         $price = $stripeSubscription->items->data[0]->price ?? null;
-        if (!$price) {
+        if (! $price) {
             return;
         }
 

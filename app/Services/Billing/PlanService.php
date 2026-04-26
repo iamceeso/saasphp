@@ -2,8 +2,8 @@
 
 namespace App\Services\Billing;
 
-use App\Models\SubscriptionPlan;
 use App\Models\PlanPrice;
+use App\Models\SubscriptionPlan;
 use Stripe\StripeClient;
 
 class PlanService
@@ -14,13 +14,14 @@ class PlanService
     {
         if ($this->stripe === null) {
             $secret = config('services.stripe.secret');
-            if (!$secret) {
+            if (! $secret) {
                 throw new \InvalidArgumentException(
                     'Stripe secret key is not configured. Please set STRIPE_SECRET_KEY in your .env file.'
                 );
             }
             $this->stripe = new StripeClient($secret);
         }
+
         return $this->stripe;
     }
 
@@ -109,7 +110,7 @@ class PlanService
         $stripePriceId = null;
 
         if ($unitAmount > 0) {
-            if (!$plan->stripe_product_id) {
+            if (! $plan->stripe_product_id) {
                 $plan->update([
                     'stripe_product_id' => $this->createStripeProductForPlan($plan),
                 ]);

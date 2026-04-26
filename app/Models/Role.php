@@ -9,6 +9,6 @@ class Role extends SpatieRole
 {
     public function assignedUsers(): MorphToMany
     {
-        return $this->morphedByMany(\App\Models\User::class, 'model', 'model_has_roles');
+        return $this->morphedByMany(User::class, 'model', 'model_has_roles');
     }
 }

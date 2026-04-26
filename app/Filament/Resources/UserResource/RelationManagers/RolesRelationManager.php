@@ -4,21 +4,20 @@ namespace App\Filament\Resources\UserResource\RelationManagers;
 
 use App\Helpers\RoleHelper;
 use App\Models\Role;
+use Filament\Actions\DetachAction;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class RolesRelationManager extends RelationManager
 {
     protected static string $relationship = 'roles';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\TextInput::make('name')
                     ->required()
@@ -39,10 +38,10 @@ class RolesRelationManager extends RelationManager
             ->headerActions([
                 // Adding roles to user is done from the role dashboard
             ])
-            ->actions([
-                Tables\Actions\DetachAction::make()
-                    ->hidden(fn(Role $record) => ! RoleHelper::canDetachRoleFromUser($record, $this->getOwnerRecord()))
-                    ->authorize(fn(Role $record) => RoleHelper::canDetachRoleFromUser($record, $this->getOwnerRecord()))
+            ->recordActions([
+                DetachAction::make()
+                    ->hidden(fn (Role $record) => ! RoleHelper::canDetachRoleFromUser($record, $this->getOwnerRecord()))
+                    ->authorize(fn (Role $record) => RoleHelper::canDetachRoleFromUser($record, $this->getOwnerRecord())),
             ])
             ->bulkActions([
                 // No bulk actions available

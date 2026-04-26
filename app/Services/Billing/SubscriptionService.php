@@ -2,15 +2,15 @@
 
 namespace App\Services\Billing;
 
-use App\Models\User;
-use App\Models\SubscriptionPlan;
 use App\Models\CustomerSubscription;
 use App\Models\PlanPrice;
+use App\Models\SubscriptionPlan;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Stripe\StripeClient;
 use Stripe\Exception\ApiErrorException;
+use Stripe\StripeClient;
 
 class SubscriptionService
 {
@@ -22,13 +22,14 @@ class SubscriptionService
     {
         if ($this->stripe === null) {
             $secret = config('services.stripe.secret');
-            if (!$secret) {
+            if (! $secret) {
                 throw new \InvalidArgumentException(
                     'Stripe secret key is not configured. Please set STRIPE_SECRET_KEY in your .env file.'
                 );
             }
             $this->stripe = new StripeClient($secret);
         }
+
         return $this->stripe;
     }
 
@@ -58,7 +59,7 @@ class SubscriptionService
                     'customer' => $stripeCustomerId,
                 ]);
             } catch (ApiErrorException $e) {
-                if (!str_contains(strtolower($e->getMessage()), 'already')) {
+                if (! str_contains(strtolower($e->getMessage()), 'already')) {
                     throw $e;
                 }
             }
@@ -166,8 +167,8 @@ class SubscriptionService
                 'user_id' => $lockedUser->id,
                 'plan_id' => $plan->id,
                 'current_subscription_key' => $this->currentSubscriptionKeyFor($lockedUser->id),
-                'stripe_subscription_id' => 'sub_free_' . $lockedUser->id . '_' . str()->uuid(),
-                'stripe_customer_id' => $lockedUser->stripe_id ?: 'cus_free_' . $lockedUser->id,
+                'stripe_subscription_id' => 'sub_free_'.$lockedUser->id.'_'.str()->uuid(),
+                'stripe_customer_id' => $lockedUser->stripe_id ?: 'cus_free_'.$lockedUser->id,
                 'status' => 'active',
                 'interval' => $interval,
                 'amount' => 0,
@@ -238,7 +239,7 @@ class SubscriptionService
         );
         $stripeItemId = data_get($stripeSubscription, 'items.data.0.id');
 
-        if (!$stripeItemId) {
+        if (! $stripeItemId) {
             throw new \RuntimeException('Unable to determine current Stripe subscription item.');
         }
 
@@ -429,7 +430,7 @@ class SubscriptionService
 
             $current = $currentSubscriptions->first();
 
-            if (!$current) {
+            if (! $current) {
                 return null;
             }
 
@@ -439,7 +440,7 @@ class SubscriptionService
             foreach ($duplicates as $duplicate) {
                 $provider = data_get($duplicate->metadata, 'provider');
 
-                if ($provider === 'stripe' && !empty($duplicate->stripe_subscription_id)) {
+                if ($provider === 'stripe' && ! empty($duplicate->stripe_subscription_id)) {
                     $stripeDuplicates[] = [
                         'subscription_id' => $duplicate->id,
                         'stripe_subscription_id' => $duplicate->stripe_subscription_id,
@@ -524,7 +525,7 @@ class SubscriptionService
                 'customer' => $stripeCustomerId,
             ]);
         } catch (ApiErrorException $e) {
-            if (!str_contains(strtolower($e->getMessage()), 'already')) {
+            if (! str_contains(strtolower($e->getMessage()), 'already')) {
                 throw $e;
             }
         }
@@ -625,6 +626,7 @@ class SubscriptionService
                 ],
                 $this->mapStripeSubscription($stripeSubscription, $plan, $interval)
             ));
+
             return $existingSubscription;
         }
 
@@ -767,8 +769,8 @@ class SubscriptionService
             $subscription->update([
                 'plan_id' => $plan->id,
                 'current_subscription_key' => $this->currentSubscriptionKeyFor($subscription->user_id),
-                'stripe_subscription_id' => 'sub_free_' . $subscription->user_id . '_' . str()->uuid(),
-                'stripe_customer_id' => $subscription->stripe_customer_id ?: ($subscription->user->stripe_id ?: 'cus_free_' . $subscription->user_id),
+                'stripe_subscription_id' => 'sub_free_'.$subscription->user_id.'_'.str()->uuid(),
+                'stripe_customer_id' => $subscription->stripe_customer_id ?: ($subscription->user->stripe_id ?: 'cus_free_'.$subscription->user_id),
                 'status' => 'active',
                 'interval' => $interval,
                 'amount' => $price->amount,

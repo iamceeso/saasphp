@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\Models;
 
-use App\Models\User;
-use App\Models\Setting;
 use App\Models\Role;
+use App\Models\Setting;
+use App\Models\User;
+use Filament\Panel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
 
 class UserTest extends TestCase
@@ -24,21 +24,21 @@ class UserTest extends TestCase
             'key' => 'site.url',
             'value' => 'saasphp.com',
             'type' => 'string',
-            'group' => 'site'
+            'group' => 'site',
         ]);
 
         Setting::create([
             'key' => 'features.enable_email_verification',
             'value' => 'true',
             'type' => 'boolean',
-            'group' => 'features'
+            'group' => 'features',
         ]);
 
         Setting::create([
             'key' => 'features.enable_phone_verification',
             'value' => 'true',
             'type' => 'boolean',
-            'group' => 'features'
+            'group' => 'features',
         ]);
 
         Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
@@ -63,7 +63,7 @@ class UserTest extends TestCase
         $user->assignRole('admin');
         $this->actingAs($user);
 
-        $this->assertTrue($user->canAccessPanel(new \Filament\Panel()));
+        $this->assertTrue($user->canAccessPanel(new Panel));
     }
 
     public function test_user_cannot_access_panel_without_verified_email()
@@ -76,7 +76,7 @@ class UserTest extends TestCase
         $user->assignRole('admin');
         $this->actingAs($user);
 
-        $this->assertFalse($user->canAccessPanel(new \Filament\Panel()));
+        $this->assertFalse($user->canAccessPanel(new Panel));
     }
 
     public function test_verified_privileged_user_can_access_panel_regardless_of_site_domain()
@@ -89,7 +89,7 @@ class UserTest extends TestCase
         $user->assignRole('staff');
         $this->actingAs($user);
 
-        $this->assertTrue($user->canAccessPanel(new \Filament\Panel()));
+        $this->assertTrue($user->canAccessPanel(new Panel));
     }
 
     public function test_user_role_does_not_block_panel_access_when_user_also_has_privileged_role()
@@ -104,13 +104,13 @@ class UserTest extends TestCase
 
         $this->assertTrue($user->hasRole('user'));
         $this->assertTrue($user->hasRole('staff'));
-        $this->assertTrue($user->canAccessPanel(new \Filament\Panel()));
+        $this->assertTrue($user->canAccessPanel(new Panel));
     }
 
     public function test_email_verification_status()
     {
         $user = User::factory()->create([
-            'email_verified_at' => null
+            'email_verified_at' => null,
         ]);
 
         $this->assertFalse($user->hasVerifiedEmail());
@@ -123,7 +123,7 @@ class UserTest extends TestCase
     public function test_phone_verification_status()
     {
         $user = User::factory()->create([
-            'phone_verified_at' => null
+            'phone_verified_at' => null,
         ]);
 
         $this->assertFalse($user->hasVerifiedPhone());
@@ -174,7 +174,7 @@ class UserTest extends TestCase
             ->update(['value' => encrypt('false')]);
 
         $user = User::factory()->create([
-            'email_verified_at' => null
+            'email_verified_at' => null,
         ]);
 
         $this->assertTrue($user->hasVerifiedEmail());
@@ -187,7 +187,7 @@ class UserTest extends TestCase
             ->update(['value' => encrypt('false')]);
 
         $user = User::factory()->create([
-            'phone_verified_at' => null
+            'phone_verified_at' => null,
         ]);
 
         $this->assertTrue($user->hasVerifiedPhone());

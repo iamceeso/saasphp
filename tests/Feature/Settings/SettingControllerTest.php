@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Settings;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,7 +38,7 @@ class SettingControllerTest extends TestCase
     public function test_can_view_password_edit_page()
     {
         $response = $this->actingAs($this->user)->get('/settings/password');
-        
+
         $response->assertOk();
     }
 
@@ -46,8 +46,7 @@ class SettingControllerTest extends TestCase
     {
         $response = $this->actingAs($this->user)->get('/settings/appearance');
 
-        $response->assertInertia(fn (Assert $page) =>
-            $page->component('settings/appearance')
+        $response->assertInertia(fn (Assert $page) => $page->component('settings/appearance')
         );
     }
 

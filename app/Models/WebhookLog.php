@@ -74,6 +74,6 @@ class WebhookLog extends Model
 
     public function canRetry(int $maxAttempts = 3): bool
     {
-        return !$this->processed && $this->attempts < $maxAttempts;
+        return ! $this->processed && $this->attempts < $maxAttempts;
     }
 }

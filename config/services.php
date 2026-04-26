@@ -24,8 +24,8 @@ return [
 
     'mailgun' => [
         'transport' => 'mailgun',
-        'domain'   => '',
-        'secret'   => '',
+        'domain' => '',
+        'secret' => '',
         'endpoint' => '',
     ],
 

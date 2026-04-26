@@ -1,15 +1,15 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Settings;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
-use App\Models\Setting;
 use App\Filament\Pages\SiteSettings;
+use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class SiteSettingsTest extends TestCase
 {
@@ -27,7 +27,7 @@ class SiteSettingsTest extends TestCase
         $this->user = User::factory()->create();
 
         // Allow all gates during test
-        Gate::before(fn() => true);
+        Gate::before(fn () => true);
 
         $this->actingAs($this->user);
     }
@@ -36,21 +36,21 @@ class SiteSettingsTest extends TestCase
     public function mount_populates_form_with_existing_settings()
     {
         Setting::create([
-            'key'   => 'site.name',
+            'key' => 'site.name',
             'value' => 'Acme Corp',
-            'type'  => 'string',
+            'type' => 'string',
             'group' => 'site',
         ]);
         Setting::create([
-            'key'   => 'site.theme',
+            'key' => 'site.theme',
             'value' => 'light',
-            'type'  => 'string',
+            'type' => 'string',
             'group' => 'site',
         ]);
 
         Livewire::test(SiteSettings::class)
-            ->assertFormSet([
-                'data.site.name'  => 'Acme Corp',
+            ->assertSchemaStateSet([
+                'data.site.name' => 'Acme Corp',
                 'data.site.theme' => 'light',
             ]);
     }
@@ -62,9 +62,9 @@ class SiteSettingsTest extends TestCase
             // we don’t set logo or the required selects
             ->call('submit')
             ->assertHasErrors([
-                'data.site.timezone'    => 'required',
+                'data.site.timezone' => 'required',
                 'data.site.date_format' => 'required',
-                'data.site.language'    => 'required',
+                'data.site.language' => 'required',
             ]);
     }
 

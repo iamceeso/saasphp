@@ -103,7 +103,8 @@ class SocialLoginTest extends TestCase
 
     private function fakeProviderUser(string $id, ?string $email, ?string $name, array $raw = [], ?string $nickname = null): AbstractUser
     {
-        return (new class($id, $email, $name, $raw, $nickname) extends AbstractUser {
+        return new class($id, $email, $name, $raw, $nickname) extends AbstractUser
+        {
             public function __construct(
                 private string $providerId,
                 ?string $email,
@@ -121,6 +122,6 @@ class SocialLoginTest extends TestCase
             {
                 return $this->providerId;
             }
-        });
+        };
     }
 }
