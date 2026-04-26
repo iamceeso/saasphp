@@ -9,16 +9,6 @@ SaaS PHP is a Laravel starter kit for subscription products. It combines a custo
 
 This documentation is based on the current code in this repository, not on marketing copy. Where the code differs from the existing README, this docs set follows the implementation in the app.
 
-## Docusaurus compatibility
-
-This folder is structured to drop directly into a Docusaurus `docs/` directory:
-
-- Every page uses valid frontmatter with `title` and `sidebar_position`
-- Filenames are URL-safe and work with Docusaurus sidebars
-- `intro.md` can serve as the section entry page without extra editing
-
-If your Docusaurus site already uses the default docs plugin, you can copy these files into its `docs/` folder and they will be picked up normally.
-
 ## Core surfaces
 
 - Customer app built with Inertia and React for onboarding, pricing, checkout, subscriptions, invoices, and account settings
