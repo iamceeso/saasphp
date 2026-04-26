@@ -19,6 +19,8 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
@@ -54,7 +56,7 @@ class SiteSettings extends Page implements HasForms
      */
     public static function canAccess(array $parameters = []): bool
     {
-        return auth()->user()?->can('modify', Setting::class);
+        return Auth::check() && Gate::forUser(Auth::user())->allows('modify', Setting::class);
     }
 
     public static function getNavigationGroup(): ?string
@@ -146,7 +148,7 @@ class SiteSettings extends Page implements HasForms
                                         ->image()
                                         ->live()
                                         ->imageEditor()
-                                        ->imageEditorAspectRatios([
+                                        ->imageEditorAspectRatioOptions([
                                             '16:9',
                                             '4:3',
                                             '1:1',

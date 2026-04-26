@@ -9,7 +9,6 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -19,7 +18,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -50,7 +48,6 @@ class SubscriptionPlanResource extends Resource
         return $schema
             ->schema([
                 Tabs::make('PlanTabs')
-                    ->persistTabInQueryString()
                     ->columnSpanFull()
                     ->tabs([
                         Tabs\Tab::make('Overview')
@@ -83,12 +80,14 @@ class SubscriptionPlanResource extends Resource
                                                 'default' => 1,
                                                 'xl' => 2,
                                             ]),
-                                        Section::make('Visibility & CTA')
-                                            ->description('How this plan should appear on the pricing page.')
+                                        Section::make('Display')
+                                            ->description('Control how this plan is presented across the pricing page.')
                                             ->schema([
                                                 TextInput::make('sort_order')
+                                                    ->label('Display order')
                                                     ->numeric()
-                                                    ->default(0),
+                                                    ->default(0)
+                                                    ->minValue(0),
                                                 Select::make('cta_type')
                                                     ->label('Plan CTA')
                                                     ->options([
@@ -97,19 +96,21 @@ class SubscriptionPlanResource extends Resource
                                                     ])
                                                     ->default('subscribe')
                                                     ->native(false)
-                                                    ->reactive(),
+                                                    ->live(),
                                                 TextInput::make('contact_button_text')
                                                     ->label('Contact button text')
                                                     ->placeholder('Contact Sales')
                                                     ->maxLength(255)
-                                                    ->visible(fn (Get $get) => $get('cta_type') === 'contact'),
+                                                    ->visible(fn (callable $get): bool => $get('cta_type') === 'contact')
+                                                    ->dehydrated(fn (callable $get): bool => $get('cta_type') === 'contact'),
                                                 TextInput::make('contact_url')
                                                     ->label('Contact link')
                                                     ->placeholder('mailto:sales@example.com or /contact')
                                                     ->maxLength(255)
                                                     ->helperText('Used when this plan should lead to sales instead of checkout.')
-                                                    ->required(fn (Get $get) => $get('cta_type') === 'contact')
-                                                    ->visible(fn (Get $get) => $get('cta_type') === 'contact'),
+                                                    ->required(fn (callable $get): bool => $get('cta_type') === 'contact')
+                                                    ->visible(fn (callable $get): bool => $get('cta_type') === 'contact')
+                                                    ->dehydrated(fn (callable $get): bool => $get('cta_type') === 'contact'),
                                                 Toggle::make('is_active')
                                                     ->default(true),
                                                 Toggle::make('is_most_popular')

@@ -1,0 +1,137 @@
+@import url('https://fonts.bunny.net/css?family=manrope:400,500,600,700');
+
+/* =========================
+   DESIGN TOKENS
+========================= */
+:root {
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface-muted: #f1f5f9;
+
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+
+    --text: #0f172a;
+    --text-soft: #64748b;
+
+    --accent: #0f766e;
+    --accent-hover: #115e59;
+    --accent-soft: rgba(15,118,110,0.12);
+
+    --sidebar-bg: #0f172a;
+    --sidebar-text: #94a3b8;
+    --sidebar-text-active: #ffffff;
+
+    --radius: 0.75rem;
+    --shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+/* =========================
+   BASE
+========================= */
+body {
+    font-family: 'Manrope', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+.fi-sidebar {
+    background: var(--sidebar-bg) !important;
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+.fi-sidebar-item-button,
+.fi-sidebar-group-button {
+    border-radius: var(--radius);
+    color: var(--sidebar-text);
+    padding: 0.6rem 0.85rem;
+    transition: all 0.15s ease;
+}
+
+/* inherit for icons + labels */
+.fi-sidebar-item-label,
+.fi-sidebar-item-icon,
+.fi-sidebar-group-label,
+.fi-sidebar-group-icon {
+    color: inherit;
+}
+
+/* hover */
+.fi-sidebar-item-button:hover,
+.fi-sidebar-group-button:hover {
+    background: rgba(255,255,255,0.06);
+    color: var(--sidebar-text-active);
+}
+
+/* active */
+.fi-sidebar-item-button.fi-active,
+.fi-sidebar-group-button.fi-active {
+    background: var(--accent);
+    color: #fff;
+}
+
+/* enforce active children */
+.fi-sidebar-item-button.fi-active *,
+.fi-sidebar-group-button.fi-active * {
+    color: #fff;
+}
+
+/* =========================
+   SURFACES (cards, tables)
+========================= */
+.fi-page,
+.fi-section,
+.fi-ta-ctn,
+.fi-modal-window {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    box-shadow: var(--shadow);
+}
+
+/* table hover */
+.fi-ta-row:hover {
+    background: var(--surface-muted);
+}
+
+/* =========================
+   INPUTS
+========================= */
+.fi-input-wrp {
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.fi-input-wrp:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* =========================
+   BUTTONS
+========================= */
+.fi-btn {
+    border-radius: 0.6rem;
+    font-weight: 600;
+}
+
+.fi-btn.fi-btn-color-primary {
+    background: var(--accent);
+}
+
+.fi-btn.fi-btn-color-primary:hover {
+    background: var(--accent-hover);
+}
+
+/* =========================
+   TABS
+========================= */
+.fi-tabs-item.fi-active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: transparent;
+}
