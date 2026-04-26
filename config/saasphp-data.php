@@ -52,11 +52,11 @@ return [
 
     'featuresSettings' => [
         'features.enable_registration' => ['value' => true, 'type' => 'boolean'],
-        'features.enable_email_verification' => ['value' => true, 'type' => 'boolean'],
-        'features.enable_phone_verification' => ['value' => true, 'type' => 'boolean'],
+        'features.enable_email_verification' => ['value' => false, 'type' => 'boolean'],
+        'features.enable_phone_verification' => ['value' => false, 'type' => 'boolean'],
         'features.enable_two_factor_auth' => ['value' => true, 'type' => 'boolean'],
-        'features.email_sending' => ['value' => true, 'type' => 'boolean'],
-        'features.sms_sending' => ['value' => true, 'type' => 'boolean'],
+        'features.email_sending' => ['value' => false, 'type' => 'boolean'],
+        'features.sms_sending' => ['value' => false, 'type' => 'boolean'],
         'features.enable_confirm_password' => ['value' => true, 'type' => 'boolean'],
         'features.phone_email_at_registration' => ['value' => true, 'type' => 'boolean'],
         'features.maintenance_mode' => ['value' => false, 'type' => 'boolean'],
