@@ -116,7 +116,7 @@ It is not yet a full multi-tenant platform with team billing, seat-based billing
 ## Installation
 
 ```bash
-git clone https://github.com/chidiesobe/saasPHP.git saasphp
+git clone https://github.com/iamceeso/saasPHP.git saasphp
 cd saasphp
 
 composer install

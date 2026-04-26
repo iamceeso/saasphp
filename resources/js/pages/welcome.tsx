@@ -53,7 +53,7 @@ export default function Welcome() {
                                     <span>
                                         Read the
                                         <a
-                                            href="https://github.com/chidiesobe/saasPHP"
+                                            href="https://github.com/iamceeso/saasPHP"
                                             target="_blank"
                                             className="ml-1 inline-flex items-center space-x-1 font-medium text-[#f53003] underline underline-offset-4 dark:text-[#FF4433]"
                                         >

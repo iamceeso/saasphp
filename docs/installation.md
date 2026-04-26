@@ -17,7 +17,7 @@ This project is a standard Laravel application with a React and Inertia frontend
 ## Clone and install
 
 ```bash
-git clone https://github.com/chidiesobe/saasPHP.git saasphp
+git clone https://github.com/iamceeso/saasPHP.git saasphp
 cd saasphp
 
 composer install
