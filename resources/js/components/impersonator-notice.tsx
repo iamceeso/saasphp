@@ -18,7 +18,7 @@ export default function ImpersonatorNotice() {
 
     return (
         <div className="mb-4 rounded-lg bg-yellow-100 p-4 text-sm text-yellow-800 shadow-sm dark:bg-yellow-900 dark:text-yellow-100">
-            <strong>Impersonating:</strong> {impersonator.name} ({impersonator.email}) —{' '}
+            <strong>Impersonating:</strong> {impersonator.name} ({impersonator.email}) {' '}
             <a href="/impersonate/leave" className="underline hover:text-yellow-900 dark:hover:text-yellow-300">
                 Leave impersonation
             </a>

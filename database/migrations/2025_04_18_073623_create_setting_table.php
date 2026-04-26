@@ -52,7 +52,7 @@ return new class extends Migration
             $adminUserId = DB::table('users')->insertGetId([
                 'name' => 'Admin User',
                 'email' => 'admin@saasphp.com',
-                'password' => Hash::make('password'), // <— Change this default if you like
+                'password' => Hash::make('password'), // < Change this default if you like
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),

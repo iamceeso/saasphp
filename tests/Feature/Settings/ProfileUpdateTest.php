@@ -73,7 +73,7 @@ test('user can soft-delete their account', function () {
         'id' => $user->id,
     ]);
 
-    // —or, if you prefer to check via the model instance—
+    // or, if you prefer to check via the model instance
     $trashed = User::withTrashed()->find($user->id);
     expect($trashed)->not->toBeNull();
     expect($trashed->trashed())->toBeTrue();

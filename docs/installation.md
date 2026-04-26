@@ -5,14 +5,15 @@ sidebar_position: 2
 
 # Installation
 
-This project is a standard Laravel application with a React and Inertia frontend. You can run it with SQLite, MySQL, or PostgreSQL.
+This project is a standard Laravel application with a React and Inertia frontend. The recommended local development environment is Laravel Sail.
 
 ## Requirements
 
-- PHP 8.2 or newer
+- Docker Desktop or Docker Engine with Docker Compose
 - Composer
 - Node.js 18 or newer
-- A supported database
+
+Sail provides the runtime container and the repository already includes a `compose.yaml` file for local development.
 
 ## Clone and install
 
@@ -21,24 +22,12 @@ git clone https://github.com/iamceeso/saasPHP.git saasphp
 cd saasphp
 
 composer install
-npm install
 cp .env.example .env
-php artisan key:generate
-```
-
-## Database setup
-
-For SQLite:
-
-```bash
-touch database/database.sqlite
-```
-
-Then run:
-
-```bash
-php artisan migrate
-php artisan db:seed
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate
+./vendor/bin/sail artisan db:seed
+./vendor/bin/sail npm install
 ```
 
 The base seeder does two important things:
@@ -48,37 +37,55 @@ The base seeder does two important things:
 
 If billing is enabled, it also runs `BillingSeeder`.
 
+## Sail command alias
+
+If you want the standard short command, add this alias to your shell:
+
+```bash
+alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'
+```
+
+After that, `./vendor/bin/sail artisan migrate` becomes `sail artisan migrate`.
+
 ## Frontend assets
 
 For a production-style build:
 
 ```bash
-npm run build
+./vendor/bin/sail npm run build
 ```
 
 For local development:
 
 ```bash
-npm run dev
+./vendor/bin/sail npm run dev
 ```
 
 ## Local development commands
 
-The repository already defines a few useful Composer scripts:
+Start the containers:
 
 ```bash
-composer run dev
-composer run new
+./vendor/bin/sail up -d
 ```
 
-`composer run dev` starts:
+Stop the containers:
 
-- `php artisan serve`
-- `php artisan queue:listen --tries=1`
-- `php artisan pail --timeout=0`
-- `npm run dev`
+```bash
+./vendor/bin/sail down
+```
 
-`composer run new` does the same, but also runs migrations and seeding first.
+Useful development commands:
+
+- `./vendor/bin/sail artisan migrate`
+- `./vendor/bin/sail artisan db:seed`
+- `./vendor/bin/sail artisan queue:listen --tries=1`
+- `./vendor/bin/sail artisan pail`
+- `./vendor/bin/sail artisan test`
+- `./vendor/bin/sail npm run dev`
+- `./vendor/bin/sail shell`
+
+The Composer scripts in `composer.json` still exist, but they use the host-machine PHP server workflow. For this project release, Sail is the recommended documented path.
 
 ## Default seeded users
 

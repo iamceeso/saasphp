@@ -5,7 +5,7 @@ sidebar_position: 11
 
 # Deployment
 
-This project deploys like a normal Laravel application with a separate frontend build step.
+This project deploys like a normal Laravel application with a separate frontend build step. Laravel Sail is the recommended local development environment, but it is not required in production.
 
 ## Production checklist
 

@@ -72,13 +72,13 @@ The settings area includes an appearance page, and site-wide branding data such 
 ## Frontend developer commands
 
 ```bash
-npm run dev
-npm run build
-npm run build:ssr
-npm run lint
-npm run format
-npm run format:check
-npm run types
+./vendor/bin/sail npm run dev
+./vendor/bin/sail npm run build
+./vendor/bin/sail npm run build:ssr
+./vendor/bin/sail npm run lint
+./vendor/bin/sail npm run format
+./vendor/bin/sail npm run format:check
+./vendor/bin/sail npm run types
 ```
 
 ## Styling stack

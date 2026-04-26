@@ -10,8 +10,8 @@ The codebase includes both feature and unit tests, with Pest and PHPUnit configu
 ## Run the test suite
 
 ```bash
-php artisan test
-./vendor/bin/pest
+./vendor/bin/sail artisan test
+./vendor/bin/sail test
 ```
 
 ## Current test coverage areas
@@ -35,9 +35,9 @@ The repository already includes tests for:
 ## Useful frontend checks
 
 ```bash
-npm run lint
-npm run types
-npm run format:check
+./vendor/bin/sail npm run lint
+./vendor/bin/sail npm run types
+./vendor/bin/sail npm run format:check
 ```
 
 ## Testing notes for billing

@@ -108,10 +108,14 @@ It is not yet a full multi-tenant platform with team billing, seat-based billing
 
 ## Requirements
 
-- PHP 8.2 or newer
+- Docker Desktop or Docker Engine with Docker Compose
 - Composer
 - Node.js 18 or newer
-- SQLite, MySQL, or PostgreSQL
+
+Sail is the recommended way to run the project locally. The repository already includes a `compose.yaml` file with:
+
+- `laravel.test`
+- `mysql`
 
 ## Installation
 
@@ -120,41 +124,55 @@ git clone https://github.com/iamceeso/saasPHP.git saasphp
 cd saasphp
 
 composer install
-npm install
-
 cp .env.example .env
-php artisan key:generate
 
-touch database/database.sqlite
-php artisan migrate
-php artisan db:seed
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate
+./vendor/bin/sail artisan db:seed
 
-npm run build
+./vendor/bin/sail npm install
+./vendor/bin/sail npm run build
 ```
+
+If you prefer the shorter command form, add the common Sail alias:
+
+```bash
+alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'
+```
+
+Then you can use `sail up -d`, `sail artisan migrate`, and similar commands.
 
 ## Development
 
 ### Recommended commands
 
-```bash
-composer run new
-```
-
-Runs migrations, seeds the database, and starts the local development services.
+Start the application containers:
 
 ```bash
-composer run dev
+./vendor/bin/sail up -d
 ```
 
-Starts the normal local development services without reseeding.
+Run the app setup commands:
+
+```bash
+./vendor/bin/sail artisan migrate
+./vendor/bin/sail artisan db:seed
+```
+
+Start Vite in a separate terminal:
+
+```bash
+./vendor/bin/sail npm run dev
+```
 
 ### Useful individual commands
 
 ```bash
-php artisan serve
-npm run dev
-php artisan queue:listen --tries=1
-php artisan pail
+./vendor/bin/sail artisan queue:listen --tries=1
+./vendor/bin/sail artisan pail
+./vendor/bin/sail artisan test
+./vendor/bin/sail shell
 ```
 
 ## Billing Setup
@@ -177,7 +195,7 @@ STRIPE_WEBHOOK_SECRET=whsec_xxx
 Seed sample billing plans:
 
 ```bash
-php artisan db:seed --class=BillingSeeder
+./vendor/bin/sail artisan db:seed --class=BillingSeeder
 ```
 
 Customer-facing billing routes:
@@ -190,7 +208,7 @@ Customer-facing billing routes:
 
 Webhook endpoint:
 
-- `POST /billing/webhooks/stripe`
+- `POST /webhooks/stripe`
 
 ## Filament Admin Panel
 
@@ -258,21 +276,21 @@ routes/
 Run the full test suite:
 
 ```bash
-php artisan test
+./vendor/bin/sail artisan test
 ```
 
 Run focused billing tests:
 
 ```bash
-php artisan test tests/Feature/BillingTest.php tests/Unit/Models/CustomerSubscriptionTest.php
+./vendor/bin/sail artisan test tests/Feature/BillingTest.php tests/Unit/Models/CustomerSubscriptionTest.php
 ```
 
 Frontend quality checks:
 
 ```bash
-npm run lint
-npm run types
-npm run build
+./vendor/bin/sail npm run lint
+./vendor/bin/sail npm run types
+./vendor/bin/sail npm run build
 ```
 
 ## Deployment Notes
