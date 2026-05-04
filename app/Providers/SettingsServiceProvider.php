@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
+use Throwable;
 
 class SettingsServiceProvider extends ServiceProvider
 {
@@ -29,7 +30,7 @@ class SettingsServiceProvider extends ServiceProvider
         // Defer logic until app is fully booted
         $this->app->booted(function () {
             // Only proceed if the 'settings' table exists
-            if (! Schema::hasTable('settings')) {
+            if (! $this->settingsTableExists()) {
                 return;
             }
 
@@ -58,5 +59,14 @@ class SettingsServiceProvider extends ServiceProvider
             $this->loadOAuthConfig();
             $this->loadEmailConfig();
         });
+    }
+
+    private function settingsTableExists(): bool
+    {
+        try {
+            return Schema::hasTable('settings');
+        } catch (Throwable) {
+            return false;
+        }
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -19,7 +19,7 @@ test('login screen can be rendered', function () {
 });
 
 test('users can authenticate using the login screen', function () {
-    $this->withoutMiddleware(VerifyCsrfToken::class);
+    $this->withoutMiddleware(PreventRequestForgery::class);
 
     $user = User::factory()->create([
         'password' => Hash::make('password'),

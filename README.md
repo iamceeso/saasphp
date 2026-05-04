@@ -61,7 +61,7 @@ The goal is to give you a strong SaaS foundation without forcing one rigid produ
 
 ### Developer experience
 
-- Laravel 12
+- Laravel 13
 - React 19 + TypeScript
 - Inertia.js
 - Tailwind CSS
@@ -85,7 +85,7 @@ It is not yet a full multi-tenant platform with team billing, seat-based billing
 ### Backend
 
 - PHP 8.2+
-- Laravel 12
+- Laravel 13
 - Laravel Fortify
 - Filament 3
 - Spatie Permission
@@ -120,7 +120,7 @@ Sail is the recommended way to run the project locally. The repository already i
 ## Installation
 
 ```bash
-git clone https://github.com/iamceeso/saasPHP.git saasphp
+git clone https://saasphp.com.git saasphp
 cd saasphp
 
 composer install

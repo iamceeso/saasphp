@@ -254,7 +254,7 @@ class UserResource extends Resource implements HasShieldPermissions
                 Action::make('impersonate-disabled')
                     ->label('')
                     ->size(14)
-                    ->icon('fas-user-large-slash')
+                    ->icon('heroicon-o-user-minus')
                     ->tooltip('Impersonation disabled: user not verified')
                     ->color('gray')
                     ->visible(function ($record) {

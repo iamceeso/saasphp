@@ -26,7 +26,7 @@ const mainNavItems: NavItem[] = [
 const rightNavItems: NavItem[] = [
     {
         title: 'Repository',
-        url: 'https://github.com/iamceeso/saasphp',
+        url: 'https://saasphp.com',
         icon: Folder,
     },
     {

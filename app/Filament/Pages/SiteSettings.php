@@ -216,7 +216,7 @@ class SiteSettings extends Page implements HasForms
                     Tab::make('Social Login')->label(__('message.social_login_tab'))
                         ->schema([
                             Section::make('Github')
-                                ->icon('bi-github')
+                                ->icon('heroicon-o-code-bracket')
                                 ->label(__('message.github_section'))
                                 ->collapsible()
                                 ->collapsed()
@@ -232,7 +232,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.redirect_uri')),
                                 ]),
                             Section::make('Twitter')
-                                ->icon('bi-twitter-x')
+                                ->icon('heroicon-o-at-symbol')
                                 ->collapsible()
                                 ->collapsed()
                                 ->columns(3)
@@ -247,7 +247,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.redirect_uri')),
                                 ]),
                             Section::make('Google')
-                                ->icon('bi-google')
+                                ->icon('heroicon-o-magnifying-glass')
                                 ->collapsible()
                                 ->collapsed()
                                 ->columns(3)
@@ -262,7 +262,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.redirect_uri')),
                                 ]),
                             Section::make('Yahoo')
-                                ->icon('mdi-yahoo')
+                                ->icon('heroicon-o-envelope')
                                 ->collapsible()
                                 ->collapsed()
                                 ->columns(3)
@@ -277,7 +277,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.redirect_uri')),
                                 ]),
                             Section::make('Microsoft')
-                                ->icon('bi-microsoft')
+                                ->icon('heroicon-o-building-office-2')
                                 ->collapsible()
                                 ->collapsed()
                                 ->columns(3)
@@ -297,7 +297,7 @@ class SiteSettings extends Page implements HasForms
                         ->label(__('message.features_tab'))
                         ->schema([
                             Section::make('Email Options')
-                                ->icon('bi-mailbox-flag')
+                                ->icon('heroicon-o-envelope-open')
                                 ->collapsible()
                                 ->collapsed()
                                 ->columns(1)
@@ -308,7 +308,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.email_sending')),
                                 ]),
                             Section::make('SMS Options')
-                                ->icon('bi-chat-text')
+                                ->icon('heroicon-o-chat-bubble-left-right')
                                 ->collapsible()
                                 ->collapsed()
                                 ->columns(1)
@@ -320,7 +320,7 @@ class SiteSettings extends Page implements HasForms
                                 ]),
 
                             Section::make('Access Options')
-                                ->icon('bi-key')
+                                ->icon('heroicon-o-key')
                                 ->collapsible()
                                 ->collapsed()
                                 ->columns(1)
@@ -331,7 +331,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.maintenance_mode')),
                                 ]),
                             Section::make('Registration Options')
-                                ->icon('mdi-lock-check-outline')
+                                ->icon('heroicon-o-user-plus')
                                 ->collapsible()
                                 ->collapsed()
                                 ->columns(1)
@@ -364,7 +364,7 @@ class SiteSettings extends Page implements HasForms
                                 ->label(__('message.from_address'))
                                 ->default('no‑reply@yourdomain.com'),
                             Section::make('Mailgun')
-                                ->icon('si-mailgun')
+                                ->icon('heroicon-o-envelope')
                                 ->collapsible()
                                 ->collapsed()
                                 ->columns(2)
@@ -377,7 +377,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.mailgun_endpoint')),
                                 ])->visible(fn ($get) => $get('email.client_name') === 'mailgun'),
                             Section::make('Resend')
-                                ->icon('si-resend')
+                                ->icon('heroicon-o-paper-airplane')
                                 ->collapsible()
                                 ->collapsed()
                                 ->schema([
@@ -387,7 +387,7 @@ class SiteSettings extends Page implements HasForms
                                         ->revealable(),
                                 ])->visible(fn ($get) => $get('email.client_name') === 'resend'),
                             Section::make('Postmark')
-                                ->icon('fas-p')
+                                ->icon('heroicon-o-envelope-open')
                                 ->collapsible()
                                 ->collapsed()
                                 ->columns(2)
@@ -420,7 +420,7 @@ class SiteSettings extends Page implements HasForms
                                 ->default('SaaS PHP'),
 
                             Section::make('Vonage')
-                                ->icon('si-vonage')
+                                ->icon('heroicon-o-device-phone-mobile')
                                 ->collapsible()
                                 ->collapsed()
                                 ->schema([
@@ -434,7 +434,7 @@ class SiteSettings extends Page implements HasForms
                                         ->revealable(),
                                 ])->visible(fn ($get) => $get('sms.client_name') === 'vonage'),
                             Section::make('Africa talking')
-                                ->icon('bi-globe-europe-africa')
+                                ->icon('heroicon-o-globe-alt')
                                 ->collapsible()
                                 ->collapsed()
                                 ->columns(2)
@@ -447,12 +447,12 @@ class SiteSettings extends Page implements HasForms
                                         ->revealable(),
                                 ])->visible(fn ($get) => $get('sms.client_name') === 'africa_talking'),
 
-                        ])->icon('fas-sms'),
+                        ])->icon('heroicon-o-chat-bubble-left-right'),
                     Tab::make('Payment Gateways')
                         ->label(__('message.payment_gateways_tab'))
                         ->schema([
                             Section::make('Stripe')
-                                ->icon('si-stripe')
+                                ->icon('heroicon-o-credit-card')
                                 ->collapsible()
                                 ->collapsed()
                                 ->schema([
@@ -468,7 +468,7 @@ class SiteSettings extends Page implements HasForms
                                         ->revealable(),
                                 ]),
                             Section::make('Paddle')
-                                ->icon('si-paddle')
+                                ->icon('heroicon-o-shopping-cart')
                                 ->collapsible()
                                 ->collapsed()
                                 ->schema([
@@ -482,7 +482,7 @@ class SiteSettings extends Page implements HasForms
                                         ->label(__('message.paddle_public_key')), // For webhook verification
                                 ]),
                             Section::make('Paystack')
-                                ->icon('fas-p')
+                                ->icon('heroicon-o-banknotes')
                                 ->collapsible()
                                 ->collapsed()
                                 ->schema([

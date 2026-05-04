@@ -16,11 +16,12 @@ use Filament\Support\Colors\Color;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Throwable;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -28,7 +29,7 @@ class AdminPanelProvider extends PanelProvider
 
     public function boot(): void
     {
-        if (Schema::hasTable('settings')) {
+        if ($this->settingsTableExists()) {
             $this->brandName = Setting::getValue('site.name', 'Admin Panel');
         }
     }
@@ -36,6 +37,15 @@ class AdminPanelProvider extends PanelProvider
     public function name(): string
     {
         return $this->brandName;
+    }
+
+    private function settingsTableExists(): bool
+    {
+        try {
+            return Schema::hasTable('settings');
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     public function panel(Panel $panel): Panel
@@ -67,7 +77,7 @@ class AdminPanelProvider extends PanelProvider
                 StartSession::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
-                VerifyCsrfToken::class,
+                PreventRequestForgery::class,
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,

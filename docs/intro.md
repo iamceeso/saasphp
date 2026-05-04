@@ -37,7 +37,7 @@ This documentation is based on the current code in this repository, not on marke
 ### Backend
 
 - PHP 8.2+
-- Laravel 12
+- Laravel 13
 - Laravel Fortify
 - Laravel Cashier
 - Filament 5

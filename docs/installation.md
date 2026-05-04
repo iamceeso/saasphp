@@ -18,7 +18,7 @@ Sail provides the runtime container and the repository already includes a `compo
 ## Clone and install
 
 ```bash
-git clone https://github.com/iamceeso/saasPHP.git saasphp
+git clone https://saasphp.com.git saasphp
 cd saasphp
 
 composer install

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\ServiceProvider;
+use Throwable;
 use Inertia\Inertia;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Microsoft\Provider;
@@ -37,7 +38,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Guard Setting access until table exists
-        if (! Schema::hasTable('settings')) {
+        if (! $this->settingsTableExists()) {
             return;
         }
 
@@ -58,5 +59,14 @@ class AppServiceProvider extends ServiceProvider
                 'twitter_id' => Setting::getValue('social.twitter.client_id', ''),
             ],
         ]);
+    }
+
+    private function settingsTableExists(): bool
+    {
+        try {
+            return Schema::hasTable('settings');
+        } catch (Throwable) {
+            return false;
+        }
     }
 }
