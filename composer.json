@@ -1,5 +1,5 @@
 {
-    "name": "saasphp/starterkit",
+    "name": "saasphp/saasphp",
     "type": "project",
     "description": "A Laravel Starter Kit with React, Inertia, Filament, Tailwind, and Alpine.",
     "keywords": [
