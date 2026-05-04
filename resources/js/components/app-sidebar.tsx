@@ -10,7 +10,7 @@ import AppLogo from './app-logo';
 const footerNavItems: NavItem[] = [
     {
         title: 'Repository',
-        url: 'https://saasphp.com',
+        url: 'https://github.com/iamceeso/saasphp',
         icon: Folder,
     },
     {
