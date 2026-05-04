@@ -15,20 +15,22 @@ This project is a standard Laravel application with a React and Inertia frontend
 
 Sail provides the runtime container and the repository already includes a `compose.yaml` file for local development.
 
-## Clone and install
+## Create a project
 
 ```bash
-git clone https://saasphp.com.git saasphp
+composer create-project saasphp/saasphp saasphp
 cd saasphp
 
-composer install
-cp .env.example .env
 ./vendor/bin/sail up -d
-./vendor/bin/sail artisan key:generate
 ./vendor/bin/sail artisan migrate
 ./vendor/bin/sail artisan db:seed
 ./vendor/bin/sail npm install
 ```
+
+The Composer project scripts will:
+
+- copy `.env.example` to `.env` if needed
+- generate the application key automatically
 
 The base seeder does two important things:
 
@@ -85,7 +87,7 @@ Useful development commands:
 - `./vendor/bin/sail npm run dev`
 - `./vendor/bin/sail shell`
 
-The Composer scripts in `composer.json` still exist, but they use the host-machine PHP server workflow. For this project release, Sail is the recommended documented path.
+The documented local workflow uses Sail for the runtime environment.
 
 ## Default seeded users
 

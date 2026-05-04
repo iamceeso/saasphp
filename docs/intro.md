@@ -1,75 +1,45 @@
----
-title: SaaS PHP
-sidebar_position: 1
----
-
 # SaaS PHP
 
-SaaS PHP is a Laravel starter kit for subscription products. It combines a customer-facing React and Inertia app with a Filament admin panel, Stripe billing primitives, account security features, and a database-backed settings system.
+A Laravel 13 starter kit for building subscription-based SaaS applications with React, Inertia, Filament, and Stripe.
 
-This documentation is based on the current code in this repository, not on marketing copy. Where the code differs from the existing README, this docs set follows the implementation in the app.
+## Installation
 
-## Core surfaces
+```bash
+composer create-project saasphp/saasphp
+cd saasphp
 
-- Customer app built with Inertia and React for onboarding, pricing, checkout, subscriptions, invoices, and account settings
-- Filament admin panel at `/admin` for users, roles, permissions, plans, subscriptions, and site settings
-- Shared settings layer stored in the `settings` table and loaded dynamically into runtime config
-- Stripe-powered billing flows with subscription lifecycle management and webhook processing
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
 
-## Main features
+npm install
+npm run build
 
-- Email or phone login
-- Optional registration toggle
-- Optional email verification
-- Optional phone verification
-- Optional two-factor authentication
-- Magic link login
-- Social login for Google, Microsoft, Yahoo, GitHub, and Twitter
-- Role and permission management with Spatie Permission and Filament Shield
-- User impersonation support in admin workflows
-- Subscription plans with monthly and annual pricing
-- Free plans and paid Stripe plans
-- Plan swaps, billing cycle changes, cancellation, resume, and invoice history
-- Database-backed site settings for branding, auth toggles, social providers, email, SMS, and payment credentials
+php artisan serve
+```
 
-## Current stack
+## Features
 
-### Backend
+* React + Inertia customer app
+* Filament admin panel
+* Stripe subscriptions (Cashier)
+* Role & permission system
+* Social login and 2FA
+* Database-driven settings
 
-- PHP 8.2+
-- Laravel 13
-- Laravel Fortify
-- Laravel Cashier
-- Filament 5
-- Spatie Permission
-- Socialite
+## Documentation
 
-### Frontend
+Full documentation is available on the official website:
+👉 https://saasphp.com
 
-- React 19
-- TypeScript
-- Inertia.js
-- Tailwind CSS 4
-- Radix UI primitives
-- Vite 6
+## Stack
 
-### Tooling
+* Laravel 13
+* Filament 5
+* React 19 + TypeScript
+* Tailwind CSS 4
+* Vite 6
 
-- Pest and PHPUnit
-- ESLint
-- Prettier
-- TypeScript type checking
+## License
 
-## Important implementation notes
-
-- Billing routes are only registered when `config('billing.enabled')` is `true`
-- Site configuration is seeded from `config/saasphp-data.php` into the database
-- Settings override runtime config for Stripe, OAuth providers, and mail transport
-- Prices are stored in minor currency units, for example `999` for `$9.99`
-- The Stripe webhook route in code is `POST /webhooks/stripe`
-
-## Who this starter is for
-
-SaaS PHP fits best when you want a strong starting point for a single-product SaaS app with one customer account per user, Stripe subscriptions, a separate admin area, and configurable auth and settings features.
-
-It is not currently a full multi-tenant platform with teams, seats, tenant isolation, or advanced revenue analytics.
+Proprietary / MIT / etc.
