@@ -398,7 +398,9 @@ class SubscriptionService
             ],
         ]);
 
-        $user->update(['stripe_id' => $customer->id]);
+        // forceFill: stripe_id is intentionally excluded from User::$fillable
+        // so it can never be mass-assigned from request input.
+        $user->forceFill(['stripe_id' => $customer->id])->save();
 
         return $customer->id;
     }
