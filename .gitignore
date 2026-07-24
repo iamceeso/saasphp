@@ -3,6 +3,8 @@
 /public/build
 /public/hot
 /public/storage
+/.doctum
+/build
 /storage/*.key
 /storage/pail
 /vendor
