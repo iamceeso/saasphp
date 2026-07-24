@@ -49,6 +49,11 @@ class CustomerSubscription extends Model
         'incomplete_expired',
     ];
 
+    public const ACTIVE_STATUSES = [
+        'trialing',
+        'active',
+    ];
+
     public static function currentSubscriptionKeyFor(int $userId): string
     {
         return "user:{$userId}";
@@ -80,7 +85,7 @@ class CustomerSubscription extends Model
 
     public function scopeActive($query)
     {
-        return $query->whereIn('status', ['trialing', 'active']);
+        return $query->whereIn('status', self::ACTIVE_STATUSES);
     }
 
     public function scopeForUser($query, User $user)
@@ -95,7 +100,7 @@ class CustomerSubscription extends Model
 
     public function isActive(): bool
     {
-        return in_array($this->status, ['trialing', 'active']) || $this->onGracePeriod();
+        return in_array($this->status, self::ACTIVE_STATUSES, true) || $this->onGracePeriod();
     }
 
     public function isTrialing(): bool

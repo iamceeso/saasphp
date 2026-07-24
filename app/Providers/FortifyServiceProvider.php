@@ -56,7 +56,7 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         Fortify::loginView(function (Request $request) {
-            $twoFactorEnabled = Setting::getBooleanValue('features.enable_two_factor_auth', 'false');
+            $twoFactorEnabled = Setting::getBooleanValue('features.enable_two_factor_auth', false);
 
             return Inertia::render('auth/login', [
                 'twoFactorEnabled' => $twoFactorEnabled,
@@ -66,8 +66,8 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         Fortify::registerView(function () {
-            $registrationEnabled = Setting::getBooleanValue('features.enable_registration', 'false');
-            $twoFactorEnabled = Setting::getBooleanValue('features.enable_two_factor_auth', 'false');
+            $registrationEnabled = Setting::getBooleanValue('features.enable_registration', false);
+            $twoFactorEnabled = Setting::getBooleanValue('features.enable_two_factor_auth', false);
 
             if (! $registrationEnabled) {
                 return Inertia::render('auth/login');
@@ -82,7 +82,7 @@ class FortifyServiceProvider extends ServiceProvider
 
         Fortify::verifyEmailView(function () {
             if (
-                ! Setting::getBooleanValue('features.enable_email_verification', 'false')
+                ! Setting::getBooleanValue('features.enable_email_verification', false)
             ) {
                 return redirect('/');
             }

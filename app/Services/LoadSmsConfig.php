@@ -42,7 +42,7 @@ trait LoadSmsConfig
             ]);
         }
 
-        $client = Setting::getValue('sms.client_name');
+        $provider = Setting::getValue('sms.client_name');
         $from = Setting::getValue('sms.from.address');
 
         // Use passed phone number or fall back to $this->phone
@@ -54,36 +54,43 @@ trait LoadSmsConfig
 
         $finalMessage = $message ?? "Your code is: {$code}";
 
-        if ($client === SmsProviders::VONAGE->value) {
-            config()->set('services.vonage.key', Setting::getValue('sms.vonage.api_key'));
-            config()->set('services.vonage.secret', Setting::getValue('sms.vonage.api_secret'));
-            config()->set('services.vonage.sms_from', $from);
+        match ($provider) {
+            SmsProviders::VONAGE->value => $this->sendViaVonage($recipient, $finalMessage, $from),
+            SmsProviders::AFRICA_TALKING->value => $this->sendViaAfricasTalking($recipient, $finalMessage),
+            default => null,
+        };
+    }
 
-            $credentials = new VonageCredentials(
-                config('services.vonage.key'),
-                config('services.vonage.secret')
-            );
-            $client = new VonageClient($credentials);
+    private function sendViaVonage(string $recipient, string $message, ?string $from): void
+    {
+        config()->set('services.vonage.key', Setting::getValue('sms.vonage.api_key'));
+        config()->set('services.vonage.secret', Setting::getValue('sms.vonage.api_secret'));
+        config()->set('services.vonage.sms_from', $from);
 
-            $messageText = $finalMessage;
-            $client->sms()->send(
-                new SMS($recipient, config('services.vonage.sms_from'), $messageText)
-            );
-        }
-        if ($client === SmsProviders::AFRICA_TALKING->value) {
+        $credentials = new VonageCredentials(
+            config('services.vonage.key'),
+            config('services.vonage.secret')
+        );
+        $client = new VonageClient($credentials);
 
-            config()->set('services.africa_talking.username', Setting::getValue('sms.africa_talking.username'));
-            config()->set('services.africa_talking.api_key', Setting::getValue('sms.africa_talking.api_key'));
+        $client->sms()->send(
+            new SMS($recipient, config('services.vonage.sms_from'), $message)
+        );
+    }
 
-            $username = Setting::getValue('sms.africa_talking.username');
-            $apiKey = Setting::getValue('sms.africa_talking.api_key');
-            $AT = new AfricasTalking($username, $apiKey);
-            $sms = $AT->sms();
+    private function sendViaAfricasTalking(string $recipient, string $message): void
+    {
+        $username = Setting::getValue('sms.africa_talking.username');
+        $apiKey = Setting::getValue('sms.africa_talking.api_key');
 
-            $sms->send([
-                'to' => $recipient,
-                'message' => $finalMessage,
-            ]);
-        }
+        config()->set('services.africa_talking.username', $username);
+        config()->set('services.africa_talking.api_key', $apiKey);
+
+        $africasTalking = new AfricasTalking($username, $apiKey);
+
+        $africasTalking->sms()->send([
+            'to' => $recipient,
+            'message' => $message,
+        ]);
     }
 }

@@ -119,7 +119,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         }
     }
 
-    public function hasVerifiedEmail()
+    public function hasVerifiedEmail(): bool
     {
         // Skip check if verification is disabled in settings
         if (! Setting::getBooleanValue('features.enable_email_verification', true)) {
@@ -129,7 +129,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return ! is_null($this->email_verified_at);
     }
 
-    public function hasVerifiedPhone()
+    public function hasVerifiedPhone(): bool
     {
         if (! Setting::getBooleanValue('features.enable_phone_verification', true)) {
             return true;
@@ -138,7 +138,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return ! is_null($this->phone_verified_at);
     }
 
-    public function markEmailAsVerified()
+    public function markEmailAsVerified(): bool
     {
         if ($this->hasVerifiedEmail()) {
             return true;
@@ -150,7 +150,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         ])->save();
     }
 
-    public function markPhoneAsVerified()
+    public function markPhoneAsVerified(): bool
     {
         if ($this->hasVerifiedPhone()) {
             return true;
@@ -174,7 +174,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function getCurrentSubscription(): ?CustomerSubscription
     {
         return $this->subscriptions()
-            ->whereIn('status', ['active', 'trialing'])
+            ->whereIn('status', CustomerSubscription::ACTIVE_STATUSES)
             ->latest()
             ->first();
     }
@@ -182,7 +182,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function hasActiveSubscription(): bool
     {
         return $this->subscriptions()
-            ->whereIn('status', ['active', 'trialing'])
+            ->whereIn('status', CustomerSubscription::ACTIVE_STATUSES)
             ->exists();
     }
 

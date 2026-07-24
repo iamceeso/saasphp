@@ -13,12 +13,6 @@ use Illuminate\Support\ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
 {
-    protected $policies = [
-        User::class => UserPolicy::class,
-        CustomerSubscription::class => SubscriptionPolicy::class,
-        SubscriptionPlan::class => PlanPolicy::class,
-    ];
-
     public function register(): void
     {
         //
@@ -26,7 +20,9 @@ class AuthServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->registerPolicies();
+        Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(CustomerSubscription::class, SubscriptionPolicy::class);
+        Gate::policy(SubscriptionPlan::class, PlanPolicy::class);
 
         Gate::before(function ($user, string $ability) {
             if (! config('filament-shield.super_admin.enabled')) {
@@ -39,12 +35,5 @@ class AuthServiceProvider extends ServiceProvider
 
             return $user->isSuperAdmin() ? true : null;
         });
-    }
-
-    private function registerPolicies(): void
-    {
-        foreach ($this->policies as $model => $policy) {
-            Gate::policy($model, $policy);
-        }
     }
 }
