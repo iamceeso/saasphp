@@ -2,7 +2,7 @@
 
 namespace App\Filament\Pages;
 
-use App\Events\ImageUpdated;
+use App\Actions\Settings\UpdateSettings;
 use App\Models\Setting;
 use DateTimeZone;
 use Filament\Actions\Action as FormAction;
@@ -21,7 +21,6 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
 /**
@@ -362,7 +361,7 @@ class SiteSettings extends Page implements HasForms
                                 }),
                             TextInput::make('email.from.address')
                                 ->label(__('message.from_address'))
-                                ->default('no‑reply@yourdomain.com'),
+                                ->default('no-reply@yourdomain.com'),
                             Section::make('Mailgun')
                                 ->icon('heroicon-o-envelope')
                                 ->collapsible()
@@ -515,54 +514,8 @@ class SiteSettings extends Page implements HasForms
     public function submit(): void
     {
         $this->validate();
-        $state = $this->form->getState()['data'];
-        $flat = Arr::dot($state);
 
-        foreach ($flat as $key => $value) {
-            if ($key === 'site.logo' && blank($value)) {
-                continue;
-            }
-
-            // Handle file upload
-            if ($value instanceof TemporaryUploadedFile) {
-                $value = $value->storePublicly('logos', 'public');
-            } elseif (is_array($value)) {
-                $firstItem = reset($value);
-                if ($firstItem instanceof TemporaryUploadedFile) {
-                    $value = $firstItem->storePublicly('logos', 'public');
-                } else {
-                    $value = '';
-                }
-            }
-
-            // Normalize to string (cast booleans to 'true'/'false')
-            if (is_bool($value)) {
-                $plain = $value ? 'true' : 'false';
-            } elseif (is_scalar($value)) {
-                $plain = (string) $value;
-            } else {
-                $plain = '';
-            }
-
-            // Fire image-updated event on logo/favicon changes
-            $isImageKey = in_array($key, ['site.logo']);
-            $setting = Setting::firstWhere('key', $key);
-            if ($setting && $isImageKey && $setting->value !== $plain) {
-                event(new ImageUpdated($setting, [$setting->value]));
-            }
-
-            // Clear settings cache
-            cache()->forget("setting.{$key}");
-
-            // Save or update via encrypted cast
-            Setting::updateOrCreate([
-                'key' => $key,
-            ], [
-                'value' => $plain,
-                'type' => is_bool($value) ? 'boolean' : 'string',
-                'group' => explode('.', $key)[0],
-            ]);
-        }
+        app(UpdateSettings::class)->handle($this->form->getState()['data']);
 
         Notification::make()
             ->title(__('message.settings_saved'))

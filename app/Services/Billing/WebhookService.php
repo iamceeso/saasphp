@@ -5,18 +5,18 @@ namespace App\Services\Billing;
 use App\Models\BillingEvent;
 use App\Models\CustomerSubscription;
 use App\Models\WebhookLog;
+use App\Services\Billing\Concerns\HasStripeClient;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Stripe\Event;
 use Stripe\Exception\SignatureVerificationException;
-use Stripe\StripeClient;
 use Stripe\Webhook;
 
 class WebhookService
 {
-    private ?StripeClient $stripe = null;
+    use HasStripeClient;
 
     public function handleWebhook(string $payload, string $signature): WebhookLog
     {
@@ -221,7 +221,7 @@ class WebhookService
         }
 
         $subscription->update([
-            'current_subscription_key' => $this->resolveCurrentSubscriptionKey(
+            'current_subscription_key' => CustomerSubscription::resolveCurrentSubscriptionKey(
                 $subscription->user_id,
                 $stripeSubscription->status,
                 $stripeSubscription->ended_at,
@@ -281,29 +281,5 @@ class WebhookService
         throw new RuntimeException(
             "Stripe webhook {$eventId} ({$eventType}) referenced unknown local subscription {$stripeSubscriptionId}."
         );
-    }
-
-    private function resolveCurrentSubscriptionKey(int $userId, string $status, mixed $endedAt = null): ?string
-    {
-        if (in_array($status, CustomerSubscription::CURRENT_SLOT_STATUSES, true) && blank($endedAt)) {
-            return "user:{$userId}";
-        }
-
-        return null;
-    }
-
-    private function getStripeClient(): StripeClient
-    {
-        if ($this->stripe === null) {
-            $secret = config('services.stripe.secret');
-
-            if (! $secret) {
-                throw new \InvalidArgumentException('Stripe secret key is not configured.');
-            }
-
-            $this->stripe = new StripeClient($secret);
-        }
-
-        return $this->stripe;
     }
 }

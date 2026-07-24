@@ -4,26 +4,11 @@ namespace App\Services\Billing;
 
 use App\Models\PlanPrice;
 use App\Models\SubscriptionPlan;
-use Stripe\StripeClient;
+use App\Services\Billing\Concerns\HasStripeClient;
 
 class PlanService
 {
-    private ?StripeClient $stripe = null;
-
-    private function getStripeClient(): StripeClient
-    {
-        if ($this->stripe === null) {
-            $secret = config('services.stripe.secret');
-            if (! $secret) {
-                throw new \InvalidArgumentException(
-                    'Stripe secret key is not configured. Please set STRIPE_SECRET_KEY in your .env file.'
-                );
-            }
-            $this->stripe = new StripeClient($secret);
-        }
-
-        return $this->stripe;
-    }
+    use HasStripeClient;
 
     public function createPlan(array $data): SubscriptionPlan
     {

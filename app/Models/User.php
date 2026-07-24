@@ -77,8 +77,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     protected static function booted()
     {
         static::created(function (User $user) {
-            // Make sure the default role exists in DB
-            $user->assignRole('user'); // or whatever your default role name is
+            $user->assignRole('user');
         });
     }
 
@@ -244,17 +243,4 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
         return true;
     }
-
-    // public function sendPasswordResetNotification($token)
-    // {
-    //     if ($this->email) {
-    //         $this->loadEmailConfig();
-    //         $this->notify(new ResetPasswordNotification($token));
-    //         return;
-    //     }
-
-    //     // Your LoadSmsConfig trait expects a "code" – just pass it the token:
-    //     $message = "Your password reset code is: {$token}";
-    //     $this->loadDynamicSmsConfig($token, $message);
-    // }
 }

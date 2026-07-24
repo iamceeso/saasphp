@@ -49,6 +49,20 @@ class CustomerSubscription extends Model
         'incomplete_expired',
     ];
 
+    public static function currentSubscriptionKeyFor(int $userId): string
+    {
+        return "user:{$userId}";
+    }
+
+    public static function resolveCurrentSubscriptionKey(int $userId, string $status, mixed $endedAt = null): ?string
+    {
+        if (in_array($status, self::CURRENT_SLOT_STATUSES, true) && blank($endedAt)) {
+            return self::currentSubscriptionKeyFor($userId);
+        }
+
+        return null;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

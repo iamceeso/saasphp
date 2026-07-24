@@ -10,7 +10,6 @@ use App\Services\Billing\SubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -54,8 +53,6 @@ class PricingController extends Controller
             ->where('interval', $request->interval)
             ->where('is_active', true)
             ->firstOrFail();
-
-        $user = Auth::user();
 
         return Inertia::render('Billing/Checkout', [
             'plan' => $plan,
@@ -103,39 +100,6 @@ class PricingController extends Controller
                     $request->interval,
                     $paymentMethod
                 );
-            } elseif (app()->environment('testing')) {
-                // Keep a deterministic fallback only for automated tests.
-                $now = now();
-                $trialEndsAt = $price->trial_days > 0 ? $now->copy()->addDays($price->trial_days) : null;
-                $periodStart = $trialEndsAt ?: $now;
-                $periodEnd = $request->interval === 'monthly'
-                    ? $periodStart->copy()->addMonth()
-                    : $periodStart->copy()->addYear();
-
-                $subscription = CustomerSubscription::create([
-                    'user_id' => $user->id,
-                    'plan_id' => $plan->id,
-                    'current_subscription_key' => $this->subscriptionService->currentSubscriptionKeyFor($user->id),
-                    'stripe_subscription_id' => 'sub_local_'.Str::uuid(),
-                    'stripe_customer_id' => $user->stripe_id ?: 'cus_local_'.$user->id,
-                    'status' => $trialEndsAt ? 'trialing' : 'active',
-                    'interval' => $request->interval,
-                    'amount' => $price->amount,
-                    'current_period_start' => $periodStart,
-                    'current_period_end' => $periodEnd,
-                    'trial_ends_at' => $trialEndsAt,
-                    'metadata' => [
-                        'provider' => 'local',
-                        'currency' => config('services.stripe.currency', 'USD'),
-                    ],
-                ]);
-
-                $result = [
-                    'subscription' => $subscription,
-                    'payment_intent_client_secret' => null,
-                    'payment_intent_status' => null,
-                    'requires_action' => false,
-                ];
             } else {
                 return response()->json([
                     'success' => false,

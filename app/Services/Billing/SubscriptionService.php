@@ -6,32 +6,17 @@ use App\Models\CustomerSubscription;
 use App\Models\PlanPrice;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Services\Billing\Concerns\HasStripeClient;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Stripe\Exception\ApiErrorException;
-use Stripe\StripeClient;
 
 class SubscriptionService
 {
+    use HasStripeClient;
+
     private const FREE_PLAN_PERIOD_YEARS = 100;
-
-    private ?StripeClient $stripe = null;
-
-    private function getStripeClient(): StripeClient
-    {
-        if ($this->stripe === null) {
-            $secret = config('services.stripe.secret');
-            if (! $secret) {
-                throw new \InvalidArgumentException(
-                    'Stripe secret key is not configured. Please set STRIPE_SECRET_KEY in your .env file.'
-                );
-            }
-            $this->stripe = new StripeClient($secret);
-        }
-
-        return $this->stripe;
-    }
 
     public function subscribe(
         User $user,
@@ -222,7 +207,7 @@ class SubscriptionService
                     'plan_id' => $newPlan->id,
                     'interval' => $interval,
                     'amount' => $newPrice->amount,
-                    'current_subscription_key' => $this->resolveCurrentSubscriptionKey(
+                    'current_subscription_key' => CustomerSubscription::resolveCurrentSubscriptionKey(
                         $subscription->user_id,
                         $subscription->status,
                         $subscription->ended_at,
@@ -493,7 +478,7 @@ class SubscriptionService
 
     public function currentSubscriptionKeyFor(int $userId): string
     {
-        return "user:{$userId}";
+        return CustomerSubscription::currentSubscriptionKeyFor($userId);
     }
 
     public function replaceFreeSubscriptionWithPaidPlan(
@@ -618,7 +603,7 @@ class SubscriptionService
         if ($existingSubscription) {
             $existingSubscription->update(array_merge(
                 [
-                    'current_subscription_key' => $this->resolveCurrentSubscriptionKey(
+                    'current_subscription_key' => CustomerSubscription::resolveCurrentSubscriptionKey(
                         $user->id,
                         $stripeSubscription->status,
                         data_get($stripeSubscription, 'ended_at'),
@@ -638,7 +623,7 @@ class SubscriptionService
                 [
                     'user_id' => $user->id,
                     'plan_id' => $plan->id,
-                    'current_subscription_key' => $this->resolveCurrentSubscriptionKey(
+                    'current_subscription_key' => CustomerSubscription::resolveCurrentSubscriptionKey(
                         $user->id,
                         $stripeSubscription->status,
                         data_get($stripeSubscription, 'ended_at'),
@@ -672,15 +657,6 @@ class SubscriptionService
                 'cancel_at_period_end' => (bool) ($stripeSubscription->cancel_at_period_end ?? false),
             ],
         ];
-    }
-
-    public function resolveCurrentSubscriptionKey(int $userId, string $status, mixed $endedAt = null): ?string
-    {
-        if (in_array($status, CustomerSubscription::CURRENT_SLOT_STATUSES, true) && blank($endedAt)) {
-            return $this->currentSubscriptionKeyFor($userId);
-        }
-
-        return null;
     }
 
     private function getOrCreateStripePrice(SubscriptionPlan $plan, PlanPrice $price): string

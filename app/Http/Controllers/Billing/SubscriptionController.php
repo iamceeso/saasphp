@@ -2,10 +2,6 @@
 
 namespace App\Http\Controllers\Billing;
 
-use App\Actions\Billing\CancelSubscription;
-use App\Actions\Billing\ChangeSubscriptionBillingCycle;
-use App\Actions\Billing\ResumeSubscription;
-use App\Actions\Billing\SwapSubscriptionPlan;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerSubscription;
 use App\Models\SubscriptionPlan;
@@ -18,11 +14,7 @@ use Inertia\Inertia;
 class SubscriptionController extends Controller
 {
     public function __construct(
-        private SubscriptionService $subscriptionService,
-        private SwapSubscriptionPlan $swapSubscriptionPlan,
-        private ChangeSubscriptionBillingCycle $changeSubscriptionBillingCycle,
-        private CancelSubscription $cancelSubscription,
-        private ResumeSubscription $resumeSubscription
+        private SubscriptionService $subscriptionService
     ) {}
 
     public function index()
@@ -72,7 +64,7 @@ class SubscriptionController extends Controller
 
         try {
             $newPlan = SubscriptionPlan::active()->findOrFail($request->plan_id);
-            $updated = $this->swapSubscriptionPlan->handle(
+            $updated = $this->subscriptionService->swapPlan(
                 $subscription,
                 $newPlan,
                 $request->interval,
@@ -109,7 +101,7 @@ class SubscriptionController extends Controller
         ]);
 
         try {
-            $updated = $this->changeSubscriptionBillingCycle->handle(
+            $updated = $this->subscriptionService->changeBillingCycle(
                 $subscription,
                 $request->interval
             );
@@ -143,7 +135,7 @@ class SubscriptionController extends Controller
         ]);
 
         try {
-            $this->cancelSubscription->handle(
+            $this->subscriptionService->cancel(
                 $subscription,
                 $request->boolean('immediately', false)
             );
@@ -174,7 +166,7 @@ class SubscriptionController extends Controller
         $this->authorize('resume', $subscription);
 
         try {
-            $updated = $this->resumeSubscription->handle($subscription);
+            $updated = $this->subscriptionService->resume($subscription);
 
             return response()->json([
                 'success' => true,
