@@ -163,6 +163,7 @@ class UserResource extends Resource implements HasShieldPermissions
                                     ->required(fn ($record) => ! $record || ! $record->exists)
                                     ->confirmed() // ensures it matches confirm_password
                                     ->dehydrateStateUsing(fn ($state) => bcrypt($state))
+                                    ->dehydrated(fn ($state) => filled($state)) // don't overwrite the password when left blank on edit
                                     ->maxLength(255),
 
                                 TextInput::make('password_confirmation')

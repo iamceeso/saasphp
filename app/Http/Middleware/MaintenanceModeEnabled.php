@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Setting;
+use App\Models\User;
 use App\Support\ImpersonationSession;
 use Closure;
 use Illuminate\Http\Request;
