@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use STS\FilamentImpersonate\ImpersonateManager;
 
 uses(RefreshDatabase::class);
 
@@ -13,6 +14,28 @@ test('profile page is displayed', function () {
         ->get('/settings/profile');
 
     $response->assertOk();
+});
+
+test('profile settings are blocked while impersonating via local table action session', function () {
+    $user = User::factory()->create();
+    $impersonator = User::factory()->create();
+
+    $this
+        ->actingAs($user)
+        ->withSession(['impersonator_id' => $impersonator->id])
+        ->get('/settings/profile')
+        ->assertForbidden();
+});
+
+test('profile settings are blocked while impersonating via vendor page action session', function () {
+    $user = User::factory()->create();
+    $impersonator = User::factory()->create();
+
+    $this
+        ->actingAs($user)
+        ->withSession([ImpersonateManager::SESSION_KEY => $impersonator->id])
+        ->get('/settings/profile')
+        ->assertForbidden();
 });
 
 test('profile information can be updated', function () {

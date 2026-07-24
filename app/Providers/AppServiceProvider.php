@@ -3,12 +3,10 @@
 namespace App\Providers;
 
 use App\Models\Setting;
-use App\Models\User;
+use App\Support\ImpersonationSession;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\ServiceProvider;
-use Throwable;
 use Inertia\Inertia;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Microsoft\Provider;
@@ -46,10 +44,8 @@ class AppServiceProvider extends ServiceProvider
         Inertia::share([
             'twoFactorEnabled' => fn () => Setting::getBooleanValue('features.enable_two_factor_auth', false),
             'maintenanceModeEnabled' => fn () => Setting::getBooleanValue('features.maintenance_mode', false),
-            'isImpersonating' => fn () => Session::has('impersonator_id'),
-            'impersonator' => fn () => Session::has('impersonator_id')
-                ? User::find(Session::get('impersonator_id'))?->only(['id', 'name', 'email'])
-                : null,
+            'isImpersonating' => fn () => ImpersonationSession::isImpersonating(),
+            'impersonator' => fn () => ImpersonationSession::impersonator()?->only(['id', 'name', 'email']),
 
             'social_ids' => fn () => [
                 'google_id' => Setting::getValue('social.google.client_id', ''),

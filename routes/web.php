@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
+use STS\FilamentImpersonate\Facades\Impersonation;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -28,6 +29,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('impersonate/leave', function () {
         if (Session::has('impersonator_id')) {
             Auth::loginUsingId(Session::pull('impersonator_id'));
+        } elseif (Impersonation::isImpersonating()) {
+            Impersonation::leave();
         }
 
         return redirect('/admin');
