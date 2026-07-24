@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -21,6 +22,12 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        if (! Setting::getBooleanValue('features.enable_registration', false)) {
+            throw ValidationException::withMessages([
+                'registration' => __('Registration is currently disabled.'),
+            ]);
+        }
+
         $requireBoth = Setting::getBooleanValue('features.phone_email_at_registration', false);
 
         $rules = [

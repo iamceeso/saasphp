@@ -5,20 +5,17 @@ use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\VerifyPhoneController;
-use App\Http\Middleware\EnsureTwoFactorEnabled;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::middleware('guest')->group(function () {
-    // Social login (with 2FA enabled)
-    Route::middleware(EnsureTwoFactorEnabled::class)->group(function () {
-        collect(['google', 'microsoft', 'yahoo', 'github', 'twitter'])
-            ->each(fn ($provider) => [
-                Route::get("login/{$provider}", [AuthenticatedSessionController::class, 'redirectTo'.ucfirst($provider)])
-                    ->name("{$provider}.login"),
-                Route::get("auth/{$provider}/callback", [AuthenticatedSessionController::class, 'handle'.ucfirst($provider).'Callback']),
-            ]);
-    });
+    // Social login
+    collect(['google', 'microsoft', 'yahoo', 'github', 'twitter'])
+        ->each(fn ($provider) => [
+            Route::get("login/{$provider}", [AuthenticatedSessionController::class, 'redirectTo'.ucfirst($provider)])
+                ->name("{$provider}.login"),
+            Route::get("auth/{$provider}/callback", [AuthenticatedSessionController::class, 'handle'.ucfirst($provider).'Callback']),
+        ]);
 
     // Magic link
     Route::prefix('magic')->name('magic.')->group(function () {

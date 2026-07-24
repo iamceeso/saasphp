@@ -14,18 +14,13 @@ class SocialLoginTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        Setting::updateOrCreate(
-            ['key' => 'features.enable_two_factor_auth'],
-            ['value' => true, 'type' => 'boolean', 'group' => 'features']
-        );
-    }
-
     public function test_verified_google_user_can_sign_in_and_create_an_account(): void
     {
+        Setting::updateOrCreate(
+            ['key' => 'features.enable_two_factor_auth'],
+            ['value' => false, 'type' => 'boolean', 'group' => 'features']
+        );
+
         $providerUser = $this->fakeProviderUser(
             id: 'google-user-1',
             email: 'social@example.com',
@@ -46,6 +41,20 @@ class SocialLoginTest extends TestCase
             'oauth_provider' => 'google',
             'oauth_provider_id' => 'google-user-1',
         ]);
+    }
+
+    public function test_social_login_redirect_routes_do_not_require_two_factor_authentication_to_be_enabled(): void
+    {
+        Setting::updateOrCreate(
+            ['key' => 'features.enable_two_factor_auth'],
+            ['value' => false, 'type' => 'boolean', 'group' => 'features']
+        );
+
+        $driver = Mockery::mock();
+        $driver->shouldReceive('redirect')->once()->andReturn(redirect('https://accounts.example.test/oauth'));
+        Socialite::shouldReceive('driver')->with('google')->once()->andReturn($driver);
+
+        $this->get('/login/google')->assertRedirect('https://accounts.example.test/oauth');
     }
 
     public function test_existing_local_account_is_not_auto_linked_by_social_email(): void
