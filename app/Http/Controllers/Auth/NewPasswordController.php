@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -53,7 +54,12 @@ class NewPasswordController extends Controller
             $tokenOwner = DB::table('password_reset_tokens')->where('email', $login)->first();
         }
 
-        if (! $user || ! $tokenOwner || ! Hash::check($request->token, $tokenOwner->token)) {
+        if (
+            ! $user
+            || ! $tokenOwner
+            || $this->passwordResetTokenExpired($tokenOwner->created_at)
+            || ! Hash::check($request->token, $tokenOwner->token)
+        ) {
             throw ValidationException::withMessages([
                 'email' => ['Invalid user or expired reset token.'],
             ]);
@@ -77,5 +83,17 @@ class NewPasswordController extends Controller
         Password::deleteToken($user);
 
         return to_route('login')->with('status', 'Password reset successful.');
+    }
+
+    private function passwordResetTokenExpired(mixed $createdAt): bool
+    {
+        if (blank($createdAt)) {
+            return true;
+        }
+
+        $broker = config('auth.defaults.passwords', 'users');
+        $expiresInMinutes = (int) config("auth.passwords.{$broker}.expire", 60);
+
+        return Carbon::parse($createdAt)->addMinutes($expiresInMinutes)->isPast();
     }
 }

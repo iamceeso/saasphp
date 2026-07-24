@@ -131,6 +131,53 @@ test('phone is verified only after password reset token is accepted', function (
     expect($user->fresh()->phone_verified_at)->not->toBeNull();
 });
 
+test('password cannot be reset with an expired email token', function () {
+    $token = 'expired-email-reset-token';
+    $user = User::factory()->create([
+        'password' => 'old-password',
+    ]);
+
+    DB::table('password_reset_tokens')->insert([
+        'email' => $user->email,
+        'token' => Hash::make($token),
+        'created_at' => now()->subMinutes(config('auth.passwords.users.expire') + 1),
+    ]);
+
+    $this->post('/reset-password', [
+        'token' => $token,
+        'email' => $user->email,
+        'password' => 'new-password',
+        'password_confirmation' => 'new-password',
+    ])->assertSessionHasErrors('email');
+
+    expect(Hash::check('old-password', $user->fresh()->password))->toBeTrue();
+});
+
+test('password cannot be reset with an expired phone token', function () {
+    $token = 'expired-phone-reset-token';
+    $phoneLogin = 'phone:+15555550125';
+    $user = User::factory()->create([
+        'email' => null,
+        'phone' => '+15555550125',
+        'password' => 'old-password',
+    ]);
+
+    DB::table('password_reset_tokens')->insert([
+        'email' => $phoneLogin,
+        'token' => Hash::make($token),
+        'created_at' => now()->subMinutes(config('auth.passwords.users.expire') + 1),
+    ]);
+
+    $this->post('/reset-password', [
+        'token' => $token,
+        'email' => $phoneLogin,
+        'password' => 'new-password',
+        'password_confirmation' => 'new-password',
+    ])->assertSessionHasErrors('email');
+
+    expect(Hash::check('old-password', $user->fresh()->password))->toBeTrue();
+});
+
 test('password can be reset with valid token', function () {
     Notification::fake();
 
