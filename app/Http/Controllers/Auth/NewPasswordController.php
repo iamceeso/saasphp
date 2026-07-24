@@ -65,6 +65,12 @@ class NewPasswordController extends Controller
             'remember_token' => Str::random(60),
         ])->save();
 
+        if (str_starts_with($login, 'phone:')) {
+            $user->markPhoneAsVerified();
+        } else {
+            $user->markEmailAsVerified();
+        }
+
         event(new PasswordReset($user));
 
         // Clean up used token

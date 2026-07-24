@@ -73,12 +73,10 @@ class PasswordResetLinkController extends Controller
         if ($user->email) {
             $this->loadEmailConfig();
             $user->notify(new ResetPassword($token));
-            $user->markEmailAsVerified();
         }
         // Or send SMS if only phone exists
         elseif ($user->phone) {
             $this->loadDynamicSmsConfig(message: "Reset your password: {$resetUrl}", phone: $user->phone);
-            $user->markPhoneAsVerified();
         }
 
         return back()->with('status', __('A reset link will be sent if the account exists.'));
