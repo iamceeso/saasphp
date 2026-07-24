@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
+/**
+ * Class EnsureTwoFactorEnabledTest.
+ */
 class EnsureTwoFactorEnabledTest extends TestCase
 {
     use RefreshDatabase;

@@ -23,9 +23,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Str;
 
 /**
- * Class RoleResource
- *
- * Filament resource for managing roles using Filament Shield.
+ * Filament resource for managing roles.
  */
 class RoleResource extends Resource implements HasShieldPermissions
 {

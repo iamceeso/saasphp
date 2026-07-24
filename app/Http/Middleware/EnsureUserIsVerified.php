@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Class EnsureUserIsVerified.
+ */
 class EnsureUserIsVerified
 {
     private const EMAIL_SENT_SESSION_KEY = 'verification.email_prompt_sent';

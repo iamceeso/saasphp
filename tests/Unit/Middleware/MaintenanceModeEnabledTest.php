@@ -10,6 +10,9 @@ use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
+/**
+ * Class MaintenanceModeEnabledTest.
+ */
 class MaintenanceModeEnabledTest extends TestCase
 {
     use RefreshDatabase;

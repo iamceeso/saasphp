@@ -13,13 +13,7 @@ use Tests\Support\FakeStripeHttpClient;
 use Tests\TestCase;
 
 /**
- * SubscriptionServiceTest only exercises the local/free-plan paths and the
- * "Stripe isn't configured" failure path. Nothing in the suite previously
- * drove the real paid-plan-via-Stripe branch, because there was no way to
- * fake the Stripe PHP SDK's own HTTP transport (it doesn't go through
- * Laravel's Http facade). FakeStripeHttpClient plugs into the SDK's
- * documented transport seam instead, so these tests exercise the actual
- * production code path for a Stripe-backed subscription.
+ * Tests Stripe-backed subscription flows through the Stripe SDK transport seam.
  */
 class StripeBackedSubscriptionServiceTest extends TestCase
 {

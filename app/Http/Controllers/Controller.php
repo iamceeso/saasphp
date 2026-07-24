@@ -7,6 +7,9 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Gate;
 
+/**
+ * Class Controller.
+ */
 abstract class Controller extends BaseController
 {
     use AuthorizesRequests, ValidatesRequests;

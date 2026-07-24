@@ -6,6 +6,9 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
+/**
+ * Class HandleInertiaRequests.
+ */
 class HandleInertiaRequests extends Middleware
 {
     /**

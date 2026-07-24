@@ -4,6 +4,9 @@ namespace App\Services\Billing\Concerns;
 
 use Stripe\StripeClient;
 
+/**
+ * Trait HasStripeClient.
+ */
 trait HasStripeClient
 {
     private ?StripeClient $stripe = null;

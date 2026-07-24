@@ -7,6 +7,9 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Class VerificationPromptTest.
+ */
 class VerificationPromptTest extends TestCase
 {
     use RefreshDatabase;

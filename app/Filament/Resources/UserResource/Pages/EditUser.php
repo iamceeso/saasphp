@@ -8,6 +8,9 @@ use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use STS\FilamentImpersonate\Actions\Impersonate;
 
+/**
+ * Class EditUser.
+ */
 class EditUser extends EditRecord
 {
     protected static string $resource = UserResource::class;

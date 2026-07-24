@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * Class VerifyPhoneController.
+ */
 class VerifyPhoneController extends Controller
 {
     public function send(Request $request): RedirectResponse

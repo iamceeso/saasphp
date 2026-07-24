@@ -15,6 +15,9 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Class PasswordResetLinkController.
+ */
 class PasswordResetLinkController extends Controller
 {
     use LoadEmailConfig, LoadSmsConfig;

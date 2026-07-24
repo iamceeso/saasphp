@@ -6,6 +6,9 @@ use App\Services\FireImageUpdatedEvent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Class Setting.
+ */
 class Setting extends Model
 {
     use FireImageUpdatedEvent, HasFactory;

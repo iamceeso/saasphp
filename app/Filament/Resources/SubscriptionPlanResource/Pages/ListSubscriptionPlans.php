@@ -6,6 +6,9 @@ use App\Filament\Resources\SubscriptionPlanResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
+/**
+ * Class ListSubscriptionPlans.
+ */
 class ListSubscriptionPlans extends ListRecords
 {
     protected static string $resource = SubscriptionPlanResource::class;

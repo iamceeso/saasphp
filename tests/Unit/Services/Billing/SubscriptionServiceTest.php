@@ -10,6 +10,9 @@ use App\Services\Billing\SubscriptionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Class SubscriptionServiceTest.
+ */
 class SubscriptionServiceTest extends TestCase
 {
     use RefreshDatabase;

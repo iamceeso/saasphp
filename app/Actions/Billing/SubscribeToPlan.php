@@ -8,6 +8,9 @@ use App\Models\User;
 use App\Services\Billing\SubscriptionService;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Class SubscribeToPlan.
+ */
 class SubscribeToPlan
 {
     public function __construct(

@@ -23,6 +23,9 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
+/**
+ * Class SubscriptionPlanResource.
+ */
 class SubscriptionPlanResource extends Resource
 {
     protected static ?string $model = SubscriptionPlan::class;

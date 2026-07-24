@@ -6,6 +6,9 @@ use App\Models\Setting;
 use Illuminate\Support\Arr;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
+/**
+ * Class UpdateSettings.
+ */
 class UpdateSettings
 {
     public function handle(array $state): void

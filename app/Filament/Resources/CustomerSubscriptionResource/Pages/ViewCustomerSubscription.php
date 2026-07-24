@@ -6,6 +6,9 @@ use App\Filament\Resources\CustomerSubscriptionResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 
+/**
+ * Class ViewCustomerSubscription.
+ */
 class ViewCustomerSubscription extends ViewRecord
 {
     protected static string $resource = CustomerSubscriptionResource::class;

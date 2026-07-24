@@ -5,6 +5,9 @@ namespace App\Policies;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 
+/**
+ * Class RolePolicy.
+ */
 class RolePolicy
 {
     public function viewAny(User $user): bool

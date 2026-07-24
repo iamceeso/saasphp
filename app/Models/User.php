@@ -23,6 +23,7 @@ use Spatie\Permission\Exceptions\PermissionDoesNotExist;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
+ * Application user account model.
  * @property int $id
  * @property string $name
  * @property string $email

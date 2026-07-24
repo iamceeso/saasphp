@@ -7,6 +7,9 @@ use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
+/**
+ * Class DatabaseSeeder.
+ */
 class DatabaseSeeder extends Seeder
 {
     /**

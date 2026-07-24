@@ -11,6 +11,9 @@ use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
+/**
+ * Class CreateNewUser.
+ */
 class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules;

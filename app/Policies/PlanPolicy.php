@@ -5,6 +5,9 @@ namespace App\Policies;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 
+/**
+ * Class PlanPolicy.
+ */
 class PlanPolicy
 {
     public function viewAny(User $user): bool

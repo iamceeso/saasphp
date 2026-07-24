@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Events\ImageUpdated;
 
+/**
+ * Trait FireImageUpdatedEvent.
+ */
 trait FireImageUpdatedEvent
 {
     public static function bootFireImageUpdatedEvent(): void

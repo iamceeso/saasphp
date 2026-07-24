@@ -12,6 +12,9 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Role;
 
+/**
+ * Class EditRole.
+ */
 class EditRole extends EditRecord
 {
     protected static string $resource = RoleResource::class;

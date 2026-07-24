@@ -7,6 +7,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
+/**
+ * Class SettingControllerTest.
+ */
 class SettingControllerTest extends TestCase
 {
     use RefreshDatabase;

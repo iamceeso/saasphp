@@ -11,6 +11,9 @@ use Inertia\Inertia;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Microsoft\Provider;
 
+/**
+ * Class AppServiceProvider.
+ */
 class AppServiceProvider extends ServiceProvider
 {
     /**

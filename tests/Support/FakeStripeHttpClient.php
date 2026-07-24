@@ -5,16 +5,7 @@ namespace Tests\Support;
 use Stripe\HttpClient\ClientInterface;
 
 /**
- * A minimal fake of Stripe's HTTP transport layer.
- *
- * The app talks to Stripe through the raw `Stripe\StripeClient` SDK, which
- * uses its own cURL-based HTTP client rather than Laravel's HTTP facade, so
- * `Http::fake()` cannot intercept it. Stripe's own supported way to test
- * against the SDK without hitting the network is to swap the transport layer
- * via `\Stripe\ApiRequestor::setHttpClient()` with something implementing
- * `ClientInterface`. This fake returns canned, minimally-valid Stripe object
- * payloads for each endpoint the app actually calls, and records every
- * request so tests can assert on what was sent.
+ * Minimal fake for Stripe SDK HTTP transport in tests.
  */
 class FakeStripeHttpClient implements ClientInterface
 {

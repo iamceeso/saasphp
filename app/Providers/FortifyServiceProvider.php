@@ -18,6 +18,9 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Laravel\Fortify\Fortify;
 
+/**
+ * Class FortifyServiceProvider.
+ */
 class FortifyServiceProvider extends ServiceProvider
 {
     /**

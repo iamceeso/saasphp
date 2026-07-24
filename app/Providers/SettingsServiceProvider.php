@@ -12,6 +12,9 @@ use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
 use Throwable;
 
+/**
+ * Class SettingsServiceProvider.
+ */
 class SettingsServiceProvider extends ServiceProvider
 {
     use LoadBillingConfig, LoadEmailConfig, LoadOAuthConfig;

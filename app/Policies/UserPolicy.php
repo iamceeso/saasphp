@@ -4,6 +4,9 @@ namespace App\Policies;
 
 use App\Models\User;
 
+/**
+ * Class UserPolicy.
+ */
 class UserPolicy
 {
     public function view(User $user, User $target): bool

@@ -7,6 +7,9 @@ use App\Models\User;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
+/**
+ * Class ListUsers.
+ */
 class ListUsers extends ListRecords
 {
     protected static string $resource = UserResource::class;

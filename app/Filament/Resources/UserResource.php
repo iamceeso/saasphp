@@ -36,10 +36,7 @@ use Spatie\Permission\Models\Role;
 use STS\FilamentImpersonate\Facades\Impersonation;
 
 /**
- * Class UserResource
- *
- * Filament resource for managing users with role-based access, validation,
- * and impersonation support.
+ * Filament resource for managing users.
  */
 class UserResource extends Resource implements HasShieldPermissions
 {

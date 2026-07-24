@@ -6,6 +6,9 @@ use App\Models\PlanPrice;
 use App\Models\SubscriptionPlan;
 use App\Services\Billing\Concerns\HasStripeClient;
 
+/**
+ * Class PlanService.
+ */
 class PlanService
 {
     use HasStripeClient;

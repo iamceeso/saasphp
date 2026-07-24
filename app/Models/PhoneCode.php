@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class PhoneCode.
+ */
 class PhoneCode extends Model
 {
     protected $fillable = [

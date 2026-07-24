@@ -14,6 +14,9 @@ use Stripe\Event;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\Webhook;
 
+/**
+ * Class WebhookService.
+ */
 class WebhookService
 {
     use HasStripeClient;

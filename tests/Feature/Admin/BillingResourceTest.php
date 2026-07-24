@@ -18,10 +18,7 @@ use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
- * FilamentAuthorizationTest only checks canAccess()/impersonation gates.
- * These tests cover the actual page/CRUD behavior of the two billing
- * resources, which previously had zero coverage despite touching billing data
- * directly.
+ * Tests billing resource page access and CRUD behavior in Filament.
  */
 class BillingResourceTest extends TestCase
 {

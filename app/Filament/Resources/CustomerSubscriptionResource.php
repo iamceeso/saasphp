@@ -17,6 +17,9 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Gate;
 
+/**
+ * Class CustomerSubscriptionResource.
+ */
 class CustomerSubscriptionResource extends Resource
 {
     protected static ?string $model = CustomerSubscription::class;

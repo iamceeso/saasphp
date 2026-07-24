@@ -7,6 +7,9 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Class RoleHelper.
+ */
 class RoleHelper
 {
     public static function superAdminRoleName(): string

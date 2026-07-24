@@ -5,6 +5,9 @@ namespace App\Support;
 use App\Models\User;
 use STS\FilamentImpersonate\ImpersonateManager;
 
+/**
+ * Class ImpersonationSession.
+ */
 class ImpersonationSession
 {
     public const LOCAL_SESSION_KEY = 'impersonator_id';

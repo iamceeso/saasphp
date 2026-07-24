@@ -24,11 +24,7 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\WithFileUploads;
 
 /**
- * Class SiteSettings
- *
- * This Filament page handles application-wide settings stored in the `settings` table.
- * Settings are grouped into tabs and sections including Site Info, Social Login, Features,
- * Email Clients, SMS Clients, and Payment Gateways.
+ * Filament page for managing application settings.
  */
 class SiteSettings extends Page implements HasForms
 {

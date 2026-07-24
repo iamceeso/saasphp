@@ -10,6 +10,9 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Class ConfirmablePasswordController.
+ */
 class ConfirmablePasswordController extends Controller
 {
     /**

@@ -11,6 +11,9 @@ use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
+/**
+ * Class AuthServiceProvider.
+ */
 class AuthServiceProvider extends ServiceProvider
 {
     public function register(): void

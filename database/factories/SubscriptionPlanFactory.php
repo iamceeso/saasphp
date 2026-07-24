@@ -5,6 +5,9 @@ namespace Database\Factories;
 use App\Models\SubscriptionPlan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * Class SubscriptionPlanFactory.
+ */
 class SubscriptionPlanFactory extends Factory
 {
     protected $model = SubscriptionPlan::class;

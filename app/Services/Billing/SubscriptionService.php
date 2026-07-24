@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Stripe\Exception\ApiErrorException;
 
+/**
+ * Class SubscriptionService.
+ */
 class SubscriptionService
 {
     use HasStripeClient;

@@ -4,6 +4,9 @@ namespace App\Policies;
 
 use App\Models\User;
 
+/**
+ * Class SettingPolicy.
+ */
 class SettingPolicy
 {
     public function modify(User $user): bool

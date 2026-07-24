@@ -6,6 +6,9 @@ use App\Models\Setting;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Trait LoadBillingConfig.
+ */
 trait LoadBillingConfig
 {
     public function loadBillingConfig(): void

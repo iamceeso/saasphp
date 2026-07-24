@@ -12,6 +12,9 @@ use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Class PasswordController.
+ */
 class PasswordController extends Controller
 {
     /**

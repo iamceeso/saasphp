@@ -7,6 +7,9 @@ use App\Models\PlanPrice;
 use App\Models\SubscriptionPlan;
 use Illuminate\Database\Seeder;
 
+/**
+ * Class BillingSeeder.
+ */
 class BillingSeeder extends Seeder
 {
     public function run(): void

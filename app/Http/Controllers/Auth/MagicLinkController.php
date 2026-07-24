@@ -16,6 +16,9 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Class MagicLinkController.
+ */
 class MagicLinkController extends Controller
 {
     protected function throttleKey(Request $request): string

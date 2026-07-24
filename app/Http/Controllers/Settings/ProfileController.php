@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Class ProfileController.
+ */
 class ProfileController extends Controller
 {
     /**

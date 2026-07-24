@@ -6,6 +6,9 @@ use App\Filament\Resources\RoleResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
+/**
+ * Class ListRoles.
+ */
 class ListRoles extends ListRecords
 {
     protected static string $resource = RoleResource::class;

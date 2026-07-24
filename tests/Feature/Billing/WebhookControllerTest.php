@@ -6,6 +6,9 @@ use App\Models\WebhookLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Class WebhookControllerTest.
+ */
 class WebhookControllerTest extends TestCase
 {
     use RefreshDatabase;

@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
+/**
+ * Class PricingController.
+ */
 class PricingController extends Controller
 {
     public function __construct(

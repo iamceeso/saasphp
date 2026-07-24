@@ -6,6 +6,9 @@ use App\Filament\Resources\SubscriptionPlanResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
+/**
+ * Class EditSubscriptionPlan.
+ */
 class EditSubscriptionPlan extends EditRecord
 {
     protected static string $resource = SubscriptionPlanResource::class;

@@ -10,6 +10,9 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use STS\FilamentImpersonate\Events\EnterImpersonation;
 use STS\FilamentImpersonate\Events\LeaveImpersonation;
 
+/**
+ * Class EventServiceProvider.
+ */
 class EventServiceProvider extends ServiceProvider
 {
     /**

@@ -9,6 +9,9 @@ use Filament\Panel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Class UserTest.
+ */
 class UserTest extends TestCase
 {
     use RefreshDatabase;

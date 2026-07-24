@@ -10,10 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Every CustomerSubscription action is gated by SubscriptionPolicy on
- * `user_id === subscription->user_id`. These tests prove that a second,
- * unrelated user cannot reach another user's subscription through any of
- * the five action endpoints, and that the legitimate owner still can.
+ * Tests ownership checks across subscription action endpoints.
  */
 class SubscriptionAuthorizationTest extends TestCase
 {

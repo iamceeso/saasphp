@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
+/**
+ * Class PhoneVerificationTest.
+ */
 class PhoneVerificationTest extends TestCase
 {
     use RefreshDatabase;

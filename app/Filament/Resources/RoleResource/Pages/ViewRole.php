@@ -6,6 +6,9 @@ use App\Filament\Resources\RoleResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 
+/**
+ * Class ViewRole.
+ */
 class ViewRole extends ViewRecord
 {
     protected static string $resource = RoleResource::class;

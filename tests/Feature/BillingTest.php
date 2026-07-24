@@ -12,6 +12,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
 
+/**
+ * Class BillingTest.
+ */
 class BillingTest extends TestCase
 {
     use RefreshDatabase;

@@ -10,11 +10,7 @@ use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 /**
- * AuthorizationPolicyTest covers specific cross-role edge cases. These tests
- * fill the direct-assertion gaps flagged in the coverage review: UserPolicy's
- * bulk/impersonate/restore abilities and byPassMaintenanceRole, and all of
- * PlanPolicy (which previously was only touched indirectly via Filament
- * canAccess() checks).
+ * Tests user and plan policy edge cases across role boundaries.
  */
 class UserAndPlanPolicyTest extends TestCase
 {

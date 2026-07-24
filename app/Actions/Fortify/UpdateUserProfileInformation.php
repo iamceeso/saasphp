@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 
+/**
+ * Class UpdateUserProfileInformation.
+ */
 class UpdateUserProfileInformation implements UpdatesUserProfileInformation
 {
     /**

@@ -6,6 +6,9 @@ use App\Filament\Resources\CustomerSubscriptionResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
+/**
+ * Class EditCustomerSubscription.
+ */
 class EditCustomerSubscription extends EditRecord
 {
     protected static string $resource = CustomerSubscriptionResource::class;

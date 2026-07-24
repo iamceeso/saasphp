@@ -8,6 +8,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
+/**
+ * Class AppearanceSettingsTest.
+ */
 class AppearanceSettingsTest extends TestCase
 {
     use RefreshDatabase;

@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
+/**
+ * Class MagicLinkTest.
+ */
 class MagicLinkTest extends TestCase
 {
     use RefreshDatabase;

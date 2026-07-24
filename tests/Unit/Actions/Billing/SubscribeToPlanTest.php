@@ -11,9 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * SubscribeToPlan::handle() is a decision tree (subscribe / reuse / change_cycle
- * / swap) sitting in front of SubscriptionService. These tests cover each branch
- * directly, rather than only indirectly through the thin HTTP tests in BillingTest.
+ * Tests each SubscribeToPlan decision path directly.
  */
 class SubscribeToPlanTest extends TestCase
 {

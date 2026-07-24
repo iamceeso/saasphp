@@ -23,6 +23,9 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Throwable;
 
+/**
+ * Class AdminPanelProvider.
+ */
 class AdminPanelProvider extends PanelProvider
 {
     protected string $brandName = 'Admin Panel'; // Fallback

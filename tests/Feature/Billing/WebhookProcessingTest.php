@@ -9,10 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * WebhookControllerTest only covers transport concerns (signature, replay,
- * unknown-subscription rejection). These tests exercise the actual state
- * mutations WebhookService performs once a webhook matches a real local
- * subscription — the part of the billing system Stripe events actually drive.
+ * Tests billing state changes driven by matched Stripe webhooks.
  */
 class WebhookProcessingTest extends TestCase
 {

@@ -12,6 +12,9 @@ use Laravel\Fortify\TwoFactorAuthenticationProvider;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
+/**
+ * Class TwoFactorAuthenticationTest.
+ */
 class TwoFactorAuthenticationTest extends TestCase
 {
     use RefreshDatabase;

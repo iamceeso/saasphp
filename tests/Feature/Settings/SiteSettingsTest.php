@@ -11,6 +11,9 @@ use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
+/**
+ * Class SiteSettingsTest.
+ */
 class SiteSettingsTest extends TestCase
 {
     use RefreshDatabase;

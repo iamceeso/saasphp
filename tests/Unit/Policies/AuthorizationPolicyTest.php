@@ -12,6 +12,9 @@ use Spatie\Permission\Models\Permission;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
+/**
+ * Class AuthorizationPolicyTest.
+ */
 class AuthorizationPolicyTest extends TestCase
 {
     use RefreshDatabase;

@@ -6,6 +6,9 @@ use App\Filament\Resources\UserResource;
 use App\Models\User;
 use Filament\Resources\Pages\CreateRecord;
 
+/**
+ * Class CreateUser.
+ */
 class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;

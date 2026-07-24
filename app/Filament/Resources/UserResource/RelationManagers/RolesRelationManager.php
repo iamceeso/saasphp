@@ -11,6 +11,9 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
+/**
+ * Class RolesRelationManager.
+ */
 class RolesRelationManager extends RelationManager
 {
     protected static string $relationship = 'roles';

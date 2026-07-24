@@ -6,6 +6,9 @@ use App\Models\PlanPrice;
 use App\Models\SubscriptionPlan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * Class PlanPriceFactory.
+ */
 class PlanPriceFactory extends Factory
 {
     protected $model = PlanPrice::class;

@@ -6,6 +6,9 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
+/**
+ * Class SPRemovePlugin.
+ */
 class SPRemovePlugin extends Command
 {
     /**

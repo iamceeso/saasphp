@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
+ * Subscription plan catalog model.
  * @property int $id
  * @property string $slug
  * @property string $name

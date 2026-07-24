@@ -13,6 +13,9 @@ use Vonage\Client as VonageClient;
 use Vonage\Client\Credentials\Basic as VonageCredentials;
 use Vonage\SMS\Message\SMS;
 
+/**
+ * Trait LoadSmsConfig.
+ */
 trait LoadSmsConfig
 {
     public function loadDynamicSmsConfig(?string $message = null, ?string $phone = null): void

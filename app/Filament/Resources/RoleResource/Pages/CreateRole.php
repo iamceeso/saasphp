@@ -9,6 +9,9 @@ use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
+/**
+ * Class CreateRole.
+ */
 class CreateRole extends CreateRecord
 {
     protected static string $resource = RoleResource::class;

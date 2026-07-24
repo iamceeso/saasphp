@@ -3,13 +3,7 @@
 namespace App\Enums;
 
 /**
- * Enum SmsProviders
- *
- * Represents supported SMS provider integrations used in the application.
- *
- *
- * @method static static VONAGE() Vonage SMS API
- * @method static static AFRICA_TALKING() Africa's Talking SMS gateway
+ * Supported SMS provider integrations.
  */
 enum SmsProviders: string
 {

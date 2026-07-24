@@ -7,6 +7,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Class EnsureTwoFactorEnabled.
+ */
 class EnsureTwoFactorEnabled
 {
     /**

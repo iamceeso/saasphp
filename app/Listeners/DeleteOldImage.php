@@ -5,6 +5,9 @@ namespace App\Listeners;
 use App\Events\ImageUpdated;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Class DeleteOldImage.
+ */
 class DeleteOldImage
 {
     /**

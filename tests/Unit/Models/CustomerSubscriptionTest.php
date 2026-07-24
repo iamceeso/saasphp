@@ -10,6 +10,9 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Class CustomerSubscriptionTest.
+ */
 class CustomerSubscriptionTest extends TestCase
 {
     use RefreshDatabase;

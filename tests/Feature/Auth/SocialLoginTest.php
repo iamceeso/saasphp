@@ -10,6 +10,9 @@ use Laravel\Socialite\Facades\Socialite;
 use Mockery;
 use Tests\TestCase;
 
+/**
+ * Class SocialLoginTest.
+ */
 class SocialLoginTest extends TestCase
 {
     use RefreshDatabase;

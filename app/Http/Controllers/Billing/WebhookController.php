@@ -7,6 +7,9 @@ use App\Services\Billing\WebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Class WebhookController.
+ */
 class WebhookController extends Controller
 {
     public function __construct(

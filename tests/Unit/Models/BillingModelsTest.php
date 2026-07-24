@@ -9,6 +9,9 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Class BillingModelsTest.
+ */
 class BillingModelsTest extends TestCase
 {
     use RefreshDatabase;

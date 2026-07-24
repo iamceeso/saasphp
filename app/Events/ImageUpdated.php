@@ -3,9 +3,7 @@
 namespace App\Events;
 
 /**
- * Event: ImageUpdated
- *
- * Dispatched when an image associated with a model is updated.
+ * Event dispatched when model images are updated.
  */
 class ImageUpdated
 {

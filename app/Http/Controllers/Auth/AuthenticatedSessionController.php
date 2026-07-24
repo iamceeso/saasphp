@@ -13,6 +13,9 @@ use Laravel\Socialite\Contracts\User as SocialiteUser;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
+/**
+ * Class AuthenticatedSessionController.
+ */
 class AuthenticatedSessionController extends Controller
 {
     /**

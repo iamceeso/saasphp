@@ -5,6 +5,9 @@ namespace App\Listeners;
 use Illuminate\Support\Facades\Log;
 use STS\FilamentImpersonate\Events\EnterImpersonation;
 
+/**
+ * Class LogImpersonationStarted.
+ */
 class LogImpersonationStarted
 {
     public function handle(EnterImpersonation $event): void

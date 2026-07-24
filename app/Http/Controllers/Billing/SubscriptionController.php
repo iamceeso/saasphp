@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
+/**
+ * Class SubscriptionController.
+ */
 class SubscriptionController extends Controller
 {
     public function __construct(
