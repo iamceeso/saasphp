@@ -4,6 +4,7 @@ use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\TwoFactorController;
 use App\Http\Middleware\BlockImpersonatedAccess;
+use App\Http\Middleware\EnsureUserIsVerified;
 use App\Http\Middleware\MaintenanceModeEnabled;
 use App\Http\Middleware\PreventAdminAccessToUserArea;
 use Illuminate\Support\Facades\Route;
@@ -11,7 +12,7 @@ use Inertia\Inertia;
 
 Route::prefix('settings')->name('settings.')->middleware([
     'auth',
-    'verified',
+    EnsureUserIsVerified::class,
     MaintenanceModeEnabled::class,
     PreventAdminAccessToUserArea::class,
     BlockImpersonatedAccess::class,

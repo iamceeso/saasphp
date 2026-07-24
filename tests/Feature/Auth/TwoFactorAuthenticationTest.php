@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Http\Controllers\Settings\TwoFactorController;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -246,5 +247,22 @@ class TwoFactorAuthenticationTest extends TestCase
         $response->assertDontSee($secret);
         $response->assertDontSee('recovery-code-1');
         $response->assertDontSee('recovery-code-2');
+    }
+
+    public function test_two_factor_qr_code_svg_is_sanitized()
+    {
+        $controller = new TwoFactorController;
+        $method = new \ReflectionMethod($controller, 'sanitizeQrCodeSvg');
+        $method->setAccessible(true);
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)" width="200" height="200"><script>alert(1)</script><path d="M0 0h1v1z" onclick="alert(1)"/></svg>';
+
+        $sanitized = $method->invoke($controller, $svg);
+
+        $this->assertStringContainsString('<svg', $sanitized);
+        $this->assertStringContainsString('<path', $sanitized);
+        $this->assertStringNotContainsString('script', $sanitized);
+        $this->assertStringNotContainsString('onload', $sanitized);
+        $this->assertStringNotContainsString('onclick', $sanitized);
     }
 }

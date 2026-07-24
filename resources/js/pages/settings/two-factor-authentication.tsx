@@ -35,6 +35,8 @@ export default function TwoFactorAuthentication() {
     };
 
     const { twoFactorSecret, twoFactorQRCode, twoFactorRecoveryCodes, twoFactorConfirmation } = usePage<TwoFactorAuthenticationProps>().props;
+    const twoFactorQRCodeSource =
+        typeof twoFactorQRCode === 'string' && twoFactorQRCode.length > 0 ? `data:image/svg+xml;utf8,${encodeURIComponent(twoFactorQRCode)}` : null;
 
     const twoFactorEnable: FormEventHandler = (e) => {
         e.preventDefault();
@@ -73,8 +75,8 @@ export default function TwoFactorAuthentication() {
             <ImpersonatorNotice/>
             <SettingsLayout>
                 <div className="space-y-6">
-                    {twoFactorSecret && !twoFactorConfirmation && typeof twoFactorQRCode === 'string' && (
-                        <div dangerouslySetInnerHTML={{ __html: twoFactorQRCode }} />
+                    {twoFactorSecret && !twoFactorConfirmation && twoFactorQRCodeSource && (
+                        <img src={twoFactorQRCodeSource} alt="Two-factor authentication QR code" className="h-48 w-48 rounded bg-white p-2" />
                     )}
 
                     <HeadingSmall title="2FA Details" description="Enable and disable two-factor authentication" />

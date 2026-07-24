@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use DOMDocument;
+use DOMElement;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,7 +23,7 @@ class TwoFactorController extends Controller
 
         return Inertia::render('settings/two-factor-authentication', [
             'twoFactorSecret' => $shouldExposeSetupState ? 'pending-setup' : null,
-            'twoFactorQRCode' => $shouldExposeSetupState ? $request->user()->twoFactorQrCodeSvg() : '',
+            'twoFactorQRCode' => $shouldExposeSetupState ? $this->sanitizeQrCodeSvg($request->user()->twoFactorQrCodeSvg()) : '',
             'twoFactorRecoveryCodes' => $shouldExposeSetupState ? $request->user()->recoveryCodes() : [],
             'twoFactorConfirmation' => $twoFactorConfirmed,
         ]);
@@ -64,5 +66,80 @@ class TwoFactorController extends Controller
         ])->save();
 
         return back()->with('status', 'two-factor-authentication-confirmed');
+    }
+
+    private function sanitizeQrCodeSvg(string $svg): string
+    {
+        $document = new DOMDocument;
+
+        if (! @$document->loadXML($svg, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING)) {
+            return '';
+        }
+
+        if ($document->documentElement?->tagName !== 'svg') {
+            return '';
+        }
+
+        $allowedElements = ['svg', 'g', 'path', 'rect', 'circle', 'line', 'polyline', 'polygon'];
+        $allowedAttributes = [
+            'xmlns',
+            'width',
+            'height',
+            'viewBox',
+            'viewbox',
+            'fill',
+            'fill-rule',
+            'clip-rule',
+            'stroke',
+            'stroke-width',
+            'stroke-linecap',
+            'stroke-linejoin',
+            'd',
+            'x',
+            'y',
+            'x1',
+            'y1',
+            'x2',
+            'y2',
+            'rx',
+            'ry',
+            'cx',
+            'cy',
+            'r',
+            'points',
+        ];
+
+        $this->sanitizeSvgElement($document->documentElement, $allowedElements, $allowedAttributes);
+
+        return $document->saveXML($document->documentElement) ?: '';
+    }
+
+    /**
+     * @param  array<int, string>  $allowedElements
+     * @param  array<int, string>  $allowedAttributes
+     */
+    private function sanitizeSvgElement(DOMElement $element, array $allowedElements, array $allowedAttributes): void
+    {
+        foreach (iterator_to_array($element->childNodes) as $child) {
+            if (! $child instanceof DOMElement) {
+                $element->removeChild($child);
+
+                continue;
+            }
+
+            if (! in_array($child->tagName, $allowedElements, true)) {
+                $element->removeChild($child);
+
+                continue;
+            }
+
+            $this->sanitizeSvgElement($child, $allowedElements, $allowedAttributes);
+        }
+
+        foreach (iterator_to_array($element->attributes) as $attribute) {
+            if (! in_array($attribute->name, $allowedAttributes, true)) {
+                $element->removeAttributeNode($attribute);
+            }
+        }
     }
 }

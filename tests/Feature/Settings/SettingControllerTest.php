@@ -35,6 +35,19 @@ class SettingControllerTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_settings_require_phone_verification_when_a_phone_number_is_present()
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+            'phone' => '+15555550199',
+            'phone_verified_at' => null,
+        ]);
+
+        $response = $this->actingAs($user)->get('/settings/profile');
+
+        $response->assertInertia(fn (Assert $page) => $page->component('auth/verify-phone'));
+    }
+
     public function test_can_view_password_edit_page()
     {
         $response = $this->actingAs($this->user)->get('/settings/password');

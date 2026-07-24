@@ -110,6 +110,30 @@ class SocialLoginTest extends TestCase
         ]);
     }
 
+    public function test_twitter_user_with_email_can_sign_in(): void
+    {
+        $providerUser = $this->fakeProviderUser(
+            id: 'twitter-user-1',
+            email: 'twitter@example.com',
+            name: 'Twitter User',
+            raw: ['screen_name' => 'twitteruser'],
+        );
+
+        $driver = Mockery::mock();
+        $driver->shouldReceive('user')->once()->andReturn($providerUser);
+        Socialite::shouldReceive('driver')->with('twitter')->once()->andReturn($driver);
+
+        $response = $this->get('/auth/twitter/callback');
+
+        $response->assertRedirect('/dashboard');
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', [
+            'email' => 'twitter@example.com',
+            'oauth_provider' => 'twitter',
+            'oauth_provider_id' => 'twitter-user-1',
+        ]);
+    }
+
     public function test_microsoft_email_must_have_an_explicit_verified_flag(): void
     {
         $providerUser = $this->fakeProviderUser(

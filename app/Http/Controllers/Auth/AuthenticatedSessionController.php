@@ -171,6 +171,10 @@ class AuthenticatedSessionController extends Controller
             return filled($this->providerEmail($providerUser));
         }
 
+        if ($provider === 'twitter') {
+            return filled($this->providerEmail($providerUser));
+        }
+
         $verificationFlags = match ($provider) {
             'google' => [
                 data_get($rawUser, 'verified_email'),
