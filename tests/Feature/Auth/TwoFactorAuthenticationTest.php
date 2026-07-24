@@ -220,4 +220,31 @@ class TwoFactorAuthenticationTest extends TestCase
             ->where('twoFactorRecoveryCodes', [])
             ->where('twoFactorConfirmation', true));
     }
+
+    public function test_two_factor_credentials_are_hidden_from_serialized_user_payloads()
+    {
+        $secret = (new Google2FA)->generateSecretKey();
+        $recoveryCodes = ['recovery-code-1', 'recovery-code-2'];
+
+        $this->user->forceFill([
+            'two_factor_secret' => encrypt($secret),
+            'two_factor_confirmed_at' => now(),
+            'two_factor_recovery_codes' => encrypt(json_encode($recoveryCodes)),
+        ])->save();
+
+        $serializedUser = $this->user->fresh()->toArray();
+
+        $this->assertArrayNotHasKey('two_factor_secret', $serializedUser);
+        $this->assertArrayNotHasKey('two_factor_recovery_codes', $serializedUser);
+
+        $response = $this->actingAs($this->user)->get('/settings/security');
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->missing('auth.user.two_factor_secret')
+            ->missing('auth.user.two_factor_recovery_codes'));
+
+        $response->assertDontSee($secret);
+        $response->assertDontSee('recovery-code-1');
+        $response->assertDontSee('recovery-code-2');
+    }
 }
