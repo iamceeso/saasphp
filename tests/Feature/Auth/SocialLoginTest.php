@@ -110,6 +110,56 @@ class SocialLoginTest extends TestCase
         ]);
     }
 
+    public function test_microsoft_email_must_have_an_explicit_verified_flag(): void
+    {
+        $providerUser = $this->fakeProviderUser(
+            id: 'microsoft-user-1',
+            email: 'microsoft@example.com',
+            name: 'Microsoft User',
+            raw: [
+                'mail' => 'microsoft@example.com',
+                'userPrincipalName' => 'microsoft@example.com',
+            ],
+        );
+
+        $driver = Mockery::mock();
+        $driver->shouldReceive('user')->once()->andReturn($providerUser);
+        Socialite::shouldReceive('driver')->with('microsoft')->once()->andReturn($driver);
+
+        $response = $this->get('/auth/microsoft/callback');
+
+        $response->assertRedirect('/login');
+        $response->assertSessionHasErrors('login');
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', [
+            'email' => 'microsoft@example.com',
+        ]);
+    }
+
+    public function test_microsoft_user_with_verified_flag_can_sign_in(): void
+    {
+        $providerUser = $this->fakeProviderUser(
+            id: 'microsoft-user-2',
+            email: 'verified-microsoft@example.com',
+            name: 'Verified Microsoft User',
+            raw: ['email_verified' => true],
+        );
+
+        $driver = Mockery::mock();
+        $driver->shouldReceive('user')->once()->andReturn($providerUser);
+        Socialite::shouldReceive('driver')->with('microsoft')->once()->andReturn($driver);
+
+        $response = $this->get('/auth/microsoft/callback');
+
+        $response->assertRedirect('/dashboard');
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', [
+            'email' => 'verified-microsoft@example.com',
+            'oauth_provider' => 'microsoft',
+            'oauth_provider_id' => 'microsoft-user-2',
+        ]);
+    }
+
     private function fakeProviderUser(string $id, ?string $email, ?string $name, array $raw = [], ?string $nickname = null): AbstractUser
     {
         return new class($id, $email, $name, $raw, $nickname) extends AbstractUser

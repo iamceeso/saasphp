@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +24,30 @@ test('reset password link can be requested', function () {
     $this->post('/forgot-password', ['login' => $user->email]);
 
     Notification::assertSentTo($user, ResetPassword::class);
+});
+
+test('reset password request does not reveal whether an account exists', function () {
+    Notification::fake();
+
+    $response = $this->post('/forgot-password', ['login' => 'missing@example.com']);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('status', __('A reset link will be sent if the account exists.'));
+
+    Notification::assertNothingSent();
+});
+
+test('reset password requests are rate limited', function () {
+    for ($attempt = 0; $attempt < 5; $attempt++) {
+        $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.99'])
+            ->post('/forgot-password', ['login' => 'missing@example.com'])
+            ->assertRedirect();
+    }
+
+    $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.99'])
+        ->post('/forgot-password', ['login' => 'missing@example.com'])
+        ->assertTooManyRequests();
 });
 
 test('requesting a password reset link does not verify an email address', function () {

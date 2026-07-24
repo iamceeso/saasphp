@@ -27,7 +27,7 @@ trait LoadSmsConfig
             return;
         }
 
-        $code = rand(100000, 999999);
+        $code = random_int(100000, 999999);
         $expiresAt = now()->addMinutes(5);
 
         if (Auth::check()) {

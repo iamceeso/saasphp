@@ -6,6 +6,7 @@ use App\Models\CustomerSubscription;
 use App\Models\PlanPrice;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Models\WebhookLog;
 use App\Services\Billing\WebhookService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
@@ -276,6 +277,35 @@ class BillingTest extends TestCase
             ->assertJson([
                 'error' => 'Webhook could not be processed.',
             ]);
+    }
+
+    public function test_unknown_subscription_webhook_is_recorded_as_failed()
+    {
+        config()->set('services.stripe.webhook_secret', 'whsec_test_secret');
+
+        $payload = json_encode([
+            'id' => 'evt_unknown_subscription',
+            'type' => 'customer.subscription.deleted',
+            'data' => [
+                'object' => [
+                    'id' => 'sub_missing',
+                    'object' => 'subscription',
+                    'canceled_at' => now()->timestamp,
+                    'ended_at' => now()->timestamp,
+                ],
+            ],
+        ]);
+
+        $timestamp = now()->timestamp;
+        $signature = hash_hmac('sha256', "{$timestamp}.{$payload}", 'whsec_test_secret');
+
+        app(WebhookService::class)->handleWebhook($payload, "t={$timestamp},v1={$signature}");
+
+        $log = WebhookLog::where('stripe_event_id', 'evt_unknown_subscription')->firstOrFail();
+
+        $this->assertFalse($log->processed);
+        $this->assertSame(1, $log->attempts);
+        $this->assertStringContainsString('unknown local subscription sub_missing', $log->error);
     }
 
     private function assertEqual($expected, $actual)

@@ -77,6 +77,28 @@ class UserResource extends Resource implements HasShieldPermissions
         return auth()->user()?->can('viewAny', User::class);
     }
 
+    protected static function canImpersonateRecord(User $record): bool
+    {
+        $user = auth()->user();
+
+        return (bool) (
+            $user?->can('impersonate', User::class) &&
+            $record->isStandardUser() &&
+            (! ($record->phone && ! $record->hasVerifiedPhone())) &&
+            (! ($record->email && ! $record->hasVerifiedEmail()))
+        );
+    }
+
+    protected static function canDeleteRecord(User $record): bool
+    {
+        return (bool) (auth()->user()?->can('delete', $record) && ! $record->isSuperAdmin());
+    }
+
+    protected static function canForceDeleteRecord(User $record): bool
+    {
+        return (bool) (auth()->user()?->can('forceDelete', $record) && ! $record->isSuperAdmin());
+    }
+
     public static function form(Schema $schema): Schema
     {
         // Check if both phone and email are required at registration
@@ -89,33 +111,33 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->required()
                     ->maxLength(255)
                     ->unique(ignoreRecord: true)
-                    ->dehydrateStateUsing(fn($state) => strtolower($state)),
+                    ->dehydrateStateUsing(fn ($state) => strtolower($state)),
 
                 TextInput::make('email')
                     ->label(__('message.email'))
                     ->email()
                     ->required(
-                        fn(Get $get) => $requireBoth
+                        fn (Get $get) => $requireBoth
                             ? true
                             : blank($get('phone')) // require if phone is empty
                     )
                     ->maxLength(255)
                     ->reactive()
                     ->unique(ignoreRecord: true)
-                    ->dehydrateStateUsing(fn($state) => strtolower($state)),
+                    ->dehydrateStateUsing(fn ($state) => strtolower($state)),
 
                 TextInput::make('phone')
                     ->label(__('message.phone'))
                     ->tel()
                     ->required(
-                        fn(Get $get) => $requireBoth
+                        fn (Get $get) => $requireBoth
                             ? true
                             : blank($get('email')) // require if email is empty
                     )
                     ->maxLength(20)
                     ->reactive()
                     ->unique(ignoreRecord: true)
-                    ->dehydrateStateUsing(fn($state) => strtolower($state)),
+                    ->dehydrateStateUsing(fn ($state) => strtolower($state)),
 
                 Section::make()
                     ->schema([
@@ -124,15 +146,15 @@ class UserResource extends Resource implements HasShieldPermissions
                                 TextInput::make('password')
                                     ->label(__('message.password'))
                                     ->password()
-                                    ->required(fn($record) => ! $record || ! $record->exists)
+                                    ->required(fn ($record) => ! $record || ! $record->exists)
                                     ->confirmed() // ensures it matches confirm_password
-                                    ->dehydrateStateUsing(fn($state) => bcrypt($state))
+                                    ->dehydrateStateUsing(fn ($state) => bcrypt($state))
                                     ->maxLength(255),
 
                                 TextInput::make('password_confirmation')
                                     ->label(__('message.confirm_password'))
                                     ->password()
-                                    ->required(fn($record) => ! $record || ! $record->exists)
+                                    ->required(fn ($record) => ! $record || ! $record->exists)
                                     ->dehydrated(false), // don't save this field to the database
                             ]),
                     ]),
@@ -190,7 +212,7 @@ class UserResource extends Resource implements HasShieldPermissions
 
                         if ($user->can('viewStaffRole', User::class)) {
                             $staffRoles = collect($allRoles)
-                                ->reject(fn($name, $key) => in_array(strtolower($key), [strtolower(static::superAdminRoleName()), 'user']));
+                                ->reject(fn ($name, $key) => in_array(strtolower($key), [strtolower(static::superAdminRoleName()), 'user']));
                             $visibleRoles = $visibleRoles->merge($staffRoles);
                         }
 
@@ -224,7 +246,7 @@ class UserResource extends Resource implements HasShieldPermissions
                             return $query->whereDoesntHave('roles');
                         }
 
-                        return $query->whereHas('roles', fn($q) => $q->where('name', $data['value']));
+                        return $query->whereHas('roles', fn ($q) => $q->where('name', $data['value']));
                     }),
 
             ], layout: FiltersLayout::AboveContent)->filtersFormColumns(2)
@@ -237,19 +259,15 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->color('danger')
                     ->tooltip('User Impersonation: you cant return to admin panel')
                     ->action(function ($record) {
+                        abort_unless(static::canImpersonateRecord($record), 403);
+
+                        abort_unless(Impersonation::enter(auth()->user(), $record), 403);
                         session()->put('impersonator_id', auth()->id());
-                        Impersonation::enter(auth()->user(), $record);
 
                         return redirect('/'); // or your intended redirect path after impersonation
                     })
-                    ->visible(function ($record) {
-                        $user = auth()->user();
-
-                        return $user->can('impersonate', User::class) &&
-                            $record->isStandardUser() &&
-                            (! ($record->phone && ! $record->hasVerifiedPhone())) &&
-                            (! ($record->email && ! $record->hasVerifiedEmail()));
-                    }),
+                    ->authorize(fn (User $record) => static::canImpersonateRecord($record))
+                    ->visible(fn (User $record) => static::canImpersonateRecord($record)),
 
                 // Disabled impersonate icon shown when verification is missing
                 Action::make('impersonate-disabled')
@@ -270,27 +288,16 @@ class UserResource extends Resource implements HasShieldPermissions
                     }),
                 ViewAction::make()->icon('heroicon-o-eye')
                     ->color('primary')
-                    ->label('')->visible(fn($record) => auth()->user()?->can('view', $record)),
+                    ->label('')->visible(fn ($record) => auth()->user()?->can('view', $record)),
                 EditAction::make()->icon('heroicon-o-pencil')
                     ->label('')
-                    ->visible(fn($record) => auth()->user()?->can('update', $record)),
+                    ->visible(fn ($record) => auth()->user()?->can('update', $record)),
                 DeleteAction::make()
                     ->icon('heroicon-o-trash')
                     ->color('warning')
                     ->label('')
-                    ->visible(function ($record) {
-                        $user = auth()->user();
-
-                        if (! $user->can('delete', $record)) {
-                            return false;
-                        }
-
-                        if (! $record->isSuperAdmin()) {
-                            return true;
-                        }
-
-                        return ! $record->isSuperAdmin();
-                    })
+                    ->authorize(fn (User $record) => static::canDeleteRecord($record))
+                    ->visible(fn (User $record) => static::canDeleteRecord($record))
                     ->modalHeading('Trash User')
                     ->modalDescription('Are you sure you want to temporarily delete this user?')
                     ->modalSubmitActionLabel('Yes, trash user'),
@@ -303,32 +310,23 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->label('')
-                    ->visible(fn($record) => auth()->user()?->can('forceDelete', $record))
+                    ->authorize(fn (User $record) => static::canForceDeleteRecord($record))
                     ->modalHeading('Permanently Delete User')
                     ->modalDescription('This action cannot be undone. Are you sure you want to permanently delete this user?')
                     ->modalSubmitActionLabel('Yes, delete permanently')
-                    ->visible(function ($record) {
-                        $user = auth()->user();
-
-                        if (! $user->can('delete', $record)) {
-                            return false;
-                        }
-
-                        if (! $record->isSuperAdmin()) {
-                            return true;
-                        }
-
-                        return ! $record->isSuperAdmin();
-                    }),
+                    ->visible(fn (User $record) => static::canForceDeleteRecord($record)),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
                         ->color('success')
                         ->icon('heroicon-o-trash')
-                        ->visible(fn() => auth()->user()?->can('deleteAny', User::class))
+                        ->authorize(fn () => auth()->user()?->can('deleteAny', User::class))
+                        ->visible(fn () => auth()->user()?->can('deleteAny', User::class))
                         ->action(function ($records) {
-                            if ($records->contains(fn($user) => $user->isSuperAdmin())) {
+                            abort_unless(auth()->user()?->can('deleteAny', User::class), 403);
+
+                            if ($records->contains(fn ($user) => $user->isSuperAdmin())) {
                                 Notification::make()
                                     ->title('Error')
                                     ->body('Cannot delete users with the super admin role.')
@@ -342,9 +340,12 @@ class UserResource extends Resource implements HasShieldPermissions
                         }),
 
                     ForceDeleteBulkAction::make()
-                        ->visible(fn($records) => auth()->user()?->can('forceDeleteAny', User::class))
+                        ->authorize(fn () => auth()->user()?->can('forceDeleteAny', User::class))
+                        ->visible(fn () => auth()->user()?->can('forceDeleteAny', User::class))
                         ->action(function ($records) {
-                            if ($records->contains(fn($user) => $user->isSuperAdmin())) {
+                            abort_unless(auth()->user()?->can('forceDeleteAny', User::class), 403);
+
+                            if ($records->contains(fn ($user) => $user->isSuperAdmin())) {
                                 Notification::make()
                                     ->title('Error')
                                     ->body('Cannot delete users with the super admin role.')
@@ -354,10 +355,10 @@ class UserResource extends Resource implements HasShieldPermissions
                                 return;
                             }
 
-                            $records->each->delete();
+                            $records->each->forceDelete();
                         }),
                     RestoreBulkAction::make()
-                        ->visible(fn($records) => auth()->user()?->can('restoreAny', User::class)),
+                        ->visible(fn ($records) => auth()->user()?->can('restoreAny', User::class)),
                 ]),
 
             ]);
@@ -390,7 +391,7 @@ class UserResource extends Resource implements HasShieldPermissions
         }
 
         if ($user->can('viewStaffRole', User::class)) {
-            $query->whereDoesntHave('roles', fn($q) => $q->where('name', static::superAdminRoleName()));
+            $query->whereDoesntHave('roles', fn ($q) => $q->where('name', static::superAdminRoleName()));
 
             if (! $user->can('viewNoRole', User::class)) {
                 $query->whereHas('roles');
@@ -400,6 +401,6 @@ class UserResource extends Resource implements HasShieldPermissions
         }
 
         // If the user has neither permission, only show users with "user" role
-        return $query->whereHas('roles', fn($q) => $q->where('name', 'user'));
+        return $query->whereHas('roles', fn ($q) => $q->where('name', 'user'));
     }
 }

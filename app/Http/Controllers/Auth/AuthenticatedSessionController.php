@@ -177,9 +177,9 @@ class AuthenticatedSessionController extends Controller
                 data_get($rawUser, 'email_verified'),
             ],
             'microsoft' => [
-                data_get($rawUser, 'mail'),
-                data_get($rawUser, 'userPrincipalName'),
-                data_get($rawUser, 'email'),
+                data_get($rawUser, 'email_verified'),
+                data_get($rawUser, 'verified_email'),
+                data_get($rawUser, 'verified'),
             ],
             'yahoo' => [
                 data_get($rawUser, 'email_verified'),
@@ -196,10 +196,6 @@ class AuthenticatedSessionController extends Controller
             if (filter_var($flag, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true) {
                 return true;
             }
-        }
-
-        if ($provider === 'microsoft') {
-            return filter_var($this->providerEmail($providerUser), FILTER_VALIDATE_EMAIL) !== false;
         }
 
         return false;

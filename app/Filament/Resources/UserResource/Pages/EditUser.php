@@ -34,6 +34,10 @@ class EditUser extends EditRecord
                 ->icon('heroicon-o-trash')
                 ->color('success')
                 ->label('')
+                ->authorize(
+                    fn (User $record) => auth()->user()?->can('delete', $record) &&
+                        ! $record->isSuperAdmin()
+                )
                 ->visible(
                     fn (User $record) => auth()->user()?->can('delete', $record) &&
                         ! $record->isSuperAdmin()
@@ -47,6 +51,10 @@ class EditUser extends EditRecord
             Actions\ForceDeleteAction::make()
                 ->icon('heroicon-o-trash')
                 ->label('')->color('danger')
+                ->authorize(
+                    fn (User $record) => auth()->user()?->can('forceDelete', $record) &&
+                        ! $record->isSuperAdmin()
+                )
                 ->visible(
                     fn (User $record) => auth()->user()?->can('forceDelete', $record) &&
                         ! $record->isSuperAdmin()
@@ -55,6 +63,12 @@ class EditUser extends EditRecord
 
         $actions[] = Impersonate::make()
             ->record($this->record)
+            ->authorize(
+                fn () => auth()->user()?->can('impersonate', User::class) &&
+                    $this->record->isStandardUser() &&
+                    (! ($this->record->phone && ! $this->record->hasVerifiedPhone())) &&
+                    (! ($this->record->email && ! $this->record->hasVerifiedEmail()))
+            )
             ->visible(
                 fn () => auth()->user()?->can('impersonate', User::class) &&
                     $this->record->isStandardUser() &&

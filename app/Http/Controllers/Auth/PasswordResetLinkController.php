@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,8 +31,6 @@ class PasswordResetLinkController extends Controller
 
     /**
      * Handle an incoming password reset link request.
-     *
-     * @throws ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
@@ -46,9 +43,7 @@ class PasswordResetLinkController extends Controller
             ->first();
 
         if (! $user) {
-            throw ValidationException::withMessages([
-                'login' => __('No account found for that email or phone number.'),
-            ]);
+            return back()->with('status', __('A reset link will be sent if the account exists.'));
         }
 
         // Generate a new token

@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureUserIsVerified;
 use App\Http\Middleware\MaintenanceModeEnabled;
 use App\Http\Middleware\PreventAdminAccessToUserArea;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
@@ -27,10 +28,19 @@ Route::middleware(['auth'])->group(function () {
 
     // Impersonation “leave” (only needs auth)
     Route::get('impersonate/leave', function () {
-        if (Session::has('impersonator_id')) {
-            Auth::loginUsingId(Session::pull('impersonator_id'));
-        } elseif (Impersonation::isImpersonating()) {
+        if (Impersonation::isImpersonating()) {
+            Session::forget('impersonator_id');
             Impersonation::leave();
+        } elseif (Session::has('impersonator_id')) {
+            $impersonatedId = Auth::id();
+            $impersonatorId = Session::pull('impersonator_id');
+
+            Auth::loginUsingId($impersonatorId);
+
+            Log::info('User impersonation stopped.', [
+                'impersonator_id' => $impersonatorId,
+                'impersonated_id' => $impersonatedId,
+            ]);
         }
 
         return redirect('/admin');

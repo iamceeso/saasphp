@@ -8,6 +8,7 @@ use App\Models\WebhookLog;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Stripe\Event;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\StripeClient;
@@ -79,13 +80,13 @@ class WebhookService
     private function handleSubscriptionCreated(Event $event): void
     {
         $stripeSubscription = $event->data->object;
-        $this->syncSubscriptionState($stripeSubscription);
+        $this->syncSubscriptionState($stripeSubscription, $event);
     }
 
     private function handleSubscriptionUpdated(Event $event): void
     {
         $stripeSubscription = $event->data->object;
-        $this->syncSubscriptionState($stripeSubscription);
+        $this->syncSubscriptionState($stripeSubscription, $event);
     }
 
     private function handleSubscriptionDeleted(Event $event): void
@@ -97,7 +98,7 @@ class WebhookService
         )->first();
 
         if (! $subscription) {
-            return;
+            $this->failUnknownSubscription($event, $stripeSubscription->id);
         }
 
         DB::transaction(function () use ($subscription, $stripeSubscription) {
@@ -132,7 +133,7 @@ class WebhookService
             )->first();
 
             if (! $subscription) {
-                return;
+                $this->failUnknownSubscription($event, $invoice->subscription);
             }
 
             DB::transaction(function () use ($subscription, $invoice) {
@@ -165,7 +166,7 @@ class WebhookService
             )->first();
 
             if (! $subscription) {
-                return;
+                $this->failUnknownSubscription($event, $invoice->subscription);
             }
 
             DB::transaction(function () use ($subscription, $invoice) {
@@ -191,7 +192,7 @@ class WebhookService
         )->first();
 
         if (! $subscription) {
-            return;
+            $this->failUnknownSubscription($event, $stripeSubscription->id);
         }
 
         BillingEvent::create([
@@ -203,7 +204,7 @@ class WebhookService
         ]);
     }
 
-    private function syncSubscriptionState($stripeSubscription): void
+    private function syncSubscriptionState($stripeSubscription, ?Event $event = null): void
     {
         $subscription = CustomerSubscription::where(
             'stripe_subscription_id',
@@ -211,12 +212,12 @@ class WebhookService
         )->first();
 
         if (! $subscription) {
-            return;
+            $this->failUnknownSubscription($event, $stripeSubscription->id);
         }
 
         $price = $stripeSubscription->items->data[0]->price ?? null;
         if (! $price) {
-            return;
+            throw new RuntimeException("Stripe subscription {$stripeSubscription->id} has no price item to sync.");
         }
 
         $subscription->update([
@@ -270,6 +271,16 @@ class WebhookService
         }
 
         return Carbon::createFromTimestamp((int) $timestamp);
+    }
+
+    private function failUnknownSubscription(?Event $event, mixed $stripeSubscriptionId): never
+    {
+        $eventId = $event?->id ?? 'retry';
+        $eventType = $event?->type ?? 'subscription.sync';
+
+        throw new RuntimeException(
+            "Stripe webhook {$eventId} ({$eventType}) referenced unknown local subscription {$stripeSubscriptionId}."
+        );
     }
 
     private function resolveCurrentSubscriptionKey(int $userId, string $status, mixed $endedAt = null): ?string
