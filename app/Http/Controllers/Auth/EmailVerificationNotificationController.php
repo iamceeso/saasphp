@@ -7,7 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Class EmailVerificationNotificationController.
+ * Sends verification email notifications for authenticated users.
  */
 class EmailVerificationNotificationController extends Controller
 {

@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Class WebhookController.
+ * Accepts inbound billing webhooks and passes them to the service layer.
  */
 class WebhookController extends Controller
 {

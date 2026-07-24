@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 /**
- * Class HandleInertiaRequests.
+ * Shares root template data and common props with Inertia.
  */
 class HandleInertiaRequests extends Middleware
 {

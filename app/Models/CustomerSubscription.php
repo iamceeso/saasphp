@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Class CustomerSubscription.
+ * Represents a customer's plan state, billing cycle, and renewal dates.
  */
 class CustomerSubscription extends Model
 {

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\ResetsUserPasswords;
 
 /**
- * Class ResetUserPassword.
+ * Resets a user's password through the Fortify recovery flow.
  */
 class ResetUserPassword implements ResetsUserPasswords
 {

@@ -5,7 +5,7 @@ namespace App\Services\Billing\Concerns;
 use Stripe\StripeClient;
 
 /**
- * Trait HasStripeClient.
+ * Provides lazy access to a configured Stripe client instance.
  */
 trait HasStripeClient
 {

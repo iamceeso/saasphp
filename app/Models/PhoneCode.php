@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Class PhoneCode.
+ * Stores phone verification codes with usage and expiry state.
  */
 class PhoneCode extends Model
 {

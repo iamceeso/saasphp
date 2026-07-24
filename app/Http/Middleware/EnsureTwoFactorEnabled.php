@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Class EnsureTwoFactorEnabled.
+ * Requires two-factor setup before entering protected routes.
  */
 class EnsureTwoFactorEnabled
 {

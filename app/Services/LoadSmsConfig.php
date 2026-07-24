@@ -14,7 +14,7 @@ use Vonage\Client\Credentials\Basic as VonageCredentials;
 use Vonage\SMS\Message\SMS;
 
 /**
- * Trait LoadSmsConfig.
+ * Loads SMS provider configuration from persisted settings.
  */
 trait LoadSmsConfig
 {

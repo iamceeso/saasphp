@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Class MaintenanceModeEnabled.
+ * Enforces maintenance-mode access rules for incoming requests.
  */
 class MaintenanceModeEnabled
 {

@@ -6,7 +6,7 @@ use App\Models\User;
 use STS\FilamentImpersonate\ImpersonateManager;
 
 /**
- * Class ImpersonationSession.
+ * Manages impersonator session state for admin user switching.
  */
 class ImpersonationSession
 {

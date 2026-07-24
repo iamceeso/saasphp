@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Trait LoadBillingConfig.
+ * Loads billing provider configuration from persisted settings.
  */
 trait LoadBillingConfig
 {

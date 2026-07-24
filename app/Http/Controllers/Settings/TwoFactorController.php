@@ -12,7 +12,7 @@ use Inertia\Response;
 use Laravel\Fortify\TwoFactorAuthenticationProvider;
 
 /**
- * Class TwoFactorController.
+ * Manages two-factor settings, setup, and confirmation actions.
  */
 class TwoFactorController extends Controller
 {

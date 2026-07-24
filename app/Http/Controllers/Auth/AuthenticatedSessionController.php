@@ -14,7 +14,7 @@ use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
 /**
- * Class AuthenticatedSessionController.
+ * Handles login, logout, and social authentication callbacks.
  */
 class AuthenticatedSessionController extends Controller
 {

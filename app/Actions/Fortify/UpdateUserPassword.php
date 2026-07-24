@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\UpdatesUserPasswords;
 
 /**
- * Class UpdateUserPassword.
+ * Updates an authenticated user's password through Fortify.
  */
 class UpdateUserPassword implements UpdatesUserPasswords
 {

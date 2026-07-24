@@ -9,7 +9,7 @@ use App\Services\Billing\SubscriptionService;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Class SubscribeToPlan.
+ * Chooses the correct subscription action for a plan change request.
  */
 class SubscribeToPlan
 {

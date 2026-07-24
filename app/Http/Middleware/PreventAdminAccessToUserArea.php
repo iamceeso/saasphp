@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Class PreventAdminAccessToUserArea.
+ * Blocks privileged users from entering the standard user area.
  */
 class PreventAdminAccessToUserArea
 {

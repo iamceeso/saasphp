@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Stripe\Exception\ApiErrorException;
 
 /**
- * Class SubscriptionService.
+ * Manages local and Stripe-backed subscription lifecycle operations.
  */
 class SubscriptionService
 {

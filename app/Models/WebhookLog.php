@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Class WebhookLog.
+ * Records webhook processing state, errors, and retry attempts.
  */
 class WebhookLog extends Model
 {

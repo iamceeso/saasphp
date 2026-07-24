@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Class PlanFeature.
+ * Stores typed feature values attached to subscription plans.
  */
 class PlanFeature extends Model
 {

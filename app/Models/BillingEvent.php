@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Class BillingEvent.
+ * Stores billing event history and processing outcomes.
  */
 class BillingEvent extends Model
 {

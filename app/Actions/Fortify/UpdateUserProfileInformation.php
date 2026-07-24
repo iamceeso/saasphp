@@ -9,7 +9,7 @@ use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 
 /**
- * Class UpdateUserProfileInformation.
+ * Updates profile details and verification state for a user.
  */
 class UpdateUserProfileInformation implements UpdatesUserProfileInformation
 {

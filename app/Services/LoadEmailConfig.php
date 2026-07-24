@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Trait LoadEmailConfig.
+ * Loads mail transport configuration from persisted settings.
  */
 trait LoadEmailConfig
 {

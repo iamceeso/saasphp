@@ -11,7 +11,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Class ConfirmablePasswordController.
+ * Handles password confirmation screens and validation flow.
  */
 class ConfirmablePasswordController extends Controller
 {

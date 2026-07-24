@@ -8,7 +8,7 @@ use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * Class Controller.
+ * Base controller with shared authorization behavior.
  */
 abstract class Controller extends BaseController
 {

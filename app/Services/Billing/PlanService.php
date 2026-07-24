@@ -7,7 +7,7 @@ use App\Models\SubscriptionPlan;
 use App\Services\Billing\Concerns\HasStripeClient;
 
 /**
- * Class PlanService.
+ * Manages subscription plans, prices, and feature definitions.
  */
 class PlanService
 {

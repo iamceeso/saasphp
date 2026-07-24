@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Class Setting.
+ * Stores encrypted application settings with cached lookups.
  */
 class Setting extends Model
 {

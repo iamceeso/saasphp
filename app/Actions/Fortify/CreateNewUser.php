@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 /**
- * Class CreateNewUser.
+ * Creates new user accounts through the Fortify registration flow.
  */
 class CreateNewUser implements CreatesNewUsers
 {

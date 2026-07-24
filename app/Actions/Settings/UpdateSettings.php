@@ -7,7 +7,7 @@ use Illuminate\Support\Arr;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
- * Class UpdateSettings.
+ * Persists application settings state and uploaded assets.
  */
 class UpdateSettings
 {

@@ -13,7 +13,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Class PasswordController.
+ * Manages password settings screens and update requests.
  */
 class PasswordController extends Controller
 {

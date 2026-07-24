@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 /**
- * Class PricingController.
+ * Renders public pricing data and subscription checkout options.
  */
 class PricingController extends Controller
 {

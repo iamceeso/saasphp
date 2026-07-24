@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Class RoleHelper.
+ * Provides role naming and visibility helper utilities.
  */
 class RoleHelper
 {

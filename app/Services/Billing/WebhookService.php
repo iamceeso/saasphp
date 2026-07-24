@@ -15,7 +15,7 @@ use Stripe\Exception\SignatureVerificationException;
 use Stripe\Webhook;
 
 /**
- * Class WebhookService.
+ * Processes Stripe webhook payloads and retries failed deliveries.
  */
 class WebhookService
 {

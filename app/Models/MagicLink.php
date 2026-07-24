@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Class MagicLink.
+ * Stores passwordless sign-in codes with expiry and usage state.
  */
 class MagicLink extends Model
 {

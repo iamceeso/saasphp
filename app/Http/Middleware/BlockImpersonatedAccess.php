@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Class BlockImpersonatedAccess.
+ * Blocks impersonated sessions from restricted application areas.
  */
 class BlockImpersonatedAccess
 {

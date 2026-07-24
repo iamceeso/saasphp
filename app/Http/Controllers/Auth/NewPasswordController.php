@@ -18,7 +18,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Class NewPasswordController.
+ * Handles password reset completion for recovery links.
  */
 class NewPasswordController extends Controller
 {

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Class PlanPrice.
+ * Stores interval pricing and free-trial data for a plan.
  */
 class PlanPrice extends Model
 {

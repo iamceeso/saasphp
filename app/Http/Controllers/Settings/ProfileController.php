@@ -12,7 +12,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Class ProfileController.
+ * Manages profile settings screens and profile updates.
  */
 class ProfileController extends Controller
 {

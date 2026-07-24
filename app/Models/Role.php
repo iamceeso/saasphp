@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Spatie\Permission\Models\Role as SpatieRole;
 
 /**
- * Class Role.
+ * Extends permission roles with assigned user relationships.
  */
 class Role extends SpatieRole
 {

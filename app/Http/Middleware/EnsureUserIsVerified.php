@@ -10,7 +10,7 @@ use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Class EnsureUserIsVerified.
+ * Requires users to complete verification before protected access.
  */
 class EnsureUserIsVerified
 {

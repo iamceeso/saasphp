@@ -9,7 +9,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Class EmailVerificationPromptController.
+ * Renders the prompt that asks users to verify their email.
  */
 class EmailVerificationPromptController extends Controller
 {

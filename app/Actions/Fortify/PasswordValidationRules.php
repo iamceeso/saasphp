@@ -6,7 +6,7 @@ use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 /**
- * Trait PasswordValidationRules.
+ * Shares password validation rules across Fortify actions.
  */
 trait PasswordValidationRules
 {

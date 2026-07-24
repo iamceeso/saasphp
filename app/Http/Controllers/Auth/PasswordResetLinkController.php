@@ -16,7 +16,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Class PasswordResetLinkController.
+ * Handles requests to send password reset links.
  */
 class PasswordResetLinkController extends Controller
 {

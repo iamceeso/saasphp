@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Events\ImageUpdated;
 
 /**
- * Trait FireImageUpdatedEvent.
+ * Dispatches image update events for configured model file fields.
  */
 trait FireImageUpdatedEvent
 {

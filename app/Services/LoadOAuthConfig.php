@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Trait LoadOAuthConfig.
+ * Loads OAuth provider credentials from persisted settings.
  */
 trait LoadOAuthConfig
 {

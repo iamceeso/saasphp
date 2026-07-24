@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 /**
- * Class SubscriptionController.
+ * Handles customer subscription actions and billing views.
  */
 class SubscriptionController extends Controller
 {

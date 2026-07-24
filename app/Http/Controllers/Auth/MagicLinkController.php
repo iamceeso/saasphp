@@ -17,7 +17,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Class MagicLinkController.
+ * Handles passwordless sign-in link requests and verification.
  */
 class MagicLinkController extends Controller
 {
