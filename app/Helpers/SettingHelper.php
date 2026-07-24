@@ -9,18 +9,12 @@ class SettingHelper
     /**
      * Get a setting value by key, with optional default fallback.
      */
-    public static function get(string $key, $default = null)
+    public static function get(string $key, $default = null, bool $asBoolean = false)
     {
-        $setting = Setting::where('key', $key)->first();
-
-        if (! $setting) {
-            return $default;
+        if ($asBoolean) {
+            return Setting::getBooleanValue($key, $default);
         }
 
-        if ($setting->type === 'boolean') {
-            return $setting->value === 'true';
-        }
-
-        return $setting->value;
+        return Setting::getValue($key, $default);
     }
 }

@@ -64,16 +64,10 @@ class EditUser extends EditRecord
         $actions[] = Impersonate::make()
             ->record($this->record)
             ->authorize(
-                fn () => auth()->user()?->can('impersonate', User::class) &&
-                    $this->record->isStandardUser() &&
-                    (! ($this->record->phone && ! $this->record->hasVerifiedPhone())) &&
-                    (! ($this->record->email && ! $this->record->hasVerifiedEmail()))
+                fn () => UserResource::canImpersonateRecord($this->record)
             )
             ->visible(
-                fn () => auth()->user()?->can('impersonate', User::class) &&
-                    $this->record->isStandardUser() &&
-                    (! ($this->record->phone && ! $this->record->hasVerifiedPhone())) &&
-                    (! ($this->record->email && ! $this->record->hasVerifiedEmail()))
+                fn () => UserResource::canImpersonateRecord($this->record)
             );
 
         return $actions;

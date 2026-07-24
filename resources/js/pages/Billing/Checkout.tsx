@@ -1,9 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { billingJsonRequest } from '@/modules/billing/lib/request';
 import { Head } from '@inertiajs/react';
-import React, { useMemo, useState } from 'react';
 import { CardElement, Elements, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import React, { useMemo, useState } from 'react';
 
 interface Plan {
     id: number;
@@ -33,6 +34,17 @@ interface CheckoutFormProps {
     publishableKey: string;
 }
 
+interface SubscribeResponse {
+    success?: boolean;
+    redirect?: string;
+    error?: string;
+    message?: string;
+    errors?: Record<string, string[]>;
+    requiresAction?: boolean;
+    clientSecret?: string;
+    paymentIntentStatus?: string;
+}
+
 function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormProps) {
     const stripe = useStripe();
     const elements = useElements();
@@ -48,41 +60,21 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
 
         try {
             if (isFreePlan) {
-                const response = await fetch(route('subscribe'), {
+                const data = await billingJsonRequest<SubscribeResponse>(route('subscribe'), {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Accept: 'application/json',
-                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({
+                    body: {
                         plan_id: plan.id,
                         interval,
-                    }),
+                    },
                 });
 
-                const contentType = response.headers.get('content-type') || '';
-
-                if (!contentType.includes('application/json')) {
-                    if (response.status === 401 || response.status === 403) {
-                        setError('Your session has expired or access is denied. Please sign in again and retry.');
-                        return;
-                    }
-
-                    if (response.status === 419) {
-                        setError('Your session token expired. Refresh the page and try again.');
-                        return;
-                    }
-
-                    setError('Unexpected server response. Please refresh the page and try again.');
+                if (!data.success) {
+                    setError(data.error || 'Unable to start the free plan.');
                     return;
                 }
 
-                const data = await response.json();
-
-                if (!response.ok || !data.success) {
-                    setError(data.error || 'Unable to start the free plan.');
+                if (!data.redirect) {
+                    setError('Subscription completed, but no redirect was provided. Please refresh the page.');
                     return;
                 }
 
@@ -120,46 +112,18 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
                 return;
             }
 
-            const response = await fetch(route('subscribe'), {
+            const data = await billingJsonRequest<SubscribeResponse>(route('subscribe'), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({
+                body: {
                     plan_id: plan.id,
                     interval: interval,
                     payment_method: paymentMethodResult.paymentMethod.id,
-                }),
+                },
             });
-
-            const contentType = response.headers.get('content-type') || '';
-
-            if (!contentType.includes('application/json')) {
-                if (response.status === 401 || response.status === 403) {
-                    setError('Your session has expired or access is denied. Please sign in again and retry.');
-                    return;
-                }
-
-                if (response.status === 419) {
-                    setError('Your session token expired. Refresh the page and try again.');
-                    return;
-                }
-
-                setError('Unexpected server response. Please refresh the page and try again.');
-                return;
-            }
-
-            const data = await response.json();
 
             if (data.success) {
                 const requiresConfirmation =
-                    Boolean(data.requiresAction) ||
-                    ['requires_action', 'requires_confirmation'].includes(
-                        data.paymentIntentStatus ?? ''
-                    );
+                    Boolean(data.requiresAction) || ['requires_action', 'requires_confirmation'].includes(data.paymentIntentStatus ?? '');
 
                 if (requiresConfirmation && data.clientSecret) {
                     const confirmation = await stripe.confirmCardPayment(data.clientSecret);
@@ -171,23 +135,20 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
 
                     const paymentIntentStatus = confirmation.paymentIntent?.status;
 
-                    if (
-                        paymentIntentStatus &&
-                        !['succeeded', 'processing', 'requires_capture'].includes(paymentIntentStatus)
-                    ) {
+                    if (paymentIntentStatus && !['succeeded', 'processing', 'requires_capture'].includes(paymentIntentStatus)) {
                         setError(`Payment requires attention. Current status: ${paymentIntentStatus}.`);
                         return;
                     }
                 }
 
+                if (!data.redirect) {
+                    setError('Subscription completed, but no redirect was provided. Please refresh the page.');
+                    return;
+                }
+
                 window.location.href = data.redirect;
             } else {
-                const backendError =
-                    data.error ||
-                    data.message ||
-                    (data.errors
-                        ? Object.values(data.errors).flat().join(' ')
-                        : null);
+                const backendError = data.error || data.message || (data.errors ? Object.values(data.errors).flat().join(' ') : null);
 
                 setError(backendError || 'An error occurred during payment processing');
             }
@@ -206,18 +167,14 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4">
-            <div className="max-w-2xl mx-auto">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-12">
+            <div className="mx-auto max-w-2xl">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        {isFreePlan ? 'Start Your Free Plan' : 'Complete Your Subscription'}
-                    </h1>
-                    <p className="text-gray-600">
-                        {isFreePlan ? 'No card required for this plan.' : 'Secure payment powered by Stripe'}
-                    </p>
+                    <h1 className="mb-2 text-3xl font-bold text-gray-900">{isFreePlan ? 'Start Your Free Plan' : 'Complete Your Subscription'}</h1>
+                    <p className="text-gray-600">{isFreePlan ? 'No card required for this plan.' : 'Secure payment powered by Stripe'}</p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8">
+                <div className="grid gap-8 md:grid-cols-3">
                     <div className="md:col-span-2">
                         <Card>
                             <CardHeader>
@@ -231,13 +188,13 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
                             <CardContent>
                                 <form onSubmit={handleSubmit} className="space-y-6">
                                     {error && (
-                                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                                             <p className="text-red-800">{error}</p>
                                         </div>
                                     )}
 
-                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                        <div className="flex justify-between mb-2">
+                                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                        <div className="mb-2 flex justify-between">
                                             <span className="text-gray-600">{plan.name}</span>
                                             <span className="font-semibold">{formatPrice(price.amount)}</span>
                                         </div>
@@ -250,24 +207,20 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
                                     {!isFreePlan && (
                                         <>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Cardholder Name
-                                                </label>
+                                                <label className="mb-2 block text-sm font-medium text-gray-700">Cardholder Name</label>
                                                 <input
                                                     type="text"
                                                     value={cardholderName}
                                                     onChange={(e) => setCardholderName(e.target.value)}
                                                     placeholder="John Doe"
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                                                     required
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Card Details
-                                                </label>
-                                                <div className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+                                                <label className="mb-2 block text-sm font-medium text-gray-700">Card Details</label>
+                                                <div className="w-full rounded-lg border border-gray-300 px-4 py-3 focus-within:border-transparent focus-within:ring-2 focus-within:ring-blue-500">
                                                     <CardElement
                                                         options={{
                                                             hidePostalCode: true,
@@ -286,23 +239,19 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
                                                         }}
                                                     />
                                                 </div>
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    Test: 4242 4242 4242 4242
-                                                </p>
+                                                <p className="mt-1 text-xs text-gray-500">Test: 4242 4242 4242 4242</p>
                                             </div>
                                         </>
                                     )}
 
-                                    <Button
-                                        type="submit"
-                                        disabled={isLoading || (!isFreePlan && (!stripe || !elements))}
-                                        className="w-full"
-                                    >
+                                    <Button type="submit" disabled={isLoading || (!isFreePlan && (!stripe || !elements))} className="w-full">
                                         {isLoading
-                                            ? (isFreePlan ? 'Starting...' : 'Processing...')
+                                            ? isFreePlan
+                                                ? 'Starting...'
+                                                : 'Processing...'
                                             : isFreePlan
-                                                ? 'Start Free Plan'
-                                                : `Subscribe - ${formatPrice(price.amount)}/${interval === 'monthly' ? 'mo' : 'yr'}`}
+                                              ? 'Start Free Plan'
+                                              : `Subscribe - ${formatPrice(price.amount)}/${interval === 'monthly' ? 'mo' : 'yr'}`}
                                     </Button>
                                 </form>
                             </CardContent>
@@ -316,11 +265,11 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <h3 className="font-semibold mb-2">{plan.name}</h3>
+                                    <h3 className="mb-2 font-semibold">{plan.name}</h3>
                                     <p className="text-sm text-gray-600">{plan.description}</p>
                                 </div>
 
-                                <div className="border-t border-gray-200 pt-4 space-y-2">
+                                <div className="space-y-2 border-t border-gray-200 pt-4">
                                     <div className="flex justify-between text-sm">
                                         <span>Price</span>
                                         <span>{formatPrice(price.amount)}</span>
@@ -338,9 +287,7 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
                                         <span>Total</span>
                                         <span>{formatPrice(price.amount)}</span>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        Billed {interval === 'monthly' ? 'monthly' : 'annually'}
-                                    </p>
+                                    <p className="mt-2 text-xs text-gray-500">Billed {interval === 'monthly' ? 'monthly' : 'annually'}</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -352,30 +299,17 @@ function CheckoutForm({ plan, price, interval, publishableKey }: CheckoutFormPro
 }
 
 export default function CheckoutPage({ plan, price, interval, publishableKey }: Props) {
-    const stripePromise = useMemo(
-        () => (publishableKey ? loadStripe(publishableKey) : null),
-        [publishableKey]
-    );
+    const stripePromise = useMemo(() => (publishableKey ? loadStripe(publishableKey) : null), [publishableKey]);
 
     return (
         <>
             <Head title="Checkout" />
             {stripePromise ? (
                 <Elements stripe={stripePromise}>
-                    <CheckoutForm
-                        plan={plan}
-                        price={price}
-                        interval={interval}
-                        publishableKey={publishableKey}
-                    />
+                    <CheckoutForm plan={plan} price={price} interval={interval} publishableKey={publishableKey} />
                 </Elements>
             ) : (
-                <CheckoutForm
-                    plan={plan}
-                    price={price}
-                    interval={interval}
-                    publishableKey={publishableKey}
-                />
+                <CheckoutForm plan={plan} price={price} interval={interval} publishableKey={publishableKey} />
             )}
         </>
     );

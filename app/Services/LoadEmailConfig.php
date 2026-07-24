@@ -25,11 +25,11 @@ trait LoadEmailConfig
         // Retrieve common settings
         $client = Setting::getValue('email.client_name');
         $from = Setting::getValue('email.from.address', 'no-reply@example.com');
-        [$local, $domain] = explode('@', $from, 2);
         $siteName = Setting::getValue('site.name', 'Built with SaaS PHP');
+        $domain = $this->mailDomainFromAddress($from);
 
         // Silent warning message
-        if (! $from || ! $client) {
+        if (! $from || ! $client || ! $domain) {
             Log::warning('Email config not fully set:', [
                 'client' => $client,
                 'from' => $from,
@@ -64,5 +64,14 @@ trait LoadEmailConfig
                 Config::set('mail.default', 'log');
                 break;
         }
+    }
+
+    private function mailDomainFromAddress(?string $from): ?string
+    {
+        if (! $from || ! filter_var($from, FILTER_VALIDATE_EMAIL)) {
+            return null;
+        }
+
+        return str($from)->after('@')->value();
     }
 }

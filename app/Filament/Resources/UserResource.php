@@ -77,7 +77,7 @@ class UserResource extends Resource implements HasShieldPermissions
         return auth()->user()?->can('viewAny', User::class);
     }
 
-    protected static function canImpersonateRecord(User $record): bool
+    public static function canImpersonateRecord(User $record): bool
     {
         $user = auth()->user();
 
@@ -86,6 +86,20 @@ class UserResource extends Resource implements HasShieldPermissions
             $record->isStandardUser() &&
             (! ($record->phone && ! $record->hasVerifiedPhone())) &&
             (! ($record->email && ! $record->hasVerifiedEmail()))
+        );
+    }
+
+    public static function canShowDisabledImpersonateRecord(User $record): bool
+    {
+        $user = auth()->user();
+
+        return (bool) (
+            $user?->can('impersonate', User::class) &&
+            $record->isStandardUser() &&
+            (
+                ($record->phone && ! $record->hasVerifiedPhone()) ||
+                ($record->email && ! $record->hasVerifiedEmail())
+            )
         );
     }
 
@@ -276,16 +290,7 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->icon('heroicon-o-user-minus')
                     ->tooltip('Impersonation disabled: user not verified')
                     ->color('gray')
-                    ->visible(function ($record) {
-                        $user = auth()->user();
-
-                        return $user->can('impersonate', User::class) &&
-                            $record->isStandardUser() &&
-                            (
-                                ($record->phone && ! $record->hasVerifiedPhone()) ||
-                                ($record->email && ! $record->hasVerifiedEmail())
-                            );
-                    }),
+                    ->visible(fn (User $record) => static::canShowDisabledImpersonateRecord($record)),
                 ViewAction::make()->icon('heroicon-o-eye')
                     ->color('primary')
                     ->label('')->visible(fn ($record) => auth()->user()?->can('view', $record)),

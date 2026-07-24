@@ -1,14 +1,15 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { BillingNav } from '@/modules/billing/components/BillingNav';
 import { BillingPageHeader } from '@/modules/billing/components/BillingPageHeader';
 import { BillingStatusBadge } from '@/modules/billing/components/BillingStatusBadge';
 import { PlanFeatureList } from '@/modules/billing/components/PlanFeatureList';
 import { formatBillingDate, formatBillingPrice } from '@/modules/billing/lib/format';
+import { billingJsonRequest } from '@/modules/billing/lib/request';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 interface Subscription {
     id: number;
@@ -68,6 +69,12 @@ interface Props {
     availablePlans: AvailablePlan[];
 }
 
+interface BillingActionResponse {
+    success?: boolean;
+    error?: string;
+    message?: string;
+}
+
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
     { title: 'Subscriptions', href: '/subscriptions' },
@@ -89,28 +96,15 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
         setIsUpdating(true);
         setActionError(null);
         try {
-            const response = await fetch(route('subscriptions.swap-plan', subscription.id), {
+            const data = await billingJsonRequest<BillingActionResponse>(route('subscriptions.swap-plan', subscription.id), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({
+                body: {
                     plan_id: selectedPlan,
                     interval: selectedInterval,
                     prorate: true,
-                }),
+                },
             });
 
-            const contentType = response.headers.get('content-type') || '';
-            if (!contentType.includes('application/json')) {
-                setActionError('Unexpected server response. Please refresh and try again.');
-                return;
-            }
-
-            const data = await response.json();
             if (data.success) {
                 window.location.reload();
                 return;
@@ -127,15 +121,10 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
         if (!confirm('Are you sure you want to cancel this subscription?')) return;
 
         try {
-            const response = await fetch(route('subscriptions.cancel', subscription.id), {
+            const data = await billingJsonRequest<BillingActionResponse>(route('subscriptions.cancel', subscription.id), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
             });
 
-            const data = await response.json();
             if (data.success) {
                 window.location.href = route('subscriptions.index');
             }
@@ -145,12 +134,7 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
     };
 
     return (
-        <AppLayout
-            breadcrumbs={[
-                ...breadcrumbs,
-                { title: subscription.plan.name, href: route('subscriptions.show', subscription.id) },
-            ]}
-        >
+        <AppLayout breadcrumbs={[...breadcrumbs, { title: subscription.plan.name, href: route('subscriptions.show', subscription.id) }]}>
             <Head title={`Subscription - ${subscription.plan.name}`} />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div className="flex items-center justify-between gap-4">
@@ -162,7 +146,7 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                 </div>
                 <BillingNav />
 
-                <div className="grid md:grid-cols-3 gap-8 mb-8">
+                <div className="mb-8 grid gap-8 md:grid-cols-3">
                     <div className="md:col-span-2">
                         <Card className="mb-6">
                             <CardHeader>
@@ -170,15 +154,13 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                 <CardDescription>{subscription.plan.description}</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="grid sm:grid-cols-2 gap-4">
+                                <div className="grid gap-4 sm:grid-cols-2">
                                     <div>
-                                        <p className="text-sm font-medium text-gray-600 mb-1">Plan</p>
-                                        <p className="text-lg font-semibold text-gray-900">
-                                            {subscription.plan.name}
-                                        </p>
+                                        <p className="mb-1 text-sm font-medium text-gray-600">Plan</p>
+                                        <p className="text-lg font-semibold text-gray-900">{subscription.plan.name}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-600 mb-1">Price</p>
+                                        <p className="mb-1 text-sm font-medium text-gray-600">Price</p>
                                         <p className="text-lg font-semibold text-gray-900">
                                             {isFreeSubscription ? (
                                                 'Free'
@@ -194,18 +176,12 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                     </div>
                                     {isFreeSubscription ? (
                                         <div>
-                                            <p className="text-sm font-medium text-gray-600 mb-1">
-                                                Access
-                                            </p>
-                                            <p className="text-sm text-gray-900">
-                                                Active free tier
-                                            </p>
+                                            <p className="mb-1 text-sm font-medium text-gray-600">Access</p>
+                                            <p className="text-sm text-gray-900">Active free tier</p>
                                         </div>
                                     ) : (
                                         <div>
-                                            <p className="text-sm font-medium text-gray-600 mb-1">
-                                                Current Period
-                                            </p>
+                                            <p className="mb-1 text-sm font-medium text-gray-600">Current Period</p>
                                             <p className="text-sm text-gray-900">
                                                 {formatBillingDate(subscription.current_period_start)} -{' '}
                                                 {formatBillingDate(subscription.current_period_end)}
@@ -214,47 +190,30 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                     )}
                                     {subscription.trial_ends_at && (
                                         <div>
-                                            <p className="text-sm font-medium text-gray-600 mb-1">
-                                                Trial Ends
-                                            </p>
-                                            <p className="text-sm text-green-600 font-medium">
-                                                {formatBillingDate(subscription.trial_ends_at)}
-                                            </p>
+                                            <p className="mb-1 text-sm font-medium text-gray-600">Trial Ends</p>
+                                            <p className="text-sm font-medium text-green-600">{formatBillingDate(subscription.trial_ends_at)}</p>
                                         </div>
                                     )}
                                     {subscription.canceled_at && (
                                         <div>
-                                            <p className="text-sm font-medium text-gray-600 mb-1">
-                                                Canceled At
-                                            </p>
-                                            <p className="text-sm text-red-600 font-medium">
-                                                {formatBillingDate(subscription.canceled_at)}
-                                            </p>
+                                            <p className="mb-1 text-sm font-medium text-gray-600">Canceled At</p>
+                                            <p className="text-sm font-medium text-red-600">{formatBillingDate(subscription.canceled_at)}</p>
                                         </div>
                                     )}
                                     {subscription.ended_at && (
                                         <div>
-                                            <p className="text-sm font-medium text-gray-600 mb-1">
-                                                Ended At
-                                            </p>
-                                            <p className="text-sm text-gray-900">
-                                                {formatBillingDate(subscription.ended_at)}
-                                            </p>
+                                            <p className="mb-1 text-sm font-medium text-gray-600">Ended At</p>
+                                            <p className="text-sm text-gray-900">{formatBillingDate(subscription.ended_at)}</p>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="border-t pt-4 flex gap-3">
+                                <div className="flex gap-3 border-t pt-4">
                                     <Button asChild variant="outline">
-                                        <Link href={route('subscriptions.invoices', subscription.id)}>
-                                            View Invoices
-                                        </Link>
+                                        <Link href={route('subscriptions.invoices', subscription.id)}>View Invoices</Link>
                                     </Button>
                                     {(subscription.status === 'active' || subscription.status === 'trialing') && !subscription.canceled_at && (
-                                        <Button
-                                            variant="destructive"
-                                            onClick={handleCancel}
-                                        >
+                                        <Button variant="destructive" onClick={handleCancel}>
                                             Cancel Subscription
                                         </Button>
                                     )}
@@ -277,9 +236,7 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg">Change Plan</CardTitle>
-                                    <CardDescription>
-                                        Switch to a different plan
-                                    </CardDescription>
+                                    <CardDescription>Switch to a different plan</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <select
@@ -288,7 +245,7 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                             const value = e.target.value;
                                             setSelectedPlan(value ? parseInt(value, 10) : null);
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                        className="w-full rounded-lg border border-gray-300 px-3 py-2"
                                     >
                                         <option value="">Select a plan</option>
                                         {availablePlans.map((plan) => (
@@ -302,38 +259,24 @@ export default function SubscriptionDetailPage({ subscription, availablePlans }:
                                         <>
                                             <select
                                                 value={selectedInterval}
-                                                onChange={(e) =>
-                                                    setSelectedInterval(e.target.value as 'monthly' | 'annually')
-                                                }
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                                onChange={(e) => setSelectedInterval(e.target.value as 'monthly' | 'annually')}
+                                                className="w-full rounded-lg border border-gray-300 px-3 py-2"
                                             >
                                                 <option value="monthly">Monthly</option>
                                                 <option value="annually">Annually</option>
                                             </select>
 
-                                            <Button
-                                                onClick={handleSwapPlan}
-                                                disabled={isUpdating || upgradingFromFreeToPaid}
-                                                className="w-full"
-                                            >
-                                                {isUpdating
-                                                    ? 'Updating...'
-                                                    : upgradingFromFreeToPaid
-                                                        ? 'Use Pricing Page to Upgrade'
-                                                        : 'Update Plan'}
+                                            <Button onClick={handleSwapPlan} disabled={isUpdating || upgradingFromFreeToPaid} className="w-full">
+                                                {isUpdating ? 'Updating...' : upgradingFromFreeToPaid ? 'Use Pricing Page to Upgrade' : 'Update Plan'}
                                             </Button>
 
                                             {upgradingFromFreeToPaid && (
-                                                <p className="text-sm text-muted-foreground">
+                                                <p className="text-muted-foreground text-sm">
                                                     Paid upgrades from a free plan require checkout so a payment method can be collected.
                                                 </p>
                                             )}
 
-                                            {actionError && (
-                                                <p className="text-sm text-red-600">
-                                                    {actionError}
-                                                </p>
-                                            )}
+                                            {actionError && <p className="text-sm text-red-600">{actionError}</p>}
                                         </>
                                     )}
                                 </CardContent>

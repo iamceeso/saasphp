@@ -1,10 +1,11 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { BillingPageHeader } from '@/modules/billing/components/BillingPageHeader';
 import { PlanFeatureList } from '@/modules/billing/components/PlanFeatureList';
 import { formatBillingPrice } from '@/modules/billing/lib/format';
+import { billingJsonRequest } from '@/modules/billing/lib/request';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import React from 'react';
@@ -54,6 +55,12 @@ interface Props {
     userSubscription: Subscription | null;
 }
 
+interface SubscribeResponse {
+    success?: boolean;
+    redirect?: string;
+    error?: string;
+}
+
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
     { title: 'Pricing', href: '/billing/pricing' },
@@ -86,41 +93,21 @@ export default function PricingPage({ plans, userSubscription }: Props) {
         setSubscribeError(null);
 
         try {
-            const response = await fetch(route('subscribe'), {
+            const data = await billingJsonRequest<SubscribeResponse>(route('subscribe'), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({
+                body: {
                     plan_id: plan.id,
                     interval: billingInterval,
-                }),
+                },
             });
 
-            const contentType = response.headers.get('content-type') || '';
-
-            if (!contentType.includes('application/json')) {
-                if (response.status === 401 || response.status === 403) {
-                    setSubscribeError('Your session has expired or access is denied. Please sign in again and retry.');
-                    return;
-                }
-
-                if (response.status === 419) {
-                    setSubscribeError('Your session token expired. Refresh the page and try again.');
-                    return;
-                }
-
-                setSubscribeError('Unexpected server response. Please refresh the page and try again.');
+            if (!data.success) {
+                setSubscribeError(data.error || 'Unable to activate the free plan.');
                 return;
             }
 
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                setSubscribeError(data.error || 'Unable to activate the free plan.');
+            if (!data.redirect) {
+                setSubscribeError('Subscription completed, but no redirect was provided. Please refresh the page.');
                 return;
             }
 
@@ -136,28 +123,27 @@ export default function PricingPage({ plans, userSubscription }: Props) {
     const highlightedPlanId = sortedPlans.find((plan) => plan.is_most_popular)?.id;
 
     const pricingContent = (
-        <div className={isAuthenticated ? 'flex h-full flex-1 flex-col gap-6 rounded-xl p-4' : 'min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8'}>
-            <div className={isAuthenticated ? '' : 'max-w-7xl mx-auto'}>
-                <div className={isAuthenticated ? '' : 'text-center mb-12'}>
+        <div
+            className={
+                isAuthenticated
+                    ? 'flex h-full flex-1 flex-col gap-6 rounded-xl p-4'
+                    : 'min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-12 sm:px-6 lg:px-8'
+            }
+        >
+            <div className={isAuthenticated ? '' : 'mx-auto max-w-7xl'}>
+                <div className={isAuthenticated ? '' : 'mb-12 text-center'}>
                     {isAuthenticated ? (
-                        <BillingPageHeader
-                            title="Simple, Transparent Pricing"
-                            description="Choose the perfect plan for your needs."
-                        />
+                        <BillingPageHeader title="Simple, Transparent Pricing" description="Choose the perfect plan for your needs." />
                     ) : (
                         <>
-                            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                                Simple, Transparent Pricing
-                            </h1>
-                            <p className="text-xl text-gray-600 mb-8">
-                                Choose the perfect plan for your needs
-                            </p>
+                            <h1 className="mb-4 text-4xl font-bold text-gray-900">Simple, Transparent Pricing</h1>
+                            <p className="mb-8 text-xl text-gray-600">Choose the perfect plan for your needs</p>
                         </>
                     )}
 
-                    
-
-                    <div className={`mt-6 inline-flex items-center rounded-xl border border-border bg-background/80 p-1 ${isAuthenticated ? '' : ''}`}>
+                    <div
+                        className={`border-border bg-background/80 mt-6 inline-flex items-center rounded-xl border p-1 ${isAuthenticated ? '' : ''}`}
+                    >
                         <span className={`text-sm font-medium ${billingInterval === 'monthly' ? 'text-gray-900' : 'text-gray-600'}`}>
                             <button
                                 onClick={() => setBillingInterval('monthly')}
@@ -178,7 +164,7 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                     </div>
                 </div>
 
-                <div className={`grid md:grid-cols-3 gap-8 ${isAuthenticated ? '' : 'max-w-6xl mx-auto'}`}>
+                <div className={`grid gap-8 md:grid-cols-3 ${isAuthenticated ? '' : 'mx-auto max-w-6xl'}`}>
                     {sortedPlans.map((plan) => {
                         const price = plan.prices.find((p) => p.interval === billingInterval);
                         const isCurrentPlan = userSubscription?.plan_id === plan.id;
@@ -192,21 +178,19 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                                 key={plan.id}
                                 className={`relative flex flex-col border transition-all ${
                                     isCurrentPlan
-                                        ? 'ring-2 ring-blue-500 shadow-lg'
+                                        ? 'shadow-lg ring-2 ring-blue-500'
                                         : isHighlighted
-                                            ? 'border-blue-300 shadow-md'
-                                            : 'hover:border-slate-300 hover:shadow-sm'
+                                          ? 'border-blue-300 shadow-md'
+                                          : 'hover:border-slate-300 hover:shadow-sm'
                                 }`}
                             >
                                 {isHighlighted && !isCurrentPlan && (
                                     <Badge className="absolute -top-3 right-4 bg-blue-600 text-white">Most Popular</Badge>
                                 )}
                                 <CardHeader>
-                                    <div className="flex items-center justify-between mb-2">
+                                    <div className="mb-2 flex items-center justify-between">
                                         <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                                        {isCurrentPlan && (
-                                            <Badge className="bg-blue-600">Current Plan</Badge>
-                                        )}
+                                        {isCurrentPlan && <Badge className="bg-blue-600">Current Plan</Badge>}
                                     </div>
                                     <CardDescription>{plan.description}</CardDescription>
                                 </CardHeader>
@@ -223,39 +207,29 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                                             </>
                                         ) : price ? (
                                             <>
-                                                <div className="flex items-end gap-2 mb-2">
-                                                    <span className="text-4xl font-bold tracking-tight">
-                                                        {formatBillingPrice(price.amount)}
-                                                    </span>
+                                                <div className="mb-2 flex items-end gap-2">
+                                                    <span className="text-4xl font-bold tracking-tight">{formatBillingPrice(price.amount)}</span>
                                                     <span className="mb-1 text-sm text-gray-600">
                                                         /{price.interval === 'monthly' ? 'month' : 'year'}
                                                     </span>
                                                 </div>
                                                 {price.trial_days > 0 && (
-                                                    <p className="text-sm text-emerald-600 font-medium">
-                                                        {price.trial_days} days free trial
-                                                    </p>
+                                                    <p className="text-sm font-medium text-emerald-600">{price.trial_days} days free trial</p>
                                                 )}
                                             </>
                                         ) : (
-                                            <p className="text-sm text-muted-foreground">Price unavailable for this interval.</p>
+                                            <p className="text-muted-foreground text-sm">Price unavailable for this interval.</p>
                                         )}
                                     </div>
 
                                     <div className="mb-6">
-                                        <h3 className="font-semibold text-sm mb-4">Features included:</h3>
+                                        <h3 className="mb-4 text-sm font-semibold">Features included:</h3>
                                         <PlanFeatureList features={plan.features} />
                                     </div>
 
                                     {isContactPlan ? (
-                                        <Button
-                                            asChild
-                                            className="w-full"
-                                            variant={isHighlighted ? 'default' : 'secondary'}
-                                        >
-                                            <a href={plan.contact_url || '/contact'}>
-                                                {contactButtonLabel}
-                                            </a>
+                                        <Button asChild className="w-full" variant={isHighlighted ? 'default' : 'secondary'}>
+                                            <a href={plan.contact_url || '/contact'}>{contactButtonLabel}</a>
                                         </Button>
                                     ) : (
                                         <Button
@@ -267,10 +241,12 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                                             {isCurrentPlan
                                                 ? 'Current Plan'
                                                 : subscribingPlanId === plan.id
-                                                    ? (isFreePlan ? 'Starting Free Plan...' : 'Loading...')
-                                                    : isFreePlan
-                                                        ? 'Start Free'
-                                                        : 'Subscribe Now'}
+                                                  ? isFreePlan
+                                                      ? 'Starting Free Plan...'
+                                                      : 'Loading...'
+                                                  : isFreePlan
+                                                    ? 'Start Free'
+                                                    : 'Subscribe Now'}
                                         </Button>
                                     )}
                                 </CardContent>
@@ -280,31 +256,23 @@ export default function PricingPage({ plans, userSubscription }: Props) {
                 </div>
 
                 {subscribeError && (
-                    <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                        {subscribeError}
-                    </div>
+                    <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{subscribeError}</div>
                 )}
 
-                <div className={`${isAuthenticated ? '' : 'max-w-4xl mx-auto mt-16'} mt-6 rounded-xl border bg-card p-8`}>
-                    <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
+                <div className={`${isAuthenticated ? '' : 'mx-auto mt-16 max-w-4xl'} bg-card mt-6 rounded-xl border p-8`}>
+                    <h2 className="mb-4 text-2xl font-bold">Frequently Asked Questions</h2>
                     <div className="space-y-6">
                         <div>
-                            <h3 className="font-semibold text-lg mb-2">Can I change plans?</h3>
-                            <p className="text-gray-600">
-                                Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.
-                            </p>
+                            <h3 className="mb-2 text-lg font-semibold">Can I change plans?</h3>
+                            <p className="text-gray-600">Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.</p>
                         </div>
                         <div>
-                            <h3 className="font-semibold text-lg mb-2">Is there a contract?</h3>
-                            <p className="text-gray-600">
-                                No, there is no long-term contract. You can cancel your subscription at any time.
-                            </p>
+                            <h3 className="mb-2 text-lg font-semibold">Is there a contract?</h3>
+                            <p className="text-gray-600">No, there is no long-term contract. You can cancel your subscription at any time.</p>
                         </div>
                         <div>
-                            <h3 className="font-semibold text-lg mb-2">What payment methods do you accept?</h3>
-                            <p className="text-gray-600">
-                                We accept all major credit and debit cards through Stripe.
-                            </p>
+                            <h3 className="mb-2 text-lg font-semibold">What payment methods do you accept?</h3>
+                            <p className="text-gray-600">We accept all major credit and debit cards through Stripe.</p>
                         </div>
                     </div>
                 </div>
@@ -315,13 +283,7 @@ export default function PricingPage({ plans, userSubscription }: Props) {
     return (
         <>
             <Head title="Pricing" />
-            {isAuthenticated ? (
-                <AppLayout breadcrumbs={breadcrumbs}>
-                    {pricingContent}
-                </AppLayout>
-            ) : (
-                pricingContent
-            )}
+            {isAuthenticated ? <AppLayout breadcrumbs={breadcrumbs}>{pricingContent}</AppLayout> : pricingContent}
         </>
     );
 }
