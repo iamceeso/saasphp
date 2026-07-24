@@ -25,6 +25,10 @@ cd saasphp
 ./vendor/bin/sail npm run dev
 ```
 
+The app is available at `http://localhost` by default. Sail maps the web
+container to `${APP_PORT:-80}`, so set `APP_PORT` in `.env` if you need a
+different host port, for example `APP_PORT=8080`.
+
 For a production-style frontend build instead of the Vite dev server:
 
 ```bash
