@@ -2,12 +2,14 @@
 
 namespace Tests\Unit\Policies;
 
+use App\Helpers\RoleHelper;
 use App\Models\CustomerSubscription;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class AuthorizationPolicyTest extends TestCase
@@ -107,5 +109,70 @@ class AuthorizationPolicyTest extends TestCase
         ]);
 
         $this->assertTrue($user->can('create', CustomerSubscription::class));
+    }
+
+    public function test_non_core_role_manager_cannot_submit_role_management_permissions(): void
+    {
+        Permission::findOrCreate('create_role', 'web');
+        Permission::findOrCreate('update_staff_role', 'web');
+
+        $user = User::factory()->create(['email' => 'role-manager@example.com']);
+        $user->assignRole('staff');
+        $user->givePermissionTo(['create_role', 'update_staff_role']);
+
+        $this->actingAs($user);
+        $this->expectException(HttpException::class);
+
+        RoleHelper::assertCanSubmitRolePermissions(collect(['assign_core_role']));
+    }
+
+    public function test_assign_core_role_permission_can_submit_role_management_permissions(): void
+    {
+        Permission::findOrCreate('assign_core_role', 'web');
+
+        $user = User::factory()->create(['email' => 'core-manager@example.com']);
+        $user->assignRole('staff');
+        $user->givePermissionTo('assign_core_role');
+
+        $this->actingAs($user);
+
+        RoleHelper::assertCanSubmitRolePermissions(collect(['assign_core_role']));
+
+        $this->assertTrue(true);
+    }
+
+    public function test_non_core_role_manager_cannot_assign_custom_role_with_role_management_permissions(): void
+    {
+        Permission::findOrCreate('update_staff_role', 'web');
+        Permission::findOrCreate('assign_core_role', 'web');
+
+        $manager = User::factory()->create(['email' => 'staff-manager@example.com']);
+        $manager->assignRole('staff');
+        $manager->givePermissionTo('update_staff_role');
+
+        $elevatedRole = Role::create(['name' => 'ops-admin', 'guard_name' => 'web']);
+        $elevatedRole->givePermissionTo('assign_core_role');
+
+        $this->actingAs($manager);
+
+        $this->assertTrue($manager->can('update', $elevatedRole));
+        $this->assertFalse(RoleHelper::canManageAssignments($elevatedRole->fresh()));
+    }
+
+    public function test_assign_core_role_permission_can_assign_custom_role_with_role_management_permissions(): void
+    {
+        Permission::findOrCreate('update_staff_role', 'web');
+        Permission::findOrCreate('assign_core_role', 'web');
+
+        $manager = User::factory()->create(['email' => 'core-staff-manager@example.com']);
+        $manager->assignRole('staff');
+        $manager->givePermissionTo(['update_staff_role', 'assign_core_role']);
+
+        $elevatedRole = Role::create(['name' => 'ops-admin', 'guard_name' => 'web']);
+        $elevatedRole->givePermissionTo('assign_core_role');
+
+        $this->actingAs($manager);
+
+        $this->assertTrue(RoleHelper::canManageAssignments($elevatedRole->fresh()));
     }
 }

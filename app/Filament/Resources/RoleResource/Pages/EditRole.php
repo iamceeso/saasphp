@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\RoleResource\Pages;
 
 use App\Filament\Resources\RoleResource;
+use App\Helpers\RoleHelper;
 use App\Models\User;
 use BezhanSalleh\FilamentShield\Support\Utils;
 use Filament\Actions;
@@ -57,16 +58,7 @@ class EditRole extends EditRecord
             ->pluck('name')
             ->filter(fn ($name) => str($name)->endsWith('_role'));
 
-        if (
-            ! auth()->user()->isSuperAdmin()
-            &&
-            ! auth()->user()->can('assign_core_role')
-
-        ) {
-            if ($submitted->sort()->values()->all() !== $original->sort()->values()->all()) {
-                abort(403, 'You are not authorized to modify role-related permissions.');
-            }
-        }
+        RoleHelper::assertCanSubmitRolePermissions($submitted, $original);
 
         $this->permissions = collect($data)
             ->filter(function ($permission, $key) {
