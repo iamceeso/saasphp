@@ -29,7 +29,6 @@
         "laravel/tinker": "^3.0",
         "laravel/vonage-notification-channel": "^3.3",
         "league/commonmark": "^2.7",
-        "paypal/paypal-server-sdk": "^1.1",
         "resend/resend-php": "^0.17.0",
         "socialiteproviders/microsoft": "^4.6",
         "socialiteproviders/yahoo": "^4.1",

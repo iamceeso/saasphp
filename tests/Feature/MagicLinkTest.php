@@ -50,7 +50,7 @@ class MagicLinkTest extends TestCase
             ->assertSessionHas('status', 'If your email address exists in our system, a login link has been sent.');
     }
 
-    public function test_it_logs_user_in_with_valid_magic_link()
+    public function test_it_renders_the_confirmation_page_without_logging_in()
     {
         $user = User::factory()->create();
 
@@ -68,6 +68,32 @@ class MagicLinkTest extends TestCase
             'code' => $rawCode,
         ]));
 
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page->component('auth/magic-confirm'));
+
+        // The GET request must be a pure render: no side effects.
+        $this->assertGuest();
+        $this->assertDatabaseHas('magic_links', ['user_id' => $user->id, 'used_at' => null]);
+    }
+
+    public function test_it_logs_user_in_when_confirming_a_valid_magic_link()
+    {
+        $user = User::factory()->create();
+
+        $rawCode = Str::random(40);
+        $hashedCode = Hash::make($rawCode);
+
+        MagicLink::create([
+            'user_id' => $user->id,
+            'code' => $hashedCode,
+            'expires_at' => now()->addMinutes(5),
+        ]);
+
+        $response = $this->post(route('magic.confirm'), [
+            'email' => $user->email,
+            'code' => $rawCode,
+        ]);
+
         $response->assertRedirect(route('dashboard'));
         $this->assertAuthenticatedAs($user);
     }
@@ -83,10 +109,10 @@ class MagicLinkTest extends TestCase
             'expires_at' => now()->subMinutes(1), // expired
         ]);
 
-        $response = $this->get(route('magic.verify', [
+        $response = $this->post(route('magic.confirm'), [
             'email' => $user->email,
             'code' => 'invalid-or-expired-code',
-        ]));
+        ]);
 
         $response->assertRedirect(route('login'));
         $response->assertSessionHasErrors(['code']);

@@ -21,7 +21,8 @@ Route::middleware('guest')->group(function () {
     Route::prefix('magic')->name('magic.')->group(function () {
         Route::get('/login', fn () => Inertia::render('auth/magic-login'))->name('login');
         Route::post('/send', [MagicLinkController::class, 'send'])->name('send');
-        Route::get('/verify', [MagicLinkController::class, 'login'])->name('verify');
+        Route::get('/verify', [MagicLinkController::class, 'verify'])->name('verify');
+        Route::post('/confirm', [MagicLinkController::class, 'confirm'])->name('confirm');
     });
 
     // Password reset

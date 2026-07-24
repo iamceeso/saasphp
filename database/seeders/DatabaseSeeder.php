@@ -44,9 +44,9 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Admin User',
                 'password' => 'password',
-                'email_verified_at' => now(),
             ]
         );
+        $adminUser->markEmailAsVerified();
         $adminUser->syncRoles([$adminRole]);
 
         $userOne = User::firstOrCreate(

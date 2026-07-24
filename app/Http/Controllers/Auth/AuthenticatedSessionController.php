@@ -122,14 +122,14 @@ class AuthenticatedSessionController extends Controller
                 ]);
             }
 
-            $socialUser = User::create([
+            // forceFill: email_verified_at is intentionally excluded from $fillable,
+            // so a plain create() here would silently leave the new account unverified.
+            $socialUser = new User;
+            $socialUser->forceFill([
                 'email' => $email,
                 'name' => $displayName,
                 'password' => bcrypt(Str::random(16)),
                 'email_verified_at' => now(),
-            ]);
-
-            $socialUser->forceFill([
                 'oauth_provider' => $provider,
                 'oauth_provider_id' => $providerId,
             ])->save();
@@ -154,7 +154,9 @@ class AuthenticatedSessionController extends Controller
                 $updates['email_verified_at'] = now();
             }
 
-            $socialUser->fill($updates)->save();
+            // forceFill: email_verified_at is intentionally excluded from $fillable
+            // so it can never be mass-assigned from request input elsewhere.
+            $socialUser->forceFill($updates)->save();
         }
 
         Auth::login($socialUser, true);
@@ -162,6 +164,13 @@ class AuthenticatedSessionController extends Controller
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
+    /**
+     * Checked against every listed provider in tests/Feature/Auth/SocialLoginTest.php,
+     * including string-typed flags ("true"/"1"/"false") some providers send instead of
+     * native booleans, and providers that omit verification fields entirely — both are
+     * handled safely by filter_var()'s FILTER_VALIDATE_BOOLEAN/FILTER_NULL_ON_FAILURE
+     * combination below, which defaults to "unverified" rather than mis-trusting the flag.
+     */
     private function providerEmailIsVerified(string $provider, SocialiteUser $providerUser): bool
     {
         $rawUser = $this->providerRawUser($providerUser);

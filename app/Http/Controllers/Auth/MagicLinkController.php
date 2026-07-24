@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class MagicLinkController extends Controller
 {
@@ -70,7 +72,30 @@ class MagicLinkController extends Controller
         return back()->with('status', 'If your email address exists in our system, a login link has been sent.');
     }
 
-    public function login(Request $request)
+    /**
+     * Render a confirmation page for the emailed link. This step is a plain GET
+     * with no side effects (it never touches the database or logs anyone in) so
+     * that link prefetchers, email security scanners, or browser preloading
+     * can't silently burn the one-time code before the real user clicks it.
+     */
+    public function verify(Request $request): Response
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+            'code' => ['required', 'string'],
+        ]);
+
+        return Inertia::render('auth/magic-confirm', [
+            'email' => $request->string('email')->value(),
+            'code' => $request->string('code')->value(),
+        ]);
+    }
+
+    /**
+     * Actually consume the code and log the user in. Only reachable via POST,
+     * triggered by the user submitting the confirmation page.
+     */
+    public function confirm(Request $request)
     {
         $request->validate([
             'email' => ['required', 'email'],

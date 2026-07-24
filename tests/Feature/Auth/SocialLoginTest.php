@@ -184,6 +184,120 @@ class SocialLoginTest extends TestCase
         ]);
     }
 
+    public function test_yahoo_email_without_a_verified_flag_is_rejected(): void
+    {
+        $providerUser = $this->fakeProviderUser(
+            id: 'yahoo-user-1',
+            email: 'yahoo@example.com',
+            name: 'Yahoo User',
+            raw: [],
+        );
+
+        $driver = Mockery::mock();
+        $driver->shouldReceive('user')->once()->andReturn($providerUser);
+        Socialite::shouldReceive('driver')->with('yahoo')->once()->andReturn($driver);
+
+        $response = $this->get('/auth/yahoo/callback');
+
+        $response->assertRedirect('/login');
+        $response->assertSessionHasErrors('login');
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', [
+            'email' => 'yahoo@example.com',
+        ]);
+    }
+
+    public function test_yahoo_user_with_verified_flag_can_sign_in(): void
+    {
+        $providerUser = $this->fakeProviderUser(
+            id: 'yahoo-user-2',
+            email: 'verified-yahoo@example.com',
+            name: 'Verified Yahoo User',
+            raw: ['email_verified' => true],
+        );
+
+        $driver = Mockery::mock();
+        $driver->shouldReceive('user')->once()->andReturn($providerUser);
+        Socialite::shouldReceive('driver')->with('yahoo')->once()->andReturn($driver);
+
+        $response = $this->get('/auth/yahoo/callback');
+
+        $response->assertRedirect('/dashboard');
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', [
+            'email' => 'verified-yahoo@example.com',
+            'oauth_provider' => 'yahoo',
+            'oauth_provider_id' => 'yahoo-user-2',
+        ]);
+    }
+
+    /**
+     * Some providers serialize booleans as strings (e.g. "true"/"1") rather than
+     * native booleans in their raw user payload. providerEmailIsVerified() runs
+     * every flag through filter_var(..., FILTER_VALIDATE_BOOLEAN), so these
+     * truthy string forms must still be accepted as verified.
+     */
+    public function test_truthy_string_verified_flags_are_accepted_across_providers(): void
+    {
+        $cases = [
+            ['provider' => 'google', 'raw' => ['verified_email' => 'true']],
+            ['provider' => 'microsoft', 'raw' => ['email_verified' => '1']],
+            ['provider' => 'yahoo', 'raw' => ['email_verified' => 'yes']],
+        ];
+
+        foreach ($cases as $i => $case) {
+            $email = "string-verified-{$case['provider']}@example.com";
+
+            $providerUser = $this->fakeProviderUser(
+                id: "{$case['provider']}-string-user-{$i}",
+                email: $email,
+                name: 'String Verified User',
+                raw: $case['raw'],
+            );
+
+            $driver = Mockery::mock();
+            $driver->shouldReceive('user')->once()->andReturn($providerUser);
+            Socialite::shouldReceive('driver')->with($case['provider'])->once()->andReturn($driver);
+
+            $response = $this->get("/auth/{$case['provider']}/callback");
+
+            $response->assertRedirect('/dashboard');
+            $this->assertDatabaseHas('users', [
+                'email' => $email,
+                'oauth_provider' => $case['provider'],
+            ]);
+
+            $this->post('/logout');
+        }
+    }
+
+    /**
+     * A falsy-but-non-empty string ("0"/"false") must not be misread as
+     * verified by filter_var's loose coercion.
+     */
+    public function test_falsy_string_verified_flags_are_rejected(): void
+    {
+        $providerUser = $this->fakeProviderUser(
+            id: 'google-falsy-string-user',
+            email: 'falsy-string@example.com',
+            name: 'Falsy String User',
+            raw: ['verified_email' => 'false'],
+        );
+
+        $driver = Mockery::mock();
+        $driver->shouldReceive('user')->once()->andReturn($providerUser);
+        Socialite::shouldReceive('driver')->with('google')->once()->andReturn($driver);
+
+        $response = $this->get('/auth/google/callback');
+
+        $response->assertRedirect('/login');
+        $response->assertSessionHasErrors('login');
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', [
+            'email' => 'falsy-string@example.com',
+        ]);
+    }
+
     private function fakeProviderUser(string $id, ?string $email, ?string $name, array $raw = [], ?string $nickname = null): AbstractUser
     {
         return new class($id, $email, $name, $raw, $nickname) extends AbstractUser

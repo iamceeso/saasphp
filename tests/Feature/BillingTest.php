@@ -32,7 +32,7 @@ class BillingTest extends TestCase
 
     public function test_authenticated_user_can_access_subscriptions_page()
     {
-        $user = User::create([
+        $user = User::forceCreate([
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => bcrypt('password'),
@@ -87,7 +87,7 @@ class BillingTest extends TestCase
 
     public function test_authenticated_user_can_subscribe_to_free_plan_without_payment_method()
     {
-        $user = User::create([
+        $user = User::forceCreate([
             'name' => 'Free User',
             'email' => 'free@example.com',
             'password' => bcrypt('password'),
