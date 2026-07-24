@@ -173,7 +173,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function getCurrentSubscription(): ?CustomerSubscription
     {
         return $this->subscriptions()
-            ->whereIn('status', CustomerSubscription::ACTIVE_STATUSES)
+            ->whereIn('status', CustomerSubscription::CURRENT_SLOT_STATUSES)
             ->latest()
             ->first();
     }
@@ -181,7 +181,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function hasActiveSubscription(): bool
     {
         return $this->subscriptions()
-            ->whereIn('status', CustomerSubscription::ACTIVE_STATUSES)
+            ->whereIn('status', CustomerSubscription::CURRENT_SLOT_STATUSES)
             ->exists();
     }
 
