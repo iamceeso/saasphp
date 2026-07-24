@@ -10,6 +10,7 @@ use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Microsoft\Provider;
+use Throwable;
 
 /**
  * Class AppServiceProvider.

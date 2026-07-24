@@ -31,7 +31,7 @@ jobs:
           coverage: none
 
       - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress --optimize-autoloader
+        run: composer install --no-interaction --prefer-dist --no-progress --no-scripts --optimize-autoloader
 
       - name: Build API Documentation
         run: vendor/bin/doctum update doctum.php -v
