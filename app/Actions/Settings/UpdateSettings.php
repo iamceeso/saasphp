@@ -2,7 +2,6 @@
 
 namespace App\Actions\Settings;
 
-use App\Events\ImageUpdated;
 use App\Models\Setting;
 use Illuminate\Support\Arr;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -17,12 +16,6 @@ class UpdateSettings
             }
 
             [$plain, $type] = $this->normalizeValue($value);
-
-            $setting = Setting::firstWhere('key', $key);
-
-            if ($setting && $this->isImageKey($key) && $setting->value !== $plain) {
-                event(new ImageUpdated($setting, [$setting->value]));
-            }
 
             Setting::updateOrCreate([
                 'key' => $key,
@@ -60,10 +53,5 @@ class UpdateSettings
         }
 
         return ['', 'string'];
-    }
-
-    private function isImageKey(string $key): bool
-    {
-        return in_array($key, ['site.logo'], true);
     }
 }

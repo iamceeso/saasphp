@@ -309,7 +309,9 @@ class UserResource extends Resource implements HasShieldPermissions
 
                 RestoreAction::make()->icon('heroicon-o-arrow-path')
                     ->color('success')
-                    ->label(''),
+                    ->label('')
+                    ->authorize(fn (User $record) => auth()->user()?->can('restore', $record))
+                    ->visible(fn (User $record) => auth()->user()?->can('restore', $record)),
 
                 ForceDeleteAction::make()
                     ->icon('heroicon-o-trash')
@@ -363,6 +365,7 @@ class UserResource extends Resource implements HasShieldPermissions
                             $records->each->forceDelete();
                         }),
                     RestoreBulkAction::make()
+                        ->authorize(fn () => auth()->user()?->can('restoreAny', User::class))
                         ->visible(fn ($records) => auth()->user()?->can('restoreAny', User::class)),
                 ]),
 

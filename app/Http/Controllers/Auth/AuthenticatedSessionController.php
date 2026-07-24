@@ -132,7 +132,8 @@ class AuthenticatedSessionController extends Controller
                 'email_verified_at' => now(),
                 'oauth_provider' => $provider,
                 'oauth_provider_id' => $providerId,
-            ])->save();
+            ]);
+            $socialUser->save();
         } else {
             $emailOwner = User::query()
                 ->where('email', $email)

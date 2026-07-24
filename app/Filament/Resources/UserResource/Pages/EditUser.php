@@ -45,6 +45,9 @@ class EditUser extends EditRecord
             Actions\RestoreAction::make()
                 ->icon('heroicon-o-arrow-path')
                 ->label('')->color('warning')
+                ->authorize(
+                    fn (User $record) => auth()->user()?->can('restore', $record) && $record->trashed()
+                )
                 ->visible(
                     fn (User $record) => auth()->user()?->can('restore', $record) && $record->trashed()
                 ),
