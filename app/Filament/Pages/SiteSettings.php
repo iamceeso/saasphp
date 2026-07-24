@@ -129,7 +129,7 @@ class SiteSettings extends Page implements HasForms
                                         ->placeholder('A brief description of your site')
                                         ->label(__('message.site_description'))
                                         ->columnSpanFull(),
-                                ])->label(_('message.information_section')),
+                                ])->label(__('message.information_section')),
                             Section::make('Logo')
                                 ->collapsible()
                                 ->icon('heroicon-o-camera')
@@ -156,9 +156,9 @@ class SiteSettings extends Page implements HasForms
                                         ->reactive()
                                         ->nullable()
                                         ->columnSpanFull(),
-                                ])->label(_('message.logo_section')),
+                                ])->label(__('message.logo_section')),
                             Section::make('Miscellaneous')
-                                ->label(_('message.miscellaneous_section'))
+                                ->label(__('message.miscellaneous_section'))
                                 ->collapsible()
                                 ->icon('heroicon-o-cog-6-tooth')
                                 ->collapsed()
