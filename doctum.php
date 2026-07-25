@@ -12,6 +12,14 @@ $iterator = Finder::create()
 
 return new Doctum($iterator, [
     'title' => 'SaaS PHP API',
+    'theme' => 'saasphp',
+    'template_dirs' => [__DIR__ . '/docs/doctum-theme'],
     'build_dir' => __DIR__ . '/build/api',
     'cache_dir' => __DIR__ . '/.doctum/cache',
+    'footer_link' => [
+        'href' => 'https://saasphp.com',
+        'rel' => 'noreferrer noopener',
+        'target' => '_blank',
+        'link_text' => 'Return to SaaS PHP homepage',
+    ],
 ]);
